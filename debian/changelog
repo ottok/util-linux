@@ -1,3 +1,24 @@
+util-linux (2.27~rc1-1) experimental; urgency=medium
+
+  * Imported Upstream version 2.27~rc1
+    - among other things includes these fixes:
+      mkfs: drop hardcoded search path (Closes: #786759)
+      man: fix nolazytime typo in mount(8) (Closes: #786554)
+      unshare: add --propagation, use MS_PRIVATE by default (Closes: #787763)
+      hwclock: don't allow non-root access (Closes: #786804)
+      sulogin: improve support for locked root account (Closes: #789950)
+      (Please note that --force option is needed for sulogin with locked root!)
+      logger: do not exit when socket errors are not enforced (Closes: #790875)
+  * Update patch queue for 2.27
+    - dropped patches (now include in upstream release):
+      0002-lib-fileutils-Add-new-dup_fd_cloexec-function.patch
+      0003-lib-sysfs-Use-dup_fd_cloexec-instead-of-direct-call-.patch
+  * Don't use deprecated gbp commands in debian/README.source
+  * Ship lslogins, lsipc and manpages in util-linux package
+  * Update debian/*.symbols with newly added symbols
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 31 Jul 2015 14:45:54 +0200
+
 util-linux (2.26.2-9) unstable; urgency=medium
 
   * Add lintian override for hwclock.sh missing service file
