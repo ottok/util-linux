@@ -15,10 +15,10 @@ diff --git a/mount/my_dev_t.h b/mount/my_dev_t.h
 new file mode 100644
 index 0000000..e69de29
 diff --git a/sys-utils/hwclock.8 b/sys-utils/hwclock.8
-index f559e88..5523732 100644
+index fb66b4a..3b61297 100644
 --- a/sys-utils/hwclock.8
 +++ b/sys-utils/hwclock.8
-@@ -1074,6 +1074,9 @@ or 'right', as described above.
+@@ -1035,6 +1035,9 @@ may try for Hardware Clock access:
  .BR crontab (1),
  .BR tzset (3)
  .

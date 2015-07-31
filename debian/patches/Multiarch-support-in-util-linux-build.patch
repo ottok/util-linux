@@ -35,7 +35,7 @@ index 391de3d..2ac4d5e 100644
  	 -e 's|@ADJTIME_PATH[@]|$(ADJTIME_PATH)|g' \
  	 -e 's|@LIBUUID_VERSION[@]|$(LIBUUID_VERSION)|g' \
 diff --git a/configure.ac b/configure.ac
-index 6bc9efd..ff6fae5 100644
+index 853cee5..2caae1a 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -78,7 +78,6 @@ AS_CASE([$prefix:$localstatedir],
