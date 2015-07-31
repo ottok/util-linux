@@ -77,7 +77,9 @@ usr/bin/ionice                                                  [linux-any]
 usr/bin/linux32                                                 [linux-any]
 usr/bin/linux64                                                 [linux-any]
 usr/bin/lscpu                                                   [linux-any]
+usr/bin/lsipc
 usr/bin/lslocks                                                 [linux-any]
+usr/bin/lslogins
 usr/bin/nsenter                                                 [linux-any]
 usr/sbin/partx usr/bin/                                         [linux-any]
 usr/bin/prlimit                                                 [linux-any]
