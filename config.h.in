@@ -572,6 +572,9 @@
    */
 #undef LT_OBJDIR
 
+/* Define to 1 if assertions should be disabled. */
+#undef NDEBUG
+
 /* Should chsh allow only shells in /etc/shells? */
 #undef ONLY_LISTED_SHELLS
 

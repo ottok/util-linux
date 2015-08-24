@@ -26,7 +26,7 @@ PACKAGE_VERSION_RELEASE=0
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="31-Jul-2015"
+LIBBLKID_DATE="24-Aug-2015"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -169,6 +169,7 @@ UL_SET_ARCH([MIPS], [mips*])
 UL_SET_ARCH([HPPA], [hppa*])
 
 AC_SYS_LARGEFILE
+AC_HEADER_ASSERT
 
 dnl Don't forget to maintain alternatively allowed versions in autogen.sh!
 AM_GNU_GETTEXT_VERSION([0.18.3])
@@ -1437,7 +1438,8 @@ UL_BUILD_INIT([setarch], [check])
 UL_REQUIRES_LINUX([setarch])
 AM_CONDITIONAL([BUILD_SETARCH], [test "x$build_setarch" = xyes])
 
-UL_BUILD_INIT([script], [yes])
+UL_BUILD_INIT([script], [check])
+UL_REQUIRES_LINUX([script])
 AM_CONDITIONAL([BUILD_SCRIPT], [test "x$build_script" = xyes])
 
 UL_BUILD_INIT([scriptreplay], [yes])
