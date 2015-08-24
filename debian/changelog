@@ -1,3 +1,10 @@
+util-linux (2.27~rc2-2) experimental; urgency=medium
+
+  * bsdutils: enable dh-exec --with=install
+  * Add bsdutils to lintian-overides for dh-exec usage
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 24 Aug 2015 17:36:18 +0200
+
 util-linux (2.27~rc2-1) experimental; urgency=medium
 
   * Explicitly disable zramctl from being built
