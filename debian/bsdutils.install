@@ -1,3 +1,4 @@
+#!/usr/bin/dh-exec --with=install
 #usr/bin/cal
 #usr/bin/col
 #usr/bin/colcrt
