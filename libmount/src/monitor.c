@@ -168,9 +168,6 @@ static int monitor_next_entry(struct libmnt_monitor *mn,
 	assert(itr);
 	assert(me);
 
-	if (!mn || !itr || !me)
-		return -EINVAL;
-
 	*me = NULL;
 
 	if (!itr->head)
@@ -276,9 +273,6 @@ static int userspace_monitor_get_fd(struct libmnt_monitor *mn,
 				    struct monitor_entry *me)
 {
 	int rc;
-
-	assert(mn);
-	assert(me);
 
 	if (!me || me->enable == 0)	/* not-initialized or disabled */
 		return -EINVAL;
@@ -456,9 +450,6 @@ static int kernel_monitor_get_fd(struct libmnt_monitor *mn,
 				 struct monitor_entry *me)
 {
 	int rc;
-
-	assert(mn);
-	assert(me);
 
 	if (!me || me->enable == 0)	/* not-initialized or disabled */
 		return -EINVAL;
@@ -822,7 +813,7 @@ int mnt_monitor_next_change(struct libmnt_monitor *mn,
  * This function cleanups (drain) internal buffers. It's necessary to call
  * this function after event if you do not call mnt_monitor_next_change().
  *
- * Returns: 0 on success, 1 no change, <0 on error
+ * Returns: 0 on success, <0 on error
  */
 int mnt_monitor_event_cleanup(struct libmnt_monitor *mn)
 {

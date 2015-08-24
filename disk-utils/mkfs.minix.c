@@ -78,6 +78,7 @@
 #include "all-io.h"
 #include "closestream.h"
 #include "ismounted.h"
+#include "xalloc.h"
 
 #define MINIX_ROOT_INO 1
 #define MINIX_BAD_INO 2
@@ -147,6 +148,20 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fprintf(out, USAGE_MAN_TAIL("mkfs.minix(8)"));
 	exit(out == stderr ? MKFS_EX_USAGE : MKFS_EX_OK);
 }
+
+#ifdef TEST_SCRIPT
+static inline time_t mkfs_minix_time(time_t *t)
+{
+	const char *str = getenv("MKFS_MINIX_TEST_SECOND_SINCE_EPOCH");
+	time_t sec;
+
+	if (str && sscanf(str, "%ld", &sec) == 1)
+		return sec;
+	return time(t);
+}
+#else				/* !TEST_SCRIPT */
+# define mkfs_minix_time(x) time(x)
+#endif
 
 static void super_set_state(void)
 {
@@ -251,7 +266,7 @@ static void make_bad_inode_v1(struct fs_control *ctl)
 		return;
 	mark_inode(MINIX_BAD_INO);
 	inode->i_nlinks = 1;
-	inode->i_time = time(NULL);
+	inode->i_time = mkfs_minix_time(NULL);
 	inode->i_mode = S_IFREG + 0000;
 	inode->i_size = ctl->fs_bad_blocks * MINIX_BLOCK_SIZE;
 	zone = next(0);
@@ -299,7 +314,7 @@ static void make_bad_inode_v2_v3 (struct fs_control *ctl)
 		return;
 	mark_inode (MINIX_BAD_INO);
 	inode->i_nlinks = 1;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = time (NULL);
+	inode->i_atime = inode->i_mtime = inode->i_ctime = mkfs_minix_time(NULL);
 	inode->i_mode = S_IFREG + 0000;
 	inode->i_size = ctl->fs_bad_blocks * MINIX_BLOCK_SIZE;
 	zone = next (0);
@@ -351,7 +366,7 @@ static void make_root_inode_v1(struct fs_control *ctl) {
 	mark_inode(MINIX_ROOT_INO);
 	inode->i_zone[0] = get_free_block(ctl);
 	inode->i_nlinks = 2;
-	inode->i_time = time(NULL);
+	inode->i_time = mkfs_minix_time(NULL);
 	if (ctl->fs_bad_blocks)
 		inode->i_size = 3 * ctl->fs_dirsize;
 	else {
@@ -372,7 +387,7 @@ static void make_root_inode_v2_v3 (struct fs_control *ctl) {
 	mark_inode (MINIX_ROOT_INO);
 	inode->i_zone[0] = get_free_block (ctl);
 	inode->i_nlinks = 2;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = time (NULL);
+	inode->i_atime = inode->i_mtime = inode->i_ctime = mkfs_minix_time(NULL);
 
 	if (ctl->fs_bad_blocks)
 		inode->i_size = 3 * ctl->fs_dirsize;
@@ -481,10 +496,7 @@ static void super_set_magic(const struct fs_control *ctl)
 static void setup_tables(const struct fs_control *ctl) {
 	unsigned long inodes, zmaps, imaps, zones, i;
 
-	super_block_buffer = calloc(1, MINIX_BLOCK_SIZE);
-	if (!super_block_buffer)
-		err(MKFS_EX_ERROR, _("%s: unable to allocate buffer for superblock"),
-				ctl->device_name);
+	super_block_buffer = xcalloc(1, MINIX_BLOCK_SIZE);
 
 	memset(boot_block_buffer,0,512);
 	super_set_magic(ctl);
@@ -538,22 +550,19 @@ static void setup_tables(const struct fs_control *ctl) {
 	imaps = get_nimaps();
 	zmaps = get_nzmaps();
 
-	inode_map = malloc(imaps * MINIX_BLOCK_SIZE);
-	zone_map = malloc(zmaps * MINIX_BLOCK_SIZE);
-	if (!inode_map || !zone_map)
-		err(MKFS_EX_ERROR, _("%s: unable to allocate buffers for maps"),
-				ctl->device_name);
+	inode_map = xmalloc(imaps * MINIX_BLOCK_SIZE);
+	zone_map = xmalloc(zmaps * MINIX_BLOCK_SIZE);
 	memset(inode_map,0xff,imaps * MINIX_BLOCK_SIZE);
 	memset(zone_map,0xff,zmaps * MINIX_BLOCK_SIZE);
+
 	for (i = get_first_zone() ; i<zones ; i++)
 		unmark_zone(i);
 	for (i = MINIX_ROOT_INO ; i<=inodes; i++)
 		unmark_inode(i);
-	inode_buffer = malloc(get_inode_buffer_size());
-	if (!inode_buffer)
-		err(MKFS_EX_ERROR, _("%s: unable to allocate buffer for inodes"),
-				ctl->device_name);
+
+	inode_buffer = xmalloc(get_inode_buffer_size());
 	memset(inode_buffer,0, get_inode_buffer_size());
+
 	printf(P_("%lu inode\n", "%lu inodes\n", inodes), inodes);
 	printf(P_("%lu block\n", "%lu blocks\n", zones), zones);
 	printf(_("Firstdatazone=%jd (%jd)\n"), get_first_zone(), first_zone_data());
@@ -706,8 +715,8 @@ static void determine_device_blocks(struct fs_control *ctl, const struct stat *s
 		errx(MKFS_EX_ERROR, _("%s: number of blocks too small"), ctl->device_name);
 	if (fs_version == 1 && ctl->fs_blocks > MINIX_MAX_INODES)
 		ctl->fs_blocks = MINIX_MAX_INODES;
-	if (ctl->fs_blocks > MINIX_MAX_INODES * BITS_PER_BLOCK)
-		ctl->fs_blocks = MINIX_MAX_INODES * BITS_PER_BLOCK;	/* Utter maximum: Clip. */
+	if (ctl->fs_blocks > (4 + ((MINIX_MAX_INODES - 4) * BITS_PER_BLOCK)))
+		ctl->fs_blocks = 4 + ((MINIX_MAX_INODES - 4) * BITS_PER_BLOCK);	/* Utter maximum: Clip. */
 }
 
 static void check_user_instructions(struct fs_control *ctl)
@@ -763,6 +772,7 @@ int main(int argc, char ** argv)
 			break;
 		case 'v': /* kept for backwards compatiblitly */
 			warnx(_("-v is ambiguous, use '-2' instead"));
+			/* fallthrough */
 		case '2':
 			fs_version = 2;
 			break;
