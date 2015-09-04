@@ -12,9 +12,9 @@ CONFOPTS += --enable-raw
 CONFOPTS += --with-selinux
 CONFOPTS += --enable-partx
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	CONFOPTS += --without-systemd
+	CONFOPTS += --without-systemd --without-udev
 else
-	CONFOPTS += --with-systemd
+	CONFOPTS += --with-systemd --with-udev
 endif
 CONFOPTS += --enable-tunelp
 endif
