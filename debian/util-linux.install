@@ -29,6 +29,7 @@ sbin/sfdisk
 sbin/sulogin
 sbin/swaplabel
 sbin/wipefs
+sbin/zramctl                                                    [linux-any]
 usr/bin/chrt
 usr/bin/flock
 usr/bin/getopt

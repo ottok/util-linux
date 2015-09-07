@@ -57,6 +57,7 @@ debian/tmp/usr/share/man/man8/sfdisk.8
 debian/tmp/usr/share/man/man8/sulogin.8
 debian/tmp/usr/share/man/man8/swaplabel.8
 debian/tmp/usr/share/man/man8/wipefs.8
+debian/tmp/usr/share/man/man8/zramctl.8                         [linux-any]
 debian/tmp/usr/share/man/man8/x86_64.8                          [amd64]
 debian/tmp/usr/share/man/man1/dmesg.1                           [linux-any]
 debian/tmp/usr/share/man/man1/fallocate.1                       [linux-any]

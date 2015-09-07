@@ -28,11 +28,6 @@ CONFOPTS += --without-python
 # /proc/self/mountinfo or /proc/mounts.
 CONFOPTS += --enable-libmount-force-mountinfo
 
-# zramctl utility is only useful to control the zram
-# kernel module which is in 'staging' area and not
-# even enabled in Debian kernels....
-CONFOPTS += --disable-zramctl
-
 # disable utilities shipped by other packages
 # => login
 CONFOPTS += --disable-login
