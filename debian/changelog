@@ -1,3 +1,17 @@
+util-linux (2.27~rc2-3) UNRELEASED; urgency=medium
+
+  [ Andreas Henriksson ]
+  * util-linux: only ship lsipc on linux
+  * Make testsuite fatal on linux (only)
+
+  [ Laurent Bigonville ]
+  * Enable libudev support on linux architectures (Closes: #776905)
+
+  [ Andreas Henriksson ]
+  * Ship zramctl in util-linux (Closes: #775371)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 07 Sep 2015 12:39:29 +0200
+
 util-linux (2.27~rc2-2) experimental; urgency=medium
 
   * bsdutils: enable dh-exec --with=install
