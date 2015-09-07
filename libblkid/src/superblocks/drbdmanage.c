@@ -44,9 +44,6 @@ static int probe_drbdmanage(blkid_probe pr,
 	struct drbdmanage_hdr *hdr;
 	unsigned char *cp;
 	struct drbdmanage_pers *prs;
-	char persistence_version[10];
-	int l;
-
 
 	hdr = (struct drbdmanage_hdr*)
 		blkid_probe_get_buffer(pr, 0, sizeof(*hdr));
@@ -68,12 +65,9 @@ static int probe_drbdmanage(blkid_probe pr,
 	if (!prs)
 		return errno ? -errno : 1;
 
-	if (memcmp(prs->magic, persistence_magic, sizeof(prs->magic)) == 0) {
-		l = sprintf(persistence_version, "%d",
-				be32toh(prs->version_le));
-		blkid_probe_set_value(pr, "PERSISTENCE_VERSION",
-				persistence_version, l);
-	}
+	if (memcmp(prs->magic, persistence_magic, sizeof(prs->magic)) == 0 &&
+	    blkid_probe_sprintf_version(pr, "%d", be32_to_cpu(prs->version_le)) != 0)
+		return errno ? -errno : 1;
 
 	return 0;
 }
@@ -84,9 +78,10 @@ const struct blkid_idinfo drbdmanage_idinfo =
 	.name		= "drbdmanage_control_volume",
 	.usage		= BLKID_USAGE_OTHER,
 	.probefunc	= probe_drbdmanage,
-	.minsz      = 64 * 1024,
+	.minsz		= 64 * 1024,
 	.magics		= {
 		{ .magic = "$DRBDmgr=q", .len = 10, .sboff = 0 },
+		{ NULL }
 	},
 };
 

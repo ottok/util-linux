@@ -26,7 +26,7 @@ PACKAGE_VERSION_RELEASE=0
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="24-Aug-2015"
+LIBBLKID_DATE="07-Sep-2015"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -429,7 +429,7 @@ AS_CASE([$have_dirfd:$have_ddfd],
 
 AC_MSG_CHECKING([whether program_invocation_short_name is defined])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-	#include <argp.h>
+	#include <errno.h>
 ]], [[
 	program_invocation_short_name = "test";
 ]])], [
