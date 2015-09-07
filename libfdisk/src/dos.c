@@ -1961,7 +1961,7 @@ static int dos_set_partition(struct fdisk_context *cxt, size_t n,
 		if (IS_EXTENDED(p->sys_ind) && !IS_EXTENDED(pa->type->code) && has_logical(cxt)) {
 			fdisk_warnx(cxt, _(
 				"Cannot change type of the extended partition which is "
-				"already used by logical partitons. Delete logical "
+				"already used by logical partitions. Delete logical "
 				"partitions first."));
 			return -EINVAL;
 		}
@@ -2140,7 +2140,7 @@ static int dos_reorder(struct fdisk_context *cxt)
 
 	if (!wrong_p_order(cxt, NULL)) {
 		fdisk_info(cxt, _("Nothing to do. Ordering is correct already."));
-		return 0;
+		return 1;
 	}
 
 	while ((i = wrong_p_order(cxt, &k)) != 0 && i < 4) {
@@ -2168,7 +2168,6 @@ static int dos_reorder(struct fdisk_context *cxt)
 	if (i)
 		fix_chain_of_logicals(cxt);
 
-	fdisk_info(cxt, _("Done."));
 	return 0;
 }
 
