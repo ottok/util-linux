@@ -23,8 +23,7 @@ Build-Depends: autoconf,
 Section: base
 Priority: required
 Maintainer: Debian util-linux Maintainers <ah-util-linux@debian.org>
-Uploaders: Scott James Remnant <scott@ubuntu.com>,
-           LaMont Jones <lamont@debian.org>,
+Uploaders: LaMont Jones <lamont@debian.org>,
            Andreas Henriksson <andreas@fatal.se>,
            Adam Conrad <adconrad@0c3.net>
 Standards-Version: 3.9.6
