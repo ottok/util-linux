@@ -1,3 +1,12 @@
+util-linux (2.27-2) unstable; urgency=medium
+
+  * Drop Scott from co-maintainers on his request
+  * Build static binaries for fdisk-udeb and util-linux-udeb
+    - this avoids udeb collecting invalid dependencies on non-udebs
+    (Closes: #798347)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 17 Sep 2015 11:31:48 +0200
+
 util-linux (2.27-1) unstable; urgency=medium
 
   [ Andreas Henriksson ]
