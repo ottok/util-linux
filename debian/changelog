@@ -1,3 +1,10 @@
+util-linux (2.27-3) unstable; urgency=medium
+
+  * Add lintian-overrides for linking fdisk-udeb static
+  * Force installation of fdisk-udeb lintian overrides
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 17 Sep 2015 16:52:10 +0200
+
 util-linux (2.27-2) unstable; urgency=medium
 
   * Drop Scott from co-maintainers on his request
