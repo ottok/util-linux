@@ -19,6 +19,9 @@ endif
 CONFOPTS += --enable-tunelp
 endif
 
+# build static versions of programs used in fdisk-udeb and util-linux-udeb
+CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
+
 CONFOPTS += --localstatedir=/run
 CONFOPTS += --disable-silent-rules
 CONFOPTS += --without-python
