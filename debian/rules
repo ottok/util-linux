@@ -97,6 +97,8 @@ override_dh_install:
 		debian/uuid-runtime.install > \
 		debian/uuid-runtime.install.$(DEB_HOST_ARCH)
 	#
+	install -D -p -m644 debian/fdisk-udeb.lintian-overrides \
+		debian/fdisk-udeb/usr/share/lintian/overrides/fdisk-udeb
 	dh_install \
 		-Nfdisk-udeb -Nlibblkid1-udeb \
 		-Nlibfdisk1-udeb -Nlibsmartcols1-udeb -Nlibuuid1-udeb \
