@@ -1,3 +1,12 @@
+util-linux (2.27.1-1) unstable; urgency=medium
+
+  * Imported Upstream version 2.27.1
+    - among other things includes these fixes:
+      libmount: fix uid= and gid= translation (Closes: #801527)
+      libmount: (monitor) don't check for regular mtab
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 02 Nov 2015 12:41:58 +0100
+
 util-linux (2.27-3) unstable; urgency=medium
 
   * Add lintian-overrides for linking fdisk-udeb static
