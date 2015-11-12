@@ -23,6 +23,7 @@
 # Default-Start:     S
 # X-Start-Before:    checkroot
 # Default-Stop:      0 6
+# Short-Description: Sync hardware and system clock time.
 ### END INIT INFO
 
 # These defaults are user-overridable in /etc/default/hwclock
