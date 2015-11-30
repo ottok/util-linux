@@ -50,9 +50,9 @@ Breaks: bash-completion (<< 1:2.1-4.1~),
           mount (= 2.26.2-3),
           mount (= 2.26.2-3ubuntu1)
 Multi-Arch: foreign
-Description: Miscellaneous system utilities
+Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
- are oriented towards maintenance of your system.  Some of the more
+ are oriented towards maintenance of your system. Some of the more
  important utilities included in this package allow you to partition
  your hard disk, view kernel messages, and create new filesystems.
 
@@ -63,8 +63,8 @@ Section: localization
 Priority: optional
 Depends: util-linux (>= ${source:Upstream-Version}), ${misc:Depends}
 Replaces: util-linux (<< 2.11b)
-Description: Locales files for util-linux
- This package contains the internationalization files of for the util-linux
+Description: locales files for util-linux
+ This package contains the internationalization files for the util-linux
  package.
  .
  They are needed when you want the programs in util-linux to print their
@@ -79,7 +79,7 @@ Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: ${misc:Depends}
 Suggests: nfs-common (>=1:1.1.0-13)
 Multi-Arch: foreign
-Description: Tools for mounting and manipulating filesystems
+Description: tools for mounting and manipulating filesystems
  This package provides the mount(8), umount(8), swapon(8),
  swapoff(8), and losetup(8) commands.
 
@@ -115,12 +115,11 @@ Section: libs
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
-Description: block device id library
- The blkid library which allows system programs like fsck and
- mount to quickly and easily find block devices by filesystem UUID and
- LABEL.  This allows system administrators to avoid specifying
- filesystems by hard-coded device names, but via a logical naming
- system instead.
+Description: block device ID library
+ The blkid library allows system programs such as fsck and mount to
+ quickly and easily find block devices by filesystem UUID or label.
+ This allows system administrators to avoid specifying filesystems by
+ hard-coded device names and use a logical naming system instead.
 
 Package: libblkid1-udeb
 Architecture: any
@@ -128,12 +127,11 @@ Section: debian-installer
 Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Package-Type: udeb
-Description: stripped down block device id library, for debian-installer
- The blkid library which allows system programs like fsck and
- mount to quickly and easily find block devices by filesystem UUID and
- LABEL.  This allows system administrators to avoid specifiying
- filesystems by hard-coded device names, but via a logical naming
- system instead.
+Description: stripped down block device ID library, for debian-installer
+ The blkid library allows system programs such as fsck and mount to
+ quickly and easily find block devices by filesystem UUID or label.
+ This allows system administrators to avoid specifying filesystems by
+ hard-coded device names and use a logical naming system instead.
  .
  This is a minimal package for debian-installer.
 
@@ -147,12 +145,11 @@ Depends: libblkid1 (= ${binary:Version}),
          uuid-dev,
          ${misc:Depends}
 Multi-Arch: same
-Description: block device id library - headers and static libraries
- The blkid library which allows system programs like fsck and
- mount to quickly and easily find block devices by filesystem UUID and
- LABEL.  This allows system administrators to avoid specifiying
- filesystems by hard-coded device names, but via a logical naming
- system instead.
+Description: block device ID library - headers and static libraries
+ The blkid library allows system programs such as fsck and mount to
+ quickly and easily find block devices by filesystem UUID or label.
+ This allows system administrators to avoid specifying filesystems by
+ hard-coded device names and use a logical naming system instead.
  .
  This package contains the development environment for the blkid library.
 
@@ -163,8 +160,8 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
 Description: fdisk partitioning library
- The libfdisk library is used for manipulating with partition tables.
- The library is the core of the fdisk, cfdisk and sfdisk tools.
+ The libfdisk library is used for manipulating partition tables. It is
+ the core of the fdisk, cfdisk, and sfdisk tools.
 
 Package: libfdisk1-udeb
 Architecture: any
@@ -173,8 +170,8 @@ Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Package-Type: udeb
 Description: stripped down fdisk partitioning library, for debian-installer
- The libfdisk library is used for manipulating with partition tables.
- The library is the core of the fdisk, cfdisk and sfdisk tools.
+ The libfdisk library is used for manipulating partition tables. It is
+ the core of the fdisk, cfdisk, and sfdisk tools.
  .
  This is a minimal package for debian-installer.
 
@@ -190,8 +187,8 @@ Depends: libfdisk1 (= ${binary:Version}),
          ${misc:Depends}
 Multi-Arch: same
 Description: fdisk partitioning library - headers and static libraries
- The libfdisk library is used for manipulating with partition tables.
- The library is the core of the fdisk, cfdisk and sfdisk tools.
+ The libfdisk library is used for manipulating partition tables. It is
+ the core of the fdisk, cfdisk, and sfdisk tools.
  .
  This package contains the development environment for the fdisk library.
 
@@ -202,7 +199,7 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
 Description: device mounting library
- The device mounting library, used by mount and umount helpers.
+ This device mounting library is used by mount and umount helpers.
 
 Package: libmount-dev
 Architecture: linux-any
@@ -214,7 +211,7 @@ Depends: libc6-dev | libc-dev,
          ${misc:Depends}
 Multi-Arch: same
 Description: device mounting library - headers and static libraries
- The device mounting library, used by mount and umount helpers.
+ This device mounting library is used by mount and umount helpers.
  .
  This package contains the development environment for the mount library.
 
@@ -225,7 +222,7 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
 Description: smart column output alignment library
- The smart column output alignment library, used by fdisk utilities.
+ This smart column output alignment library is used by fdisk utilities.
 
 Package: libsmartcols1-udeb
 Architecture: any
@@ -234,7 +231,7 @@ Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Package-Type: udeb
 Description: stripped down smart column output aligment library, for debian-installer
- The smart column output alignment library, used by fdisk utilities.
+ This smart column output alignment library is used by fdisk utilities.
  .
  This is a minimal package for debian-installer.
 
@@ -247,7 +244,7 @@ Depends: libc6-dev | libc-dev,
          ${misc:Depends}
 Multi-Arch: same
 Description: smart column output alignment library - headers and static libraries
- The smart column output alignment library, used by fdisk utilities.
+ This smart column output alignment library is used by fdisk utilities.
  .
  This package contains the development environment for the mount library.
 
@@ -260,12 +257,11 @@ Recommends: uuid-runtime
 Replaces: e2fsprogs (<< 1.34-1)
 Multi-Arch: same
 Description: Universally Unique ID library
- The libuuid library generates and parses 128-bit universally unique
- ids (UUIDs).  A UUID is an identifier that is unique across both
- space and time, with respect to the space of all UUIDs.  A UUID can
- be used for multiple purposes, from tagging objects with an extremely
- short lifetime, to reliably identifying very persistent objects
- across a network.
+ The libuuid library generates and parses 128-bit Universally Unique
+ IDs (UUIDs). A UUID is an identifier that is unique within the space
+ of all such identifiers across both space and time. It can be used for
+ multiple purposes, from tagging objects with an extremely short lifetime
+ to reliably identifying very persistent objects across a network.
  .
  See RFC 4122 for more information.
 
@@ -279,22 +275,20 @@ Depends: adduser, passwd, ${misc:Depends}, ${shlibs:Depends}
 Replaces: e2fsprogs (<= 1.40.3-1ubuntu1)
 Multi-Arch: foreign
 Description: runtime components for the Universally Unique ID library
- The libuuid library generates and parses 128-bit universally unique
- ids (UUIDs).  A UUID is an identifier that is unique across both
- space and time, with respect to the space of all UUIDs.  A UUID can
- be used for multiple purposes, from tagging objects with an extremely
- short lifetime, to reliably identifying very persistent objects
- across a network.
+ The libuuid library generates and parses 128-bit Universally Unique
+ IDs (UUIDs). A UUID is an identifier that is unique within the space
+ of all such identifiers across both space and time. It can be used for
+ multiple purposes, from tagging objects with an extremely short lifetime
+ to reliably identifying very persistent objects across a network.
  .
  See RFC 4122 for more information.
  .
  This package contains the uuidgen program and the uuidd daemon.
  .
  The uuidd daemon is used to generate UUIDs, especially time-based
- UUID’s, in a secure and guaranteed-unique fashion, even in the face
- of large numbers of threads trying to grab UUID’s running on
- different CPU’s. It is used by libuuid as well as the uuidgen
- program.
+ UUIDs, in a secure and guaranteed-unique fashion, even in the face of
+ large numbers of threads trying to grab UUIDs running on different CPUs.
+ It is used by libuuid as well as the uuidgen program.
 
 Package: libuuid1-udeb
 Architecture: any
@@ -302,9 +296,9 @@ Section: debian-installer
 Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Package-Type: udeb
-Description: stripped down universally unique id library, for debian-installer
- libuuid generates and parses 128-bit universally unique ids (UUIDs).
- See RFC 4122 for more information.
+Description: stripped down Universally Unique ID library, for debian-installer
+ The libuuid library generates and parses 128-bit Universally Unique IDs
+ (UUIDs). See RFC 4122 for more information.
  .
  This is a minimal package for debian-installer.
 
@@ -315,9 +309,9 @@ Priority: optional
 Depends: libc6-dev | libc-dev, libuuid1 (= ${binary:Version}), ${misc:Depends}
 Replaces: e2fslibs-dev (<< 1.15)
 Multi-Arch: same
-Description: universally unique id library - headers and static libraries
- libuuid generates and parses 128-bit universally unique ids (UUIDs).
- See RFC 4122 for more information.
+Description: Universally Unique ID library - headers and static libraries
+ The libuuid library generates and parses 128-bit Universally Unique IDs
+ (UUIDs). See RFC 4122 for more information.
  .
  This package contains the development environment for the uuid library.
 
