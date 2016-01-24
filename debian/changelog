@@ -1,3 +1,19 @@
+util-linux (2.27.1-2) unstable; urgency=medium
+
+  [ Andreas Henriksson ]
+  * Handle missing directory in obsolete conversion code (Closes: #804167)
+  * hwclock.sh: drop obsolete WARNING referencing non-existing doc
+    (Closes: #795194)
+  * hwclock.sh: use sed instead of head/tail (Closes: #791511)
+  * hwclock.sh: Add Short-Description (Closes: #510086)
+  * Drop obsolete lsb-release build-dependency (Closes: #805491)
+  * bsdutils: drop ancient README.script (Closes: #231347)
+
+  [ Justin B Rye ]
+  * package description tweaks (Closes: #806736)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 24 Jan 2016 12:08:40 +0100
+
 util-linux (2.27.1-1) unstable; urgency=medium
 
   * Imported Upstream version 2.27.1
