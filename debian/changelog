@@ -1,3 +1,32 @@
+util-linux (2.27.1-4) UNRELEASED; urgency=medium
+
+  * Drop initscripts dependency now that update-rc.d no longer
+    requires it to process init scripts with LSB header dependencies.
+    - note that it's still likely to be installed (even under systemd)
+      since it's priority is required, it's just that util-linux no longer
+      needs to require it to be around.
+  * Add dependency on init-system-helpers (>= 1.29~) which contains
+    the previously mentioned update-rc.d fix.
+    - this can be dropped once init-system-helpers is always >= 1.29~.
+  * Drop lsb-base dependency
+    - strictly speaking we should have it since hwclock.sh uses
+      lsb-base, but initscripts will pull it in for us anyway under
+      sysvinit(-core) so this dependency makes no practical gain.
+      Dropping it avoids pulling it in when we don't need it (eg. under
+      systemd-sysv where hwclock.sh is masked by the systemd package).
+  * Add systemd-sysv as an alternative to tzdata dependency.
+    - tzdata was according to this changelog added for the benefit of
+      the hwclock.sh init script. (Not sure it's required.)
+      It's among the top size of debootstrap --variant=minbase packages
+      so might be useful to make it uninstallable on minimal containers,
+      which this change should accomplish (under systemd-sysv atleast).
+  * Finally move sysvinit-utils back to Breaks instead of Depends
+    - now that initscript dependency is dropped, the issue with cyclic
+      dependency should be no more and we can properly describe the
+      relation.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 29 Feb 2016 19:35:05 +0100
+
 util-linux (2.27.1-3) unstable; urgency=medium
 
   * Add debian/patches/Mark-setarch-testcase-as-known-fail.patch
