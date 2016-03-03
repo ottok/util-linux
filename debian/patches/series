@@ -3,3 +3,4 @@ man-page-tweaks-cleanup-my_dev_t.h-ancient-stuff.patch
 Disable-the-fallback-clause-in-hwclock-when-dev-rtc-.patch
 verbose-tests.patch
 Mark-setarch-testcase-as-known-fail.patch
+build-sys-use-PKG_CONFIG.patch
