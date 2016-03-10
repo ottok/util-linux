@@ -1,3 +1,18 @@
+util-linux (2.27.1-5) unstable; urgency=medium
+
+  * Completely drop (versioned) tzdata dependency (Closes: #817371)
+    - the alternative on systemd-sysv causes (pre-)dependency loops which
+      dpkg can't handle (see example in #817780)
+    - the reason for the dependency in the first place seems to have been
+      ensuring /etc/localtime is a real file. Later the use of
+      /etc/localtime seems to have been removed (see #660365).
+      Thanks to Felipe Sateler for digging this information up.
+    - tzdata itself is Priority: required so should always be around in a
+      regular install even without any dependency on it. (i.e. unless it has
+      explicitly been removed.)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 10 Mar 2016 14:26:52 +0100
+
 util-linux (2.27.1-4) unstable; urgency=medium
 
   * Drop initscripts dependency now that update-rc.d no longer
