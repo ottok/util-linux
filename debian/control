@@ -36,7 +36,6 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: init-system-helpers (>= 1.29~),
-         tzdata (>= 2006c-2) | systemd-sysv,
          ${misc:Depends}
 Suggests: dosfstools, kbd | console-tools, util-linux-locales
 Replaces: bash-completion (<< 1:2.1-4.1~),
