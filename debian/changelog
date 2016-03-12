@@ -1,3 +1,17 @@
+util-linux (2.27.1-6) unstable; urgency=medium
+
+  * Drop (versioned) init-system-helpers dependency to avoid dep loop.
+    - initscripts is guaranteed to be installed in stable/jessie, the file
+      is additionally a conffile so initscripts will need to be purged to
+      cause a problem for us with i-s-h << 1.29 and purging initscripts is
+      not possible until after the upgrade anyway. (Closes: #817857)
+  * Temporarily move sysvinit-utils back from Breaks to Depends.
+    - again seems to confuse apt and we apparently need a synchronized
+      upload with sysvinit to move things to how it should (and now can be
+      since initscripts dependency was dropped from u-l) be described.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sat, 12 Mar 2016 16:12:55 +0100
+
 util-linux (2.27.1-5) unstable; urgency=medium
 
   * Completely drop (versioned) tzdata dependency (Closes: #817371)
