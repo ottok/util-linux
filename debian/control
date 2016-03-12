@@ -35,8 +35,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
-Depends: init-system-helpers (>= 1.29~),
-         ${misc:Depends}
+Depends: ${misc:Depends}
 Suggests: dosfstools, kbd | console-tools, util-linux-locales
 Replaces: bash-completion (<< 1:2.1-4.1~),
           sysvinit-utils (<< 2.88dsf-59.1~),
