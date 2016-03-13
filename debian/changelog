@@ -1,3 +1,20 @@
+util-linux (2.28~rc1-1) experimental; urgency=medium
+
+  * debian/gbp.conf: Set branches to master/upstream
+  * Imported Upstream version 2.28~rc1
+    This includes additional fixes for the following debian bug reports:
+    - "bash-completion: fstrim: use mountpoint, not device" (Closes: #804833)
+    - "logger: always update header when writing stdin line" (Closes: #798239)
+    - "libfdisk: Fix order of C/H/S numbers output" (Closes: #815847)
+  * Drop debian/patches/build-sys-use-PKG_CONFIG.patch, now included upstream.
+  * Document added symbols and bump shlibs for libfdisk1, libmount1
+    and libsmartcols1
+  * Bump Standards-Version to 3.9.7
+  * Update debian/README.source for master/upstream
+  * Upload to experimental.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 13 Mar 2016 13:06:25 +0100
+
 util-linux (2.27.1-6) unstable; urgency=medium
 
   * Drop (versioned) init-system-helpers dependency to avoid dep loop.
