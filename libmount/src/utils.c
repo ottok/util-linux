@@ -117,6 +117,15 @@ static int fstype_cmp(const void *v1, const void *v2)
 	return strcmp(s1, s2);
 }
 
+int mnt_stat_mountpoint(const char *target, struct stat *st)
+{
+#ifdef AT_NO_AUTOMOUNT
+	return fstatat(-1, target, st, AT_NO_AUTOMOUNT);
+#else
+	return stat(target, st);
+#endif
+}
+
 /*
  * Note that the @target has to be an absolute path (so at least "/").  The
  * @filename returns an allocated buffer with the last path component, for example:
@@ -257,6 +266,7 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"bdev",
 		"binfmt_misc",
 		"cgroup",
+		"cgroup2",
 		"configfs",
 		"cpuset",
 		"debugfs",
@@ -625,16 +635,6 @@ int mnt_get_filesystems(char ***filesystems, const char *pattern)
 	return rc;
 }
 
-static size_t get_pw_record_size(void)
-{
-#ifdef _SC_GETPW_R_SIZE_MAX
-	long sz = sysconf(_SC_GETPW_R_SIZE_MAX);
-	if (sz > 0)
-		return sz;
-#endif
-	return 16384;
-}
-
 /*
  * Returns an allocated string with username or NULL.
  */
@@ -642,14 +642,13 @@ char *mnt_get_username(const uid_t uid)
 {
         struct passwd pwd;
 	struct passwd *res;
-	size_t sz = get_pw_record_size();
 	char *buf, *username = NULL;
 
-	buf = malloc(sz);
+	buf = malloc(UL_GETPW_BUFSIZ);
 	if (!buf)
 		return NULL;
 
-	if (!getpwuid_r(uid, &pwd, buf, sz, &res) && res)
+	if (!getpwuid_r(uid, &pwd, buf, UL_GETPW_BUFSIZ, &res) && res)
 		username = strdup(pwd.pw_name);
 
 	free(buf);
@@ -661,17 +660,16 @@ int mnt_get_uid(const char *username, uid_t *uid)
 	int rc = -1;
         struct passwd pwd;
 	struct passwd *pw;
-	size_t sz = get_pw_record_size();
 	char *buf;
 
 	if (!username || !uid)
 		return -EINVAL;
 
-	buf = malloc(sz);
+	buf = malloc(UL_GETPW_BUFSIZ);
 	if (!buf)
 		return -ENOMEM;
 
-	if (!getpwnam_r(username, &pwd, buf, sz, &pw) && pw) {
+	if (!getpwnam_r(username, &pwd, buf, UL_GETPW_BUFSIZ, &pw) && pw) {
 		*uid= pw->pw_uid;
 		rc = 0;
 	} else {
@@ -689,17 +687,16 @@ int mnt_get_gid(const char *groupname, gid_t *gid)
 	int rc = -1;
         struct group grp;
 	struct group *gr;
-	size_t sz = get_pw_record_size();
 	char *buf;
 
 	if (!groupname || !gid)
 		return -EINVAL;
 
-	buf = malloc(sz);
+	buf = malloc(UL_GETPW_BUFSIZ);
 	if (!buf)
 		return -ENOMEM;
 
-	if (!getgrnam_r(groupname, &grp, buf, sz, &gr) && gr) {
+	if (!getgrnam_r(groupname, &grp, buf, UL_GETPW_BUFSIZ, &gr) && gr) {
 		*gid= gr->gr_gid;
 		rc = 0;
 	} else {
@@ -788,6 +785,7 @@ int mnt_has_regular_mtab(const char **mtab, int *writable)
 		if (S_ISREG(st.st_mode)) {
 			if (writable)
 				*writable = !try_write(filename);
+			DBG(UTILS, ul_debug("%s: writable", filename));
 			return 1;
 		}
 		goto done;
@@ -796,8 +794,10 @@ int mnt_has_regular_mtab(const char **mtab, int *writable)
 	/* try to create the file */
 	if (writable) {
 		*writable = !try_write(filename);
-		if (*writable)
+		if (*writable) {
+			DBG(UTILS, ul_debug("%s: writable", filename));
 			return 1;
+		}
 	}
 
 done:
@@ -982,7 +982,7 @@ char *mnt_get_mountpoint(const char *path)
 	if (*mnt == '/' && *(mnt + 1) == '\0')
 		goto done;
 
-	if (stat(mnt, &st))
+	if (mnt_stat_mountpoint(mnt, &st))
 		goto err;
 	base = st.st_dev;
 
@@ -991,7 +991,7 @@ char *mnt_get_mountpoint(const char *path)
 
 		if (!p)
 			break;
-		if (stat(*mnt ? mnt : "/", &st))
+		if (mnt_stat_mountpoint(*mnt ? mnt : "/", &st))
 			goto err;
 		dir = st.st_dev;
 		if (dir != base) {
@@ -1096,7 +1096,7 @@ char *mnt_get_kernel_cmdline_option(const char *name)
 }
 
 #ifdef TEST_PROGRAM
-int test_match_fstype(struct libmnt_test *ts, int argc, char *argv[])
+static int test_match_fstype(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *type = argv[1];
 	char *pattern = argv[2];
@@ -1105,7 +1105,7 @@ int test_match_fstype(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_match_options(struct libmnt_test *ts, int argc, char *argv[])
+static int test_match_options(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *optstr = argv[1];
 	char *pattern = argv[2];
@@ -1114,7 +1114,7 @@ int test_match_options(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_startswith(struct libmnt_test *ts, int argc, char *argv[])
+static int test_startswith(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *optstr = argv[1];
 	char *pattern = argv[2];
@@ -1123,7 +1123,7 @@ int test_startswith(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_endswith(struct libmnt_test *ts, int argc, char *argv[])
+static int test_endswith(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *optstr = argv[1];
 	char *pattern = argv[2];
@@ -1132,7 +1132,7 @@ int test_endswith(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_appendstr(struct libmnt_test *ts, int argc, char *argv[])
+static int test_appendstr(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *str = strdup(argv[1]);
 	const char *ap = argv[2];
@@ -1144,7 +1144,7 @@ int test_appendstr(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_mountpoint(struct libmnt_test *ts, int argc, char *argv[])
+static int test_mountpoint(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *path = canonicalize_path(argv[1]),
 	     *mnt = path ? mnt_get_mountpoint(path) :  NULL;
@@ -1155,7 +1155,7 @@ int test_mountpoint(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_filesystems(struct libmnt_test *ts, int argc, char *argv[])
+static int test_filesystems(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char **filesystems = NULL;
 	int rc;
@@ -1170,7 +1170,7 @@ int test_filesystems(struct libmnt_test *ts, int argc, char *argv[])
 	return rc;
 }
 
-int test_chdir(struct libmnt_test *ts, int argc, char *argv[])
+static int test_chdir(struct libmnt_test *ts, int argc, char *argv[])
 {
 	int rc;
 	char *path = canonicalize_path(argv[1]),
@@ -1189,7 +1189,7 @@ int test_chdir(struct libmnt_test *ts, int argc, char *argv[])
 	return rc;
 }
 
-int test_kernel_cmdline(struct libmnt_test *ts, int argc, char *argv[])
+static int test_kernel_cmdline(struct libmnt_test *ts, int argc, char *argv[])
 {
 	char *name = argv[1];
 	char *res;
@@ -1207,7 +1207,7 @@ int test_kernel_cmdline(struct libmnt_test *ts, int argc, char *argv[])
 	return 0;
 }
 
-int test_mkdir(struct libmnt_test *ts, int argc, char *argv[])
+static int test_mkdir(struct libmnt_test *ts, int argc, char *argv[])
 {
 	int rc;
 
@@ -1219,7 +1219,7 @@ int test_mkdir(struct libmnt_test *ts, int argc, char *argv[])
 	return rc;
 }
 
-int test_statfs_type(struct libmnt_test *ts, int argc, char *argv[])
+static int test_statfs_type(struct libmnt_test *ts, int argc, char *argv[])
 {
 	struct statfs vfs;
 	int rc;

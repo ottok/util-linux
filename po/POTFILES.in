@@ -27,7 +27,6 @@ disk-utils/resizepart.c
 disk-utils/sfdisk.c
 disk-utils/swaplabel.c
 include/all-io.h
-include/at.h
 include/bitops.h
 include/blkdev.h
 include/canonicalize.h
@@ -44,8 +43,8 @@ include/env.h
 include/exec_shell.h
 include/exitcodes.h
 include/fileutils.h
+include/idcache.h
 include/ismounted.h
-include/linux_reboot.h
 include/linux_version.h
 include/list.h
 include/loopdev.h
@@ -82,7 +81,6 @@ include/timeutils.h
 include/ttyutils.h
 include/widechar.h
 include/xalloc.h
-lib/at.c
 lib/blkdev.c
 libblkid/src/blkidP.h
 libblkid/src/cache.c
@@ -203,6 +201,7 @@ libfdisk/src/test.c
 libfdisk/src/utils.c
 libfdisk/src/version.c
 lib/fileutils.c
+lib/idcache.c
 lib/ismounted.c
 lib/langinfo.c
 lib/linux_version.c
@@ -217,6 +216,7 @@ libmount/python/fs.c
 libmount/python/pylibmount.c
 libmount/python/pylibmount.h
 libmount/python/tab.c
+libmount/src/btrfs.c
 libmount/src/cache.c
 libmount/src/context.c
 libmount/src/context_loopdev.c
@@ -251,7 +251,6 @@ libsmartcols/src/smartcolsP.h
 libsmartcols/src/symbols.c
 libsmartcols/src/table.c
 libsmartcols/src/table_print.c
-libsmartcols/src/test.c
 libsmartcols/src/version.c
 lib/strutils.c
 lib/strv.c
@@ -317,6 +316,7 @@ misc-utils/lslocks.c
 misc-utils/mcookie.c
 misc-utils/namei.c
 misc-utils/rename.c
+misc-utils/test_uuidd.c
 misc-utils/uuidd.c
 misc-utils/uuidgen.c
 misc-utils/whereis.c
@@ -349,6 +349,7 @@ sys-utils/lscpu.c
 sys-utils/lscpu-dmi.c
 sys-utils/lscpu.h
 sys-utils/lsipc.c
+sys-utils/lsns.c
 sys-utils/mount.c
 sys-utils/mountpoint.c
 sys-utils/nsenter.c
