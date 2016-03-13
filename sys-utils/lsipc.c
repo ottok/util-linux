@@ -25,7 +25,6 @@
  */
 
 #include <errno.h>
-#include <features.h>
 #include <getopt.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -579,7 +578,7 @@ static void do_sem(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 					xasprintf(&arg, "%#o", semdsp->sem_perm.mode & 0777);
 				else {
 					arg = xmalloc(11);
-					strmode(semdsp->sem_perm.mode & 0777, arg);
+					xstrmode(semdsp->sem_perm.mode & 0777, arg);
 				}
 				rc = scols_line_refer_data(ln, n, arg);
 				break;
@@ -776,7 +775,7 @@ static void do_msg(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 					xasprintf(&arg, "%#o", msgdsp->msg_perm.mode & 0777);
 				else {
 					arg = xmalloc(11);
-					strmode(msgdsp->msg_perm.mode & 0777, arg);
+					xstrmode(msgdsp->msg_perm.mode & 0777, arg);
 					rc = scols_line_refer_data(ln, n, arg);
 				}
 				break;
@@ -928,7 +927,7 @@ static void do_shm(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 					xasprintf(&arg, "%#o", shmdsp->shm_perm.mode & 0777);
 				else {
 					arg = xmalloc(11);
-					strmode(shmdsp->shm_perm.mode & 0777, arg);
+					xstrmode(shmdsp->shm_perm.mode & 0777, arg);
 				}
 				rc = scols_line_refer_data(ln, n, arg);
 				break;

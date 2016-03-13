@@ -15,8 +15,9 @@
 #include <limits.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
-#include "at.h"
+#include "fileutils.h"
 #include "mangle.h"
 #include "mountP.h"
 #include "pathnames.h"
@@ -753,11 +754,11 @@ static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
 		struct stat st;
 		FILE *f;
 
-		if (fstat_at(dd, ".", d->d_name, &st, 0) ||
+		if (fstatat(dd, d->d_name, &st, 0) ||
 		    !S_ISREG(st.st_mode))
 			continue;
 
-		f = fopen_at(dd, ".", d->d_name, O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
+		f = fopen_at(dd, d->d_name, O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
 		if (f) {
 			mnt_table_parse_stream(tb, f, d->d_name);
 			fclose(f);
@@ -793,11 +794,11 @@ static int __mnt_table_parse_dir(struct libmnt_table *tb, const char *dirname)
 		struct stat st;
 		FILE *f;
 
-		if (fstat_at(dirfd(dir), _PATH_MNTTAB_DIR, d->d_name, &st, 0) ||
+		if (fstatat(dirfd(dir), d->d_name, &st, 0) ||
 		    !S_ISREG(st.st_mode))
 			continue;
 
-		f = fopen_at(dirfd(dir), _PATH_MNTTAB_DIR, d->d_name,
+		f = fopen_at(dirfd(dir), d->d_name,
 				O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
 		if (f) {
 			mnt_table_parse_stream(tb, f, d->d_name);
@@ -843,6 +844,7 @@ struct libmnt_table *__mnt_new_table_from_file(const char *filename, int fmt)
 		return NULL;
 	tb = mnt_new_table();
 	if (tb) {
+		DBG(TAB, ul_debugobj(tb, "new tab for file: %s", filename));
 		tb->fmt = fmt;
 		if (mnt_table_parse_file(tb, filename) != 0) {
 			mnt_unref_table(tb);
