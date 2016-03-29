@@ -41,6 +41,7 @@ usr/bin/isosize sbin/
 usr/bin/last
 usr/bin/lastb
 usr/bin/line
+usr/bin/lsns							[linux-any]
 usr/bin/mcookie
 usr/bin/mesg
 usr/bin/mips                                                    [mips mipsel]

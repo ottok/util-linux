@@ -41,6 +41,7 @@ debian/tmp/usr/share/man/man8/fsck.minix.8
 debian/tmp/usr/share/man/man8/hwclock.8
 debian/tmp/usr/share/man/man8/i386.8                            [amd64 i386]
 debian/tmp/usr/share/man/man8/isosize.8
+debian/tmp/usr/share/man/man8/lsns.8				[linux-any]
 debian/tmp/usr/share/man/man8/mips.8                            [mips mipsel]
 debian/tmp/usr/share/man/man8/mips32.8                          [mips mipsel]
 debian/tmp/usr/share/man/man8/mips64.8                          [mips mipsel]
