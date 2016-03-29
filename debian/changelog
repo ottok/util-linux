@@ -1,3 +1,12 @@
+util-linux (2.28~rc2-1) UNRELEASED; urgency=medium
+
+  * Imported Upstream version 2.28~rc2
+    - among other things includes these fixes:
+      swapon: rewrite control struct usage (Closes: 818252)
+      tests: improve setarch tests, regarding --uname-2.6 issues (See: #806911)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 29 Mar 2016 12:27:40 +0200
+
 util-linux (2.28~rc1-1) experimental; urgency=medium
 
   * debian/gbp.conf: Set branches to master/upstream
