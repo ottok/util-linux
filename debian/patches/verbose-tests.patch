@@ -17,7 +17,7 @@ index 61798c9..efdc5b0 100644
  CLEAN_LOCALS += clean-local-tests
  
 -TS_OPTS = --nonroot
-+TS_OPTS = --nonroot --verbose
++TS_OPTS = --nonroot --verbose --parallel=1
  TS_COMMAND = $(top_srcdir)/tests/run.sh \
  	--srcdir=$(abs_top_srcdir) --builddir=$(abs_top_builddir) \
  	--parallel $(TS_OPTS)
