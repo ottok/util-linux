@@ -37,7 +37,6 @@ include/color-names.h
 include/colors.h
 include/cpuset.h
 include/crc32.h
-include/crc64.h
 include/debug.h
 include/env.h
 include/exec_shell.h
@@ -178,7 +177,6 @@ lib/color-names.c
 lib/colors.c
 lib/cpuset.c
 lib/crc32.c
-lib/crc64.c
 lib/env.c
 lib/exec_shell.c
 libfdisk/src/alignment.c

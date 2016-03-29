@@ -74,7 +74,6 @@ EXTRA_DIST += \
 if BUILD_LIBMOUNT_TESTS
 check_PROGRAMS += \
 	test_mount_cache \
-	test_mount_context \
 	test_mount_lock \
 	test_mount_optstr \
 	test_mount_tab \
@@ -82,8 +81,11 @@ check_PROGRAMS += \
 	test_mount_tab_update \
 	test_mount_utils \
 	test_mount_version \
-	test_mount_monitor \
 	test_mount_debug
+if LINUX
+check_PROGRAMS += test_mount_context
+check_PROGRAMS += test_mount_monitor
+endif
 
 libmount_tests_cflags  = -DTEST_PROGRAM $(libmount_la_CFLAGS) $(NO_UNUSED_WARN_CFLAGS)
 libmount_tests_ldflags = libblkid.la -static
@@ -154,7 +156,7 @@ endif # BUILD_LIBMOUNT_TESTS
 # move lib from $(usrlib_execdir) to $(libdir) if needed
 install-exec-hook-libmount:
 	if test "$(usrlib_execdir)" != "$(libdir)" -a -f "$(DESTDIR)$(usrlib_execdir)/libmount.so"; then \
-		mkdir -p $(DESTDIR)$(libdir); \
+		$(MKDIR_P) $(DESTDIR)$(libdir); \
 		mv $(DESTDIR)$(usrlib_execdir)/libmount.so.* $(DESTDIR)$(libdir); \
 		so_img_name=$$(readlink $(DESTDIR)$(usrlib_execdir)/libmount.so); \
 		so_img_rel_target=$$(echo $(usrlib_execdir) | sed 's,\(^/\|\)[^/][^/]*,..,g'); \
