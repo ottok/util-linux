@@ -1,11 +1,22 @@
-util-linux (2.28~rc2-1) UNRELEASED; urgency=medium
+util-linux (2.28~rc2-1) experimental; urgency=medium
 
+  [ Andreas Henriksson ]
   * Imported Upstream version 2.28~rc2
     - among other things includes these fixes:
       swapon: rewrite control struct usage (Closes: 818252)
       tests: improve setarch tests, regarding --uname-2.6 issues (See: #806911)
+  * Drop debian/patches/Mark-setarch-testcase-as-known-fail.patch
+    - Now obsoleted by upstream changes.
+  * Ship new lsns utility in util-linux package
+  * Run tests with --parallel=1 to avoid mixing output.
+    Thanks to Ruediger Meier for the suggestion.
 
- -- Andreas Henriksson <andreas@fatal.se>  Tue, 29 Mar 2016 12:27:40 +0200
+  [ Laurent Bigonville ]
+  * Ship setpriv executable in new setpriv package
+    - separate package to avoid making setpriv essential and
+      making dependency libcap-ng pseudo-essential. (Closes: #755885)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 29 Mar 2016 12:59:12 +0200
 
 util-linux (2.28~rc1-1) experimental; urgency=medium
 
