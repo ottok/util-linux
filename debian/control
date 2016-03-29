@@ -8,6 +8,7 @@ Build-Depends: autoconf,
                dh-systemd (>= 1.5),
                dpkg-dev (>= 1.17.14),
                gettext,
+               libcap-ng-dev [linux-any] <!stage1>,
                libncurses5-dev,
                libncursesw5-dev,
                libpam0g-dev <!stage1>,
@@ -325,3 +326,15 @@ Package-Type: udeb
 Description: stripped down miscellaneous system utilities, for debian-installer
  This is a minimal version of util-linux for debian-installer. It only
  contains the blkid binary at the moment.
+
+Package: setpriv
+Architecture: linux-any
+Build-Profiles: <!stage1>
+Section: admin
+Priority: optional
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: foreign
+Description: tool to run a program with different Linux privilege settings
+ This package provides the setpriv command which allows the user to set or
+ query various Linux privilege settings that are inherited across execve.
