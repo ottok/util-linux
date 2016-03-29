@@ -372,19 +372,19 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 	assert(sf->movedata);
 
 	if (!pa)
-		warnx(_("failed to read new partition from device (ignore --move-data)"));
+		warnx(_("failed to read new partition from device; ignoring --move-data"));
 	else if (!fdisk_partition_has_size(pa))
-		warnx(_("failed to get size of the new partition (ignore --move-data)"));
+		warnx(_("failed to get size of the new partition; ignoring --move-data"));
 	else if (!fdisk_partition_has_start(pa))
-		warnx(_("failed to get start of the new partition (ignore --move-data)"));
+		warnx(_("failed to get start of the new partition; ignoring --move-data"));
 	else if (!fdisk_partition_has_size(orig_pa))
-		warnx(_("failed to get size of the old partition (ignore --move-data)"));
+		warnx(_("failed to get size of the old partition; ignoring --move-data"));
 	else if (!fdisk_partition_has_start(orig_pa))
-		warnx(_("failed to get start of the old partition (ignore --move-data)"));
+		warnx(_("failed to get start of the old partition; ignoring --move-data"));
 	else if (fdisk_partition_get_start(pa) == fdisk_partition_get_start(orig_pa))
-		warnx(_("begin of the partition has not been moved (ignore --move-data)"));
+		warnx(_("start of the partition has not been moved; ignoring --move-data"));
 	else if (fdisk_partition_get_size(orig_pa) < fdisk_partition_get_size(pa))
-		warnx(_("new partition is smaller than original (ignore --move-data)"));
+		warnx(_("new partition is smaller than original; ignoring --move-data"));
 	else
 		ok = 1;
 	if (!ok)
@@ -1537,7 +1537,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	if (fdisk_get_collision(sf->cxt)) {
 		int dowipe = sf->wipemode == WIPEMODE_ALWAYS ? 1 : 0;
 
-		fdisk_warnx(sf->cxt, _("%s: device already contains %s signature."),
+		fdisk_warnx(sf->cxt, _("Device %s already contains a %s signature."),
 			devname, fdisk_get_collision(sf->cxt));
 
 		if (sf->interactive && sf->wipemode == WIPEMODE_AUTO)
@@ -1546,7 +1546,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 		fdisk_enable_wipe(sf->cxt, dowipe);
 		if (dowipe)
 			fdisk_warnx(sf->cxt, _(
-				"The signature will be removed by write command."));
+				"The signature will be removed by a write command."));
 		else
 			fdisk_warnx(sf->cxt, _(
 				"It is strongly recommended to wipe the device with "

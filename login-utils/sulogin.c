@@ -80,6 +80,11 @@ static volatile sig_atomic_t sigchild;
 # define IUCLC		0
 #endif
 
+#ifndef WEXITED
+# warning "WEXITED is missing, sulogin may not work as expected"
+# define WEXITED 0
+#endif
+
 static int locked_account_password(const char *passwd)
 {
 	if (passwd && (*passwd == '*' || *passwd == '!'))
@@ -739,8 +744,7 @@ quit:
 	alarm(0);
 	if (tc)
 		tcsetattr(fd, TCSAFLUSH, &con->tio);
-	if (ret && *ret != '\0')
-		tcfinal(con);
+	tcfinal(con);
 	printf("\r\n");
 out:
 	return ret;
@@ -859,7 +863,7 @@ int main(int argc, char **argv)
 	struct passwd *pwd;
 	struct timespec sigwait = { .tv_sec = 0, .tv_nsec = 50000000 };
 	siginfo_t status = {};
-	sigset_t set = {};
+	sigset_t set;
 	int c, reconnect = 0;
 	int opt_e = 0;
 	int wait = 0;

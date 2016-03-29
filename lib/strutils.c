@@ -183,6 +183,15 @@ int isdigit_string(const char *str)
 	return p && p > str && !*p;
 }
 
+int isxdigit_string(const char *str)
+{
+	const char *p;
+
+	for (p = str; p && *p && isxdigit((unsigned char) *p); p++);
+
+	return p && p > str && !*p;
+}
+
 /*
  *  parse_switch(argv[i], "on", "off",  "yes", "no",  NULL);
  */
@@ -725,7 +734,7 @@ int parse_range(const char *str, int *lower, int *upper, int def)
 			return -1;
 
 		if (*end == ':' && !*(end + 1))		/* <M:> */
-			*upper = 0;
+			*upper = def;
 		else if (*end == '-' || *end == ':') {	/* <M:N> <M-N> */
 			str = end + 1;
 			end = NULL;
