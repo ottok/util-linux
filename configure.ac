@@ -30,7 +30,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{print $3}' \
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="29-Mar-2015"
+LIBBLKID_DATE="12-Apr-2016"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -380,6 +380,7 @@ AC_CHECK_FUNCS([ \
 	qsort_r \
 	rpmatch \
 	scandirat \
+	setprogname \
 	setresgid \
 	setresuid \
 	sched_setattr \
@@ -1185,10 +1186,13 @@ AC_CHECK_FUNCS([setns])
 
 
 AC_ARG_WITH([cap_ng],
-  AS_HELP_STRING([--without-capng], [compile without libcap-ng]),
+  AS_HELP_STRING([--without-cap-ng], [compile without libcap-ng]),
   [], [with_cap_ng=auto]
 )
-AS_IF([test "x$with_cap_ng" = xno], [have_cap_ng=no],[
+AS_IF([test "x$with_cap_ng" = xno], [
+  AM_CONDITIONAL([HAVE_CAP_NG], [false])
+  have_cap_ng=no
+],[
   UL_CHECK_LIB([cap-ng], [capng_apply], [cap_ng])
 ])
 
@@ -1318,7 +1322,11 @@ UL_REQUIRES_HAVE([lscpu], [cpu_set_t], [cpu_set_t type])
 AM_CONDITIONAL([BUILD_LSCPU], [test "x$build_lscpu" = xyes])
 
 
-UL_BUILD_INIT([lslogins], [check])
+AC_ARG_ENABLE([lslogins],
+  AS_HELP_STRING([--disable-lslogins], [do not build lslogins]),
+  [], [UL_DEFAULT_ENABLE([lslogins], [check])]
+)
+UL_BUILD_INIT([lslogins])
 UL_REQUIRES_BUILD([lslogins], [libsmartcols])
 UL_REQUIRES_HAVE([lslogins], [shadow_h], [shadow.h header])
 UL_REQUIRES_HAVE([lslogins], [utmp_h], [utmp.h header])
@@ -1361,8 +1369,11 @@ AC_ARG_ENABLE([cal],
 UL_BUILD_INIT([cal])
 AM_CONDITIONAL([BUILD_CAL], [test "x$build_cal" = xyes])
 
-
-UL_BUILD_INIT([logger], [yes])
+AC_ARG_ENABLE([logger],
+  AS_HELP_STRING([--disable-logger], [do not build logger]),
+  [], [UL_DEFAULT_ENABLE([logger], [check])]
+)
+UL_BUILD_INIT([logger])
 AM_CONDITIONAL([BUILD_LOGGER], [test "x$build_logger" = xyes])
 
 UL_BUILD_INIT([look], [yes])
