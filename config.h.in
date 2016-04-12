@@ -376,6 +376,9 @@
 /* Define to 1 if you have the `setns' function. */
 #undef HAVE_SETNS
 
+/* Define to 1 if you have the `setprogname' function. */
+#undef HAVE_SETPROGNAME
+
 /* Define to 1 if you have the `setresgid' function. */
 #undef HAVE_SETRESGID
 
