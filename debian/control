@@ -37,8 +37,6 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: ${misc:Depends},
-# conceptually a Breaks:, but confuses apt (#786469)
-          sysvinit-utils (>= 2.88dsf-59.1~),
 Suggests: dosfstools, kbd | console-tools, util-linux-locales
 Replaces: bash-completion (<< 1:2.1-4.1~),
           sysvinit-utils (<< 2.88dsf-59.1~),
@@ -48,6 +46,7 @@ Replaces: bash-completion (<< 1:2.1-4.1~),
 Breaks: bash-completion (<< 1:2.1-4.1~),
           grml-debootstrap (<< 0.68),
           cloud-utils (<< 0.27-1~),
+          sysvinit-utils (<< 2.88dsf-59.4~),
           mount (= 2.26.2-3),
           mount (= 2.26.2-3ubuntu1)
 Multi-Arch: foreign
