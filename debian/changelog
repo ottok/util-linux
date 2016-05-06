@@ -1,3 +1,9 @@
+util-linux (2.28-2) unstable; urgency=medium
+
+  * Move sysvinit-utils back to Breaks (instead of Depends), see #823569
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 06 May 2016 06:15:37 +0200
+
 util-linux (2.28-1) unstable; urgency=medium
 
   * New upstream release.
