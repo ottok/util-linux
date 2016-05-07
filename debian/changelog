@@ -1,3 +1,11 @@
+util-linux (2.28-3) unstable; urgency=medium
+
+  * Attempt to work around debootstrap problems for hwclock.sh.
+    Thanks to Helmut Grohne for coming up with ideas on how to handle this.
+    (Closes: #823665)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sat, 07 May 2016 14:34:20 +0200
+
 util-linux (2.28-2) unstable; urgency=medium
 
   * Move sysvinit-utils back to Breaks (instead of Depends), see #823569
