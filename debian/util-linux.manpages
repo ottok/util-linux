@@ -6,7 +6,7 @@ debian/tmp/usr/share/man/man1/rename.1 => /usr/share/man/man1/rename.ul.1
 [linux-any] debian/tmp/usr/share/man/man8/mkswap.8
 [!linux-any] debian/tmp/usr/share/man/man8/mkswap.8 => /usr/share/man/man8/mkswap.linux.8
 debian/hwclock.5
-debian/tmp/usr/share/man/man1/chrt.1
+debian/tmp/usr/share/man/man1/chrt.1				[!hurd-i386]
 debian/tmp/usr/share/man/man1/flock.1
 debian/tmp/usr/share/man/man1/getopt.1
 debian/tmp/usr/share/man/man1/ipcmk.1

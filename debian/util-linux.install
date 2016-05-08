@@ -30,7 +30,7 @@ sbin/sulogin
 sbin/swaplabel
 sbin/wipefs
 sbin/zramctl                                                    [linux-any]
-usr/bin/chrt
+usr/bin/chrt							[!hurd-any]
 usr/bin/flock
 usr/bin/getopt
 usr/bin/i386                                                    [amd64 i386]
