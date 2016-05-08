@@ -1,3 +1,13 @@
+util-linux (2.28-5) unstable; urgency=medium
+
+  [ Andreas Henriksson ]
+  * Fix regression in libmount1 symbols annotations
+
+  [ Samuel Thibault ]
+  * Don't ship chrt on hurd which lacks sched_setscheduler (Closes: #823765)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 08 May 2016 20:45:49 +0200
+
 util-linux (2.28-4) unstable; urgency=medium
 
   [ Steven Chamberlain ]
