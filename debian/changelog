@@ -1,3 +1,12 @@
+util-linux (2.28.1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - includes fixes for CVE-2016-5011 (Closes: #830802)
+  * Refresh debian/patches
+  * Bump Standards-Version to 3.9.8
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 15 Aug 2016 17:29:14 +0200
+
 util-linux (2.28-6) unstable; urgency=medium
 
   * Cherry-pick sparc64 testsuite fix from upstream.
