@@ -72,6 +72,7 @@ static int nilfs_valid_sb(blkid_probe pr, struct nilfs_super_block *sb, int is_b
 	static unsigned char sum[4];
 	const int sumoff = offsetof(struct nilfs_super_block, s_sum);
 	size_t bytes;
+	const size_t crc_start = sumoff + 4;
 	uint32_t crc;
 
 	if (!sb || le16_to_cpu(sb->s_magic) != NILFS_SB_MAGIC)
@@ -82,9 +83,15 @@ static int nilfs_valid_sb(blkid_probe pr, struct nilfs_super_block *sb, int is_b
 		return 0;
 
 	bytes = le16_to_cpu(sb->s_bytes);
+	/* ensure that no underrun can happen in the length parameter
+	 * of the crc32 call or more data are processed than read into
+	 * sb */
+	if (bytes < crc_start || bytes > sizeof(struct nilfs_super_block))
+		return 0;
+
 	crc = crc32(le32_to_cpu(sb->s_crc_seed), (unsigned char *)sb, sumoff);
 	crc = crc32(crc, sum, 4);
-	crc = crc32(crc, (unsigned char *)sb + sumoff + 4, bytes - sumoff - 4);
+	crc = crc32(crc, (unsigned char *)sb + crc_start, bytes - crc_start);
 
 	return blkid_probe_verify_csum(pr, crc, le32_to_cpu(sb->s_sum));
 }
@@ -102,18 +109,29 @@ static int probe_nilfs2(blkid_probe pr,
 	if (!sbp)
 		return errno ? -errno : 1;
 
+	valid[0] = nilfs_valid_sb(pr, sbp, 0);
+
+
 	/* backup */
 	sbb = (struct nilfs_super_block *) blkid_probe_get_buffer(
 			pr, NILFS_SBB_OFFSET(pr->size), sizeof(struct nilfs_super_block));
-	if (!sbb)
-		return errno ? -errno : 1;
+	if (!sbb) {
+		valid[1] = 0;
+
+		/* If the primary block is valid then continue and ignore also
+		 * I/O errors for backup block. Note the this is probably CD
+		 * where I/O errors and the end of the disk/session are "normal".
+		 */
+		if (!valid[0])
+			return errno ? -errno : 1;
+	} else
+		valid[1] = nilfs_valid_sb(pr, sbb, 1);
+
 
 	/*
 	 * Compare two super blocks and set 1 in swp if the secondary
 	 * super block is valid and newer.  Otherwise, set 0 in swp.
 	 */
-	valid[0] = nilfs_valid_sb(pr, sbp, 0);
-	valid[1] = nilfs_valid_sb(pr, sbb, 1);
 	if (!valid[0] && !valid[1])
 		return 1;
 
