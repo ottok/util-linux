@@ -3260,7 +3260,8 @@ am__DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.in \
 	$(srcdir)/tests/Makemodule.am \
 	$(srcdir)/tests/helpers/Makemodule.am \
 	$(srcdir)/text-utils/Makemodule.am \
-	$(top_srcdir)/config/compile $(top_srcdir)/config/config.guess \
+	$(srcdir)/tools/Makemodule.am $(top_srcdir)/config/compile \
+	$(top_srcdir)/config/config.guess \
 	$(top_srcdir)/config/config.rpath \
 	$(top_srcdir)/config/config.sub $(top_srcdir)/config/depcomp \
 	$(top_srcdir)/config/install-sh $(top_srcdir)/config/ltmain.sh \
@@ -3389,6 +3390,7 @@ LN_S = @LN_S@
 LTLIBICONV = @LTLIBICONV@
 LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
@@ -3658,11 +3660,13 @@ INSTALL_DATA_HOOKS = $(am__append_422)
 CLEAN_LOCALS = clean-local-tests
 CHECK_LOCALS = check-local-tests
 EXTRA_DIST = .version autogen.sh Documentation po/update-potfiles \
-	README.licensing tools/git-version-gen $(am__append_12) \
-	$(am__append_23) $(am__append_38) $(am__append_52) \
-	$(am__append_65) sys-utils/fstrim.timer tests/expected \
-	tests/functions.sh tests/commands.sh tests/run.sh tests/ts \
-	$(PATHFILES:=.in)
+	README.licensing tools/git-version-gen \
+	tools/checkcompletion.sh tools/checkconfig.sh \
+	tools/checkdecl.sh tools/checkincludes.pl tools/checkmans.sh \
+	tools/checkxalloc.sh $(am__append_12) $(am__append_23) \
+	$(am__append_38) $(am__append_52) $(am__append_65) \
+	sys-utils/fstrim.timer tests/expected tests/functions.sh \
+	tests/commands.sh tests/run.sh tests/ts $(PATHFILES:=.in)
 CLEANFILES = $(am__append_46) $(am__append_226) $(PATHFILES)
 SUBDIRS = po $(am__append_30) $(am__append_47) $(am__append_57) \
 	$(am__append_70)
@@ -4705,7 +4709,7 @@ all: $(BUILT_SOURCES) config.h
 .SUFFIXES: .c .lo .o .obj
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/include/Makemodule.am $(srcdir)/lib/Makemodule.am $(srcdir)/libuuid/Makemodule.am $(srcdir)/libuuid/man/Makemodule.am $(srcdir)/libuuid/src/Makemodule.am $(srcdir)/libblkid/Makemodule.am $(srcdir)/libblkid/src/Makemodule.am $(srcdir)/libblkid/samples/Makemodule.am $(srcdir)/libmount/Makemodule.am $(srcdir)/libmount/src/Makemodule.am $(srcdir)/libmount/python/Makemodule.am $(srcdir)/libsmartcols/Makemodule.am $(srcdir)/libsmartcols/src/Makemodule.am $(srcdir)/libsmartcols/samples/Makemodule.am $(srcdir)/libfdisk/Makemodule.am $(srcdir)/libfdisk/src/Makemodule.am $(srcdir)/schedutils/Makemodule.am $(srcdir)/text-utils/Makemodule.am $(srcdir)/term-utils/Makemodule.am $(srcdir)/login-utils/Makemodule.am $(srcdir)/sys-utils/Makemodule.am $(srcdir)/misc-utils/Makemodule.am $(srcdir)/disk-utils/Makemodule.am $(srcdir)/bash-completion/Makemodule.am $(srcdir)/tests/Makemodule.am $(srcdir)/tests/helpers/Makemodule.am $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/tools/Makemodule.am $(srcdir)/include/Makemodule.am $(srcdir)/lib/Makemodule.am $(srcdir)/libuuid/Makemodule.am $(srcdir)/libuuid/man/Makemodule.am $(srcdir)/libuuid/src/Makemodule.am $(srcdir)/libblkid/Makemodule.am $(srcdir)/libblkid/src/Makemodule.am $(srcdir)/libblkid/samples/Makemodule.am $(srcdir)/libmount/Makemodule.am $(srcdir)/libmount/src/Makemodule.am $(srcdir)/libmount/python/Makemodule.am $(srcdir)/libsmartcols/Makemodule.am $(srcdir)/libsmartcols/src/Makemodule.am $(srcdir)/libsmartcols/samples/Makemodule.am $(srcdir)/libfdisk/Makemodule.am $(srcdir)/libfdisk/src/Makemodule.am $(srcdir)/schedutils/Makemodule.am $(srcdir)/text-utils/Makemodule.am $(srcdir)/term-utils/Makemodule.am $(srcdir)/login-utils/Makemodule.am $(srcdir)/sys-utils/Makemodule.am $(srcdir)/misc-utils/Makemodule.am $(srcdir)/disk-utils/Makemodule.am $(srcdir)/bash-completion/Makemodule.am $(srcdir)/tests/Makemodule.am $(srcdir)/tests/helpers/Makemodule.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -4727,7 +4731,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
-$(srcdir)/include/Makemodule.am $(srcdir)/lib/Makemodule.am $(srcdir)/libuuid/Makemodule.am $(srcdir)/libuuid/man/Makemodule.am $(srcdir)/libuuid/src/Makemodule.am $(srcdir)/libblkid/Makemodule.am $(srcdir)/libblkid/src/Makemodule.am $(srcdir)/libblkid/samples/Makemodule.am $(srcdir)/libmount/Makemodule.am $(srcdir)/libmount/src/Makemodule.am $(srcdir)/libmount/python/Makemodule.am $(srcdir)/libsmartcols/Makemodule.am $(srcdir)/libsmartcols/src/Makemodule.am $(srcdir)/libsmartcols/samples/Makemodule.am $(srcdir)/libfdisk/Makemodule.am $(srcdir)/libfdisk/src/Makemodule.am $(srcdir)/schedutils/Makemodule.am $(srcdir)/text-utils/Makemodule.am $(srcdir)/term-utils/Makemodule.am $(srcdir)/login-utils/Makemodule.am $(srcdir)/sys-utils/Makemodule.am $(srcdir)/misc-utils/Makemodule.am $(srcdir)/disk-utils/Makemodule.am $(srcdir)/bash-completion/Makemodule.am $(srcdir)/tests/Makemodule.am $(srcdir)/tests/helpers/Makemodule.am $(am__empty):
+$(srcdir)/tools/Makemodule.am $(srcdir)/include/Makemodule.am $(srcdir)/lib/Makemodule.am $(srcdir)/libuuid/Makemodule.am $(srcdir)/libuuid/man/Makemodule.am $(srcdir)/libuuid/src/Makemodule.am $(srcdir)/libblkid/Makemodule.am $(srcdir)/libblkid/src/Makemodule.am $(srcdir)/libblkid/samples/Makemodule.am $(srcdir)/libmount/Makemodule.am $(srcdir)/libmount/src/Makemodule.am $(srcdir)/libmount/python/Makemodule.am $(srcdir)/libsmartcols/Makemodule.am $(srcdir)/libsmartcols/src/Makemodule.am $(srcdir)/libsmartcols/samples/Makemodule.am $(srcdir)/libfdisk/Makemodule.am $(srcdir)/libfdisk/src/Makemodule.am $(srcdir)/schedutils/Makemodule.am $(srcdir)/text-utils/Makemodule.am $(srcdir)/term-utils/Makemodule.am $(srcdir)/login-utils/Makemodule.am $(srcdir)/sys-utils/Makemodule.am $(srcdir)/misc-utils/Makemodule.am $(srcdir)/disk-utils/Makemodule.am $(srcdir)/bash-completion/Makemodule.am $(srcdir)/tests/Makemodule.am $(srcdir)/tests/helpers/Makemodule.am $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck

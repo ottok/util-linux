@@ -547,8 +547,13 @@ static int get_udev_properties(struct blkdev_cxt *cxt)
 			cxt->partuuid = xstrdup(data);
 		if ((data = udev_device_get_property_value(dev, "ID_PART_ENTRY_FLAGS")))
 			cxt->partflags = xstrdup(data);
-		if ((data = udev_device_get_property_value(dev, "ID_WWN")))
+
+		data = udev_device_get_property_value(dev, "ID_WWN_WITH_EXTENSION");
+		if (!data)
+			data = udev_device_get_property_value(dev, "ID_WWN");
+		if (data)
 			cxt->wwn = xstrdup(data);
+
 		if ((data = udev_device_get_property_value(dev, "ID_SERIAL_SHORT")))
 			cxt->serial = xstrdup(data);
 		udev_device_unref(dev);
@@ -753,7 +758,9 @@ static char *get_transport(struct blkdev_cxt *cxt)
 		else if (strstr(attr, "ata"))
 			trans = "ata";
 		free(attr);
-	}
+
+	} else if (strncmp(cxt->name, "nvme", 4) == 0)
+		trans = "nvme";
 
 	return trans ? xstrdup(trans) : NULL;
 }
@@ -996,6 +1003,8 @@ static void set_scols_data(struct blkdev_cxt *cxt, int col, int id, struct libsc
 			get_udev_properties(cxt);
 			if (cxt->serial)
 				str = xstrdup(cxt->serial);
+			else
+				str = sysfs_strdup(&cxt->sysfs, "device/serial");
 		}
 		break;
 	case COL_REV:

@@ -30,7 +30,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{print $3}' \
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="12-Apr-2016"
+LIBBLKID_DATE="11-Aug-2016"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -216,7 +216,6 @@ AC_CHECK_HEADERS([ \
 	linux/fd.h \
 	linux/raw.h \
 	linux/tiocl.h \
-	linux/gsmmux.h \
 	linux/version.h \
 	linux/securebits.h \
 	locale.h \
@@ -260,6 +259,12 @@ AC_CHECK_HEADERS([ \
 	unistd.h \
 	shadow.h \
 	utmp.h \
+])
+
+AC_CHECK_HEADERS([linux/gsmmux.h ], [], [],
+ [#ifdef LINUX_GSMMUX_H
+   # include <linux/gsmmux.h>
+   #endif
 ])
 
 AC_CHECK_HEADERS([security/pam_misc.h],
@@ -565,7 +570,7 @@ AC_CACHE_VAL([scanf_cv_alloc_modifier],
      #include <stdio.h>
      #include <unistd.h>
 
-     #ifdef __GLIBC__
+     #if defined(__GLIBC__) && !defined(__UCLIBC__)
 
      #if !(__GLIBC_PREREQ(2, 7))
      #error %m is not available
@@ -910,6 +915,11 @@ AC_SUBST([LIBUUID_VERSION])
 AC_SUBST([LIBUUID_VERSION_INFO])
 AM_CONDITIONAL(BUILD_LIBUUID, test "x$build_libuuid" = xyes)
 
+AC_ARG_ENABLE([libuuid-force-uuidd],
+  AS_HELP_STRING([--enable-libuuid-force-uuidd], [support uuidd even though the daemon is not built]),
+  [], [enable_libuuid_force_uuidd=no]
+)
+
 AS_IF([test "x$build_libuuid" = xyes], [
   AC_DEFINE(HAVE_LIBUUID, 1, [Define to 1 if you have the -luuid.])
 ])
@@ -1084,7 +1094,7 @@ UL_BUILD_INIT([uuidd])
 UL_REQUIRES_BUILD([uuidd], [libuuid])
 UL_REQUIRES_HAVE([uuidd], [timer], [timer_create function])
 UL_REQUIRES_HAVE([uuidd], [sys_signalfd_h], [sys/signalfd.h header])
-AS_IF([test "x$build_uuidd" = xyes], [
+AS_IF([test "x$build_uuidd" = xyes || test "x$enable_libuuid_force_uuidd" == xyes ], [
   AC_DEFINE([HAVE_UUIDD], [1], [Define to 1 if you want to use uuid daemon.])
 ])
 AM_CONDITIONAL([BUILD_UUIDD], [test "x$build_uuidd" = xyes])
