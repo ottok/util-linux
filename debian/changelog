@@ -1,3 +1,14 @@
+util-linux (2.28.2-1) unstable; urgency=medium
+
+  * debian/gbp.conf: set upstream-vcs-tag for import-orig
+  * New upstream release.
+    - among other things includes fixes for HPPA testsuite failures
+      (Closes: #827225)
+  * Drop d/p/tests-Fix-fdisk-id-and-fdisk-mbr-nondos-mode-on-Sparc.patch
+    - now include in upstream release.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 09 Sep 2016 14:20:42 +0200
+
 util-linux (2.28.1-1) unstable; urgency=medium
 
   * New upstream release.
