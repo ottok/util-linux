@@ -2,6 +2,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  FDISK_2.26@FDISK_2.26 2.26.2
  FDISK_2.27@FDISK_2.27 2.26.2
  FDISK_2.28@FDISK_2.28 2.28~rc1
+ FDISK_2.29@FDISK_2.29 2.29~rc2
  fdisk_add_partition@FDISK_2.26 2.26.2
  fdisk_align_lba@FDISK_2.26 2.26.2
  fdisk_align_lba_in_range@FDISK_2.26 2.26.2
@@ -88,6 +89,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_get_units_per_sector@FDISK_2.26 2.26.2
  fdisk_gpt_get_partition_attrs@FDISK_2.27 2.27~rc1
  fdisk_gpt_is_hybrid@FDISK_2.26 2.26.2
+ fdisk_gpt_set_npartitions@FDISK_2.29 2.29~rc2
  fdisk_gpt_set_partition_attrs@FDISK_2.27 2.27~rc1
  fdisk_has_label@FDISK_2.26 2.26.2
  fdisk_has_protected_bootbits@FDISK_2.27 2.26.2
@@ -118,11 +120,18 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_label_require_geometry@FDISK_2.26 2.26.2
  fdisk_label_set_changed@FDISK_2.26 2.26.2
  fdisk_label_set_disabled@FDISK_2.26 2.26.2
+ fdisk_labelitem_get_data_string@FDISK_2.29 2.29~rc2
+ fdisk_labelitem_get_data_u64@FDISK_2.29 2.29~rc2
+ fdisk_labelitem_get_id@FDISK_2.29 2.29~rc2
+ fdisk_labelitem_get_name@FDISK_2.29 2.29~rc2
+ fdisk_labelitem_is_number@FDISK_2.29 2.29~rc2
+ fdisk_labelitem_is_string@FDISK_2.29 2.29~rc2
  fdisk_lba_is_phy_aligned@FDISK_2.26 2.26.2
  fdisk_list_disklabel@FDISK_2.26 2.26.2
  fdisk_locate_disklabel@FDISK_2.26 2.26.2
  fdisk_new_context@FDISK_2.26 2.26.2
  fdisk_new_iter@FDISK_2.26 2.26.2
+ fdisk_new_labelitem@FDISK_2.29 2.29~rc2
  fdisk_new_nested_context@FDISK_2.26 2.26.2
  fdisk_new_partition@FDISK_2.26 2.26.2
  fdisk_new_parttype@FDISK_2.26 2.26.2
@@ -182,6 +191,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_parttype_set_typestr@FDISK_2.26 2.26.2
  fdisk_ref_ask@FDISK_2.26 2.26.2
  fdisk_ref_context@FDISK_2.26 2.26.2
+ fdisk_ref_labelitem@FDISK_2.29 2.29~rc2
  fdisk_ref_partition@FDISK_2.26 2.26.2
  fdisk_ref_parttype@FDISK_2.26 2.26.2
  fdisk_ref_script@FDISK_2.26 2.26.2
@@ -191,6 +201,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_reset_alignment@FDISK_2.26 2.26.2
  fdisk_reset_device_properties@FDISK_2.26 2.26.2
  fdisk_reset_iter@FDISK_2.26 2.26.2
+ fdisk_reset_labelitem@FDISK_2.29 2.29~rc2
  fdisk_reset_partition@FDISK_2.26 2.26.2
  fdisk_reset_table@FDISK_2.26 2.26.2
  fdisk_save_user_geometry@FDISK_2.26 2.26.2
@@ -235,6 +246,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_toggle_partition_flag@FDISK_2.26 2.26.2
  fdisk_unref_ask@FDISK_2.26 2.26.2
  fdisk_unref_context@FDISK_2.26 2.26.2
+ fdisk_unref_labelitem@FDISK_2.29 2.29~rc2
  fdisk_unref_partition@FDISK_2.26 2.26.2
  fdisk_unref_parttype@FDISK_2.26 2.26.2
  fdisk_unref_script@FDISK_2.26 2.26.2
@@ -243,4 +255,5 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_verify_disklabel@FDISK_2.26 2.26.2
  fdisk_warn@FDISK_2.26 2.26.2
  fdisk_warnx@FDISK_2.26 2.26.2
+ fdisk_wipe_partition@FDISK_2.29 2.29~rc2
  fdisk_write_disklabel@FDISK_2.26 2.26.2
