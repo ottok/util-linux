@@ -7,6 +7,10 @@ CONFOPTS += --enable-line
 CONFOPTS += --libdir=/lib/$(DEB_HOST_MULTIARCH)
 CONFOPTS += --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
 
+# Enable deprecated pg utility again as we're shipping it in the package.
+# Needs closer investigation if it can safely be removed.
+CONFOPTS += --enable-pg
+
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --enable-raw
 CONFOPTS += --with-selinux
