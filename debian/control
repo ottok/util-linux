@@ -1,11 +1,6 @@
 Source: util-linux
-Build-Depends: autoconf,
-               automake,
-               autopoint,
-               debhelper (>= 9.20141010),
-               dh-autoreconf,
+Build-Depends: debhelper (>= 10),
                dh-exec (>= 0.13),
-               dh-systemd (>= 1.5),
                dpkg-dev (>= 1.17.14),
                gettext,
                libcap-ng-dev [linux-any] <!stage1>,

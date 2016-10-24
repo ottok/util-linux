@@ -54,7 +54,7 @@ else
 endif
 
 %:
-	dh $@ --with autoreconf,systemd
+	dh $@
 
 override_dh_autoreconf:
 	AM_OPTS=--copy LT_OPTS=--copy dh_autoreconf ./autogen.sh
