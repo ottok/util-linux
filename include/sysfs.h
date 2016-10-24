@@ -27,7 +27,8 @@ struct sysfs_cxt {
 			scsi_target,
 			scsi_lun;
 
-	unsigned int	has_hctl : 1;
+	unsigned int	has_hctl   : 1,
+			hctl_error : 1 ;
 };
 
 #define UL_SYSFSCXT_EMPTY { 0, -1, NULL, NULL, 0, 0, 0, 0, 0 }
@@ -97,7 +98,7 @@ extern int sysfs_scsi_path_contains(struct sysfs_cxt *cxt, const char *pattern);
  *
  * Linux kernel linux/drivers/base/core.c: device_get_devnode()
  * defines a replacement of '!' in the /sys device name by '/' in the
- * /dev device name. This helper replaces all ocurrences of '!' in
+ * /dev device name. This helper replaces all occurrences of '!' in
  * @name by '/' to convert from /sys to /dev.
  */
 static inline void sysfs_devname_sys_to_dev(char *name)

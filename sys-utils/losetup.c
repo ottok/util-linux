@@ -178,10 +178,10 @@ static int show_all_loops(struct loopdev_cxt *lc, const char *file,
 			int used;
 			const char *bf = cn_file ? cn_file : file;
 
-			used = loopcxt_is_used(lc, st, bf, offset, flags);
+			used = loopcxt_is_used(lc, st, bf, offset, 0, flags);
 			if (!used && !cn_file) {
 				bf = cn_file = canonicalize_path(file);
-				used = loopcxt_is_used(lc, st, bf, offset, flags);
+				used = loopcxt_is_used(lc, st, bf, offset, 0, flags);
 			}
 			if (!used)
 				continue;
@@ -344,10 +344,10 @@ static int show_table(struct loopdev_cxt *lc,
 				int used;
 				const char *bf = cn_file ? cn_file : file;
 
-				used = loopcxt_is_used(lc, st, bf, offset, flags);
+				used = loopcxt_is_used(lc, st, bf, offset, 0, flags);
 				if (!used && !cn_file) {
 					bf = cn_file = canonicalize_path(file);
-					used = loopcxt_is_used(lc, st, bf, offset, flags);
+					used = loopcxt_is_used(lc, st, bf, offset, 0, flags);
 				}
 				if (!used)
 					continue;
@@ -392,6 +392,7 @@ static void usage(FILE *out)
 	fputs(_(" -f, --find                    find first unused device\n"), out);
 	fputs(_(" -c, --set-capacity <loopdev>  resize the device\n"), out);
 	fputs(_(" -j, --associated <file>       list all devices associated with <file>\n"), out);
+	fputs(_(" -L, --nooverlap               avoid possible conflict between devices\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
 
@@ -444,10 +445,121 @@ static void warn_size(const char *filename, uint64_t size)
 			filename);
 }
 
+static int create_loop(struct loopdev_cxt *lc,
+		       int nooverlap, int lo_flags, int flags,
+		       const char *file, uint64_t offset, uint64_t sizelimit)
+{
+	int hasdev = loopcxt_has_device(lc);
+	int rc = 0;
+
+	/* losetup --find --noverlap file.img */
+	if (!hasdev && nooverlap) {
+		rc = loopcxt_find_overlap(lc, file, offset, sizelimit);
+		switch (rc) {
+		case 0: /* not found */
+			break;
+
+		case 1:	/* overlap */
+			loopcxt_deinit(lc);
+			errx(EXIT_FAILURE, _("%s: overlapping loop device exists"), file);
+
+		case 2: /* overlap -- full size and offset match (reuse) */
+		{
+			uint32_t lc_encrypt_type;
+
+			/* Once a loop is initialized RO, there is no
+			 * way to change its parameters. */
+			if (loopcxt_is_readonly(lc)
+			    && !(lo_flags & LO_FLAGS_READ_ONLY)) {
+				loopcxt_deinit(lc);
+				errx(EXIT_FAILURE, _("%s: overlapping read-only loop device exists"), file);
+			}
+
+			/* This is no more supported, but check to be safe. */
+			if (loopcxt_get_encrypt_type(lc, &lc_encrypt_type) == 0
+			    && lc_encrypt_type != LO_CRYPT_NONE) {
+				loopcxt_deinit(lc);
+				errx(EXIT_FAILURE, _("%s: overlapping encrypted loop device exists"), file);
+			}
+
+			lc->info.lo_flags &= !LO_FLAGS_AUTOCLEAR;
+			if (loopcxt_set_status(lc)) {
+				loopcxt_deinit(lc);
+				errx(EXIT_FAILURE, _("%s: failed to re-use loop device"), file);
+			}
+			return 0;	/* success, re-use */
+		}
+		default: /* error */
+			loopcxt_deinit(lc);
+			errx(EXIT_FAILURE, _("failed to inspect loop devices"));
+			return -errno;
+		}
+	}
+
+	if (hasdev && !is_loopdev(loopcxt_get_device(lc)))
+		loopcxt_add_device(lc);
+
+	/* losetup --noverlap /dev/loopN file.img */
+	if (hasdev && nooverlap) {
+		struct loopdev_cxt lc2;
+
+		if (loopcxt_init(&lc2, 0)) {
+			loopcxt_deinit(lc);
+			err(EXIT_FAILURE, _("failed to initialize loopcxt"));
+		}
+		rc = loopcxt_find_overlap(&lc2, file, offset, sizelimit);
+		loopcxt_deinit(&lc2);
+
+		if (rc) {
+			loopcxt_deinit(lc);
+			if (rc > 0)
+				errx(EXIT_FAILURE, _("%s: overlapping loop device exists"), file);
+			err(EXIT_FAILURE, _("%s: failed to check for conflicting loop devices"), file);
+		}
+	}
+
+	/* Create a new device */
+	do {
+		const char *errpre;
+
+		/* Note that loopcxt_{find_unused,set_device}() resets
+		 * loopcxt struct.
+		 */
+		if (!hasdev && (rc = loopcxt_find_unused(lc))) {
+			warnx(_("cannot find an unused loop device"));
+			break;
+		}
+		if (flags & LOOPDEV_FL_OFFSET)
+			loopcxt_set_offset(lc, offset);
+		if (flags & LOOPDEV_FL_SIZELIMIT)
+			loopcxt_set_sizelimit(lc, sizelimit);
+		if (lo_flags)
+			loopcxt_set_flags(lc, lo_flags);
+		if ((rc = loopcxt_set_backing_file(lc, file))) {
+			warn(_("%s: failed to use backing file"), file);
+			break;
+		}
+		errno = 0;
+		rc = loopcxt_setup_device(lc);
+		if (rc == 0)
+			break;			/* success */
+		if (errno == EBUSY && !hasdev)
+			continue;
+
+		/* errors */
+		errpre = hasdev && loopcxt_get_fd(lc) < 0 ?
+				 loopcxt_get_device(lc) : file;
+		warn(_("%s: failed to set up loop device"), errpre);
+		break;
+	} while (hasdev == 0);
+
+	return rc;
+}
+
 int main(int argc, char **argv)
 {
 	struct loopdev_cxt lc;
-	int act = 0, flags = 0, c;
+	int act = 0, flags = 0, no_overlap = 0, c;
 	char *file = NULL;
 	uint64_t offset = 0, sizelimit = 0;
 	int res = 0, showdev = 0, lo_flags = 0;
@@ -467,6 +579,7 @@ int main(int argc, char **argv)
 		{ "detach", 1, 0, 'd' },
 		{ "detach-all", 0, 0, 'D' },
 		{ "find", 0, 0, 'f' },
+		{ "nooverlap", 0, 0, 'L' },
 		{ "help", 0, 0, 'h' },
 		{ "associated", 1, 0, 'j' },
 		{ "json", 0, 0, 'J' },
@@ -502,7 +615,7 @@ int main(int argc, char **argv)
 	if (loopcxt_init(&lc, 0))
 		err(EXIT_FAILURE, _("failed to initialize loopcxt"));
 
-	while ((c = getopt_long(argc, argv, "ac:d:Dfhj:Jlno:O:PrvV",
+	while ((c = getopt_long(argc, argv, "ac:d:Dfhj:JlLno:O:PrvV",
 				longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
@@ -546,6 +659,9 @@ int main(int argc, char **argv)
 			break;
 		case 'l':
 			list = 1;
+			break;
+		case 'L':
+			no_overlap = 1;
 			break;
 		case 'n':
 			no_headings = 1;
@@ -626,7 +742,7 @@ int main(int argc, char **argv)
 		/*
 		 * losetup [--list] <device>
 		 * OR
-		 * losetup --direct-io DIO <device>
+		 * losetup --direct-io[=off] <device>
 		 */
 		if (!set_dio)
 			act = A_SHOW_ONE;
@@ -673,45 +789,7 @@ int main(int argc, char **argv)
 
 	switch (act) {
 	case A_CREATE:
-	{
-		int hasdev = loopcxt_has_device(&lc);
-
-		if (hasdev && !is_loopdev(loopcxt_get_device(&lc)))
-			loopcxt_add_device(&lc);
-		do {
-			const char *errpre;
-
-			/* Note that loopcxt_{find_unused,set_device}() resets
-			 * loopcxt struct.
-			 */
-			if (!hasdev && (res = loopcxt_find_unused(&lc))) {
-				warnx(_("cannot find an unused loop device"));
-				break;
-			}
-			if (flags & LOOPDEV_FL_OFFSET)
-				loopcxt_set_offset(&lc, offset);
-			if (flags & LOOPDEV_FL_SIZELIMIT)
-				loopcxt_set_sizelimit(&lc, sizelimit);
-			if (lo_flags)
-				loopcxt_set_flags(&lc, lo_flags);
-			if ((res = loopcxt_set_backing_file(&lc, file))) {
-				warn(_("%s: failed to use backing file"), file);
-				break;
-			}
-			errno = 0;
-			res = loopcxt_setup_device(&lc);
-			if (res == 0)
-				break;			/* success */
-			if (errno == EBUSY && !hasdev)
-				continue;
-
-			/* errors */
-			errpre = hasdev && loopcxt_get_fd(&lc) < 0 ?
-					 loopcxt_get_device(&lc) : file;
-			warn(_("%s: failed to set up loop device"), errpre);
-			break;
-		} while (hasdev == 0);
-
+		res = create_loop(&lc, no_overlap, lo_flags, flags, file, offset, sizelimit);
 		if (res == 0) {
 			if (showdev)
 				printf("%s\n", loopcxt_get_device(&lc));
@@ -720,7 +798,6 @@ int main(int argc, char **argv)
 				goto lo_set_dio;
 		}
 		break;
-	}
 	case A_DELETE:
 		res = delete_loop(&lc);
 		while (optind < argc) {

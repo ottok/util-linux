@@ -19,7 +19,7 @@
  *  order from highest-order term to lowest-order term.  UARTs transmit
  *  characters in order from LSB to MSB.  By storing the CRC this way,
  *  we hand it to the UART in the order low-byte to high-byte; the UART
- *  sends each low-bit to hight-bit; and the result is transmission bit
+ *  sends each low-bit to high-bit; and the result is transmission bit
  *  by bit from highest- to lowest-order term without requiring any bit
  *  shuffling on our part.  Reception works similarly.
  *
@@ -108,7 +108,7 @@ static inline uint32_t crc32_add_char(uint32_t crc, unsigned char c)
  * and does __not__ xor at the end. Then individual users can do
  * whatever they need.
  */
-uint32_t crc32(uint32_t seed, const unsigned char *buf, size_t len)
+uint32_t ul_crc32(uint32_t seed, const unsigned char *buf, size_t len)
 {
 	uint32_t crc = seed;
 	const unsigned char *p = buf;
@@ -121,7 +121,7 @@ uint32_t crc32(uint32_t seed, const unsigned char *buf, size_t len)
 	return crc;
 }
 
-uint32_t crc32_exclude_offset(uint32_t seed, const unsigned char *buf, size_t len,
+uint32_t ul_crc32_exclude_offset(uint32_t seed, const unsigned char *buf, size_t len,
 			      size_t exclude_off, size_t exclude_len)
 {
 	uint32_t crc = seed;

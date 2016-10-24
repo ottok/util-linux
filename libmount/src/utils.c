@@ -454,10 +454,8 @@ static int check_option(const char *haystack, size_t len,
 		size_t plen = sep ? (size_t) (sep - p) :
 				    len - (p - haystack);
 
-		if (plen == needle_len) {
-			if (!strncmp(p, needle, plen))
-				return !no;	/* foo or nofoo was found */
-		}
+		if (plen == needle_len && !strncmp(p, needle, plen))
+			return !no;	/* foo or nofoo was found */
 		p += plen;
 	}
 
@@ -1013,7 +1011,7 @@ err:
 }
 
 /*
- * Search for @name kernel command parametr.
+ * Search for @name kernel command parameter.
  *
  * Returns newly allocated string with a parameter argument if the @name is
  * specified as "name=" or returns pointer to @name or returns NULL if not
@@ -1173,7 +1171,7 @@ done:
 	free(spec);
 	if (dev) {
 		*path = allocated ? dev : strdup(dev);
-		if (!path)
+		if (!*path)
 			return -ENOMEM;
 		return 0;
 	}

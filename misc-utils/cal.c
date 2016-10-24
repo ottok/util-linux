@@ -41,7 +41,7 @@
  *
  * 2000-09-01  Michael Charles Pruznick <dummy@netwiz.net>
  *             Added "-3" option to print prev/next month with current.
- *             Added over-ridable default MONTHS_IN_ROW and "-1" option to
+ *             Added overridable default MONTHS_IN_ROW and "-1" option to
  *             get traditional output when -3 is the default.  I hope that
  *             enough people will like -3 as the default that one day the
  *             product can be shipped that way.
@@ -74,6 +74,7 @@
 #include "mbsalign.h"
 #include "strutils.h"
 #include "optutils.h"
+#include "timeutils.h"
 
 static int has_term = 0;
 static const char *Senter = "", *Sexit = "";	/* enter and exit standout mode */
@@ -87,7 +88,11 @@ static const char *Senter = "", *Sexit = "";	/* enter and exit standout mode */
 # include <term.h>
 #endif
 
-static int setup_terminal(char *term)
+static int setup_terminal(char *term
+#if !defined(HAVE_LIBNCURSES) && !defined(HAVE_LIBNCURSESW)
+			__attribute__((__unused__))
+#endif
+		)
 {
 #if defined(HAVE_LIBNCURSES) || defined(HAVE_LIBNCURSESW)
 	int ret;
@@ -108,7 +113,11 @@ static void my_putstring(char *s)
 		fputs(s, stdout);
 }
 
-static const char *my_tgetstr(char *ss)
+static const char *my_tgetstr(char *ss
+	#if !defined(HAVE_LIBNCURSES) && !defined(HAVE_LIBNCURSESW)
+			__attribute__((__unused__))
+#endif
+		)
 {
 	const char *ret = NULL;
 
@@ -194,8 +203,10 @@ struct cal_request {
 
 struct cal_control {
 	const char *full_month[MONTHS_IN_YEAR];	/* month names */
+	const char *abbr_month[MONTHS_IN_YEAR];	/* abbreviated month names */
+
 	int colormode;			/* day and week number highlight */
-	int num_months;			/* number of requested mounths */
+	int num_months;			/* number of requested monts */
 	int span_months;		/* span the date */
 	int months_in_row;		/* number of months horizontally in print out */
 	int weekstart;			/* day the week starts, often Sun or Mon */
@@ -219,6 +230,7 @@ struct cal_month {
 
 /* function prototypes */
 static int leap_year(int32_t year);
+static int monthname_to_number(struct cal_control *ctl, const char *name);
 static void headers_init(struct cal_control *ctl);
 static void cal_fill_month(struct cal_month *month, const struct cal_control *ctl);
 static void cal_output_header(struct cal_month *month, const struct cal_control *ctl);
@@ -236,6 +248,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out);
 int main(int argc, char **argv)
 {
 	struct tm *local_time;
+	char *term;
 	time_t now;
 	int ch = 0, yflag = 0, Yflag = 0;
 	static struct cal_control ctl = {
@@ -282,18 +295,14 @@ int main(int argc, char **argv)
 	textdomain(PACKAGE);
 	atexit(close_stdout);
 
-#if defined(HAVE_LIBNCURSES) || defined(HAVE_LIBNCURSESW)
-	{
-		char *term = getenv("TERM");
-		if (term) {
-			has_term = setup_terminal(term) == 0;
-			if (has_term) {
-				Senter = my_tgetstr("smso");
-				Sexit = my_tgetstr("rmso");
-			}
+	term = getenv("TERM");
+	if (term) {
+		has_term = setup_terminal(term) == 0;
+		if (has_term) {
+			Senter = my_tgetstr("smso");
+			Sexit = my_tgetstr("rmso");
 		}
 	}
-#endif
 
 /*
  * The traditional Unix cal utility starts the week at Sunday,
@@ -401,7 +410,20 @@ int main(int argc, char **argv)
 	} else
 		ctl.week_width = ctl.day_width * DAYS_IN_WEEK;
 
-	time(&now);
+	if (argc == 1 && !isdigit_string(*argv)) {
+		usec_t x;
+		/* cal <timestamp> */
+		if (parse_timestamp(*argv, &x) == 0)
+			now = (time_t) (x / 1000000);
+		/* cal <monthname> */
+		else if ((ctl.req.month = monthname_to_number(&ctl, *argv)) > 0)
+			time(&now);	/* this year */
+		else
+			errx(EXIT_FAILURE, _("failed to parse timestamp or unknown month name: %s"), *argv);
+		argc = 0;
+	} else
+		time(&now);
+
 	local_time = localtime(&now);
 
 	switch(argc) {
@@ -411,7 +433,14 @@ int main(int argc, char **argv)
 			errx(EXIT_FAILURE, _("illegal day value: use 1-%d"), DAYS_IN_MONTH);
 		/* FALLTHROUGH */
 	case 2:
-		ctl.req.month = strtos32_or_err(*argv++, _("illegal month value: use 1-12"));
+		if (isdigit(**argv))
+			ctl.req.month = strtos32_or_err(*argv++, _("illegal month value: use 1-12"));
+		else {
+			ctl.req.month = monthname_to_number(&ctl, *argv);
+			if (ctl.req.month < 0)
+				errx(EXIT_FAILURE, _("unknown month name: %s"), *argv);
+			argv++;
+		}
 		if (ctl.req.month < 1 || MONTHS_IN_YEAR < ctl.req.month)
 			errx(EXIT_FAILURE, _("illegal month value: use 1-12"));
 		/* FALLTHROUGH */
@@ -437,7 +466,8 @@ int main(int argc, char **argv)
 	case 0:
 		ctl.req.day = local_time->tm_yday + 1;
 		ctl.req.year = local_time->tm_year + 1900;
-		ctl.req.month = local_time->tm_mon + 1;
+		if (!ctl.req.month)
+			ctl.req.month = local_time->tm_mon + 1;
 		break;
 	default:
 		usage(stderr);
@@ -509,6 +539,45 @@ static int leap_year(int32_t year)
 		return ( !(year % 4) && (year % 100) ) || !(year % 400);
 }
 
+static void init_monthnames(struct cal_control *ctl)
+{
+	size_t i;
+
+	if (ctl->full_month[0] != '\0')
+		return;		/* already initialized */
+
+	for (i = 0; i < MONTHS_IN_YEAR; i++)
+		ctl->full_month[i] = nl_langinfo(MON_1 + i);
+}
+
+static void init_abbr_monthnames(struct cal_control *ctl)
+{
+	size_t i;
+
+	if (ctl->abbr_month[0] != '\0')
+		return;		/* already initialized */
+
+	for (i = 0; i < MONTHS_IN_YEAR; i++)
+		ctl->abbr_month[i] = nl_langinfo(ABMON_1 + i);
+}
+
+static int monthname_to_number(struct cal_control *ctl, const char *name)
+{
+	size_t i;
+
+	init_monthnames(ctl);
+	for (i = 0; i < MONTHS_IN_YEAR; i++)
+		if (strcasecmp(ctl->full_month[i], name) == 0)
+			return i + 1;
+
+	init_abbr_monthnames(ctl);
+	for (i = 0; i < MONTHS_IN_YEAR; i++)
+		if (strcasecmp(ctl->abbr_month[i], name) == 0)
+			return i + 1;
+
+	return -EINVAL;
+}
+
 static void headers_init(struct cal_control *ctl)
 {
 	size_t i, wd;
@@ -516,7 +585,7 @@ static void headers_init(struct cal_control *ctl)
 	char tmp[FMT_ST_CHARS];
 	int year_len;
 
-	year_len = snprintf(tmp, sizeof(tmp), "%d", ctl->req.year);
+	year_len = snprintf(tmp, sizeof(tmp), "%04d", ctl->req.year);
 
 	if (year_len < 0 || (size_t)year_len >= sizeof(tmp)) {
 		/* XXX impossible error */
@@ -537,8 +606,9 @@ static void headers_init(struct cal_control *ctl)
 				     space_left, ctl->day_width - 1);
 	}
 
+	init_monthnames(ctl);
+
 	for (i = 0; i < MONTHS_IN_YEAR; i++) {
-		ctl->full_month[i] = nl_langinfo(MON_1 + i);
 		/* The +1 after year_len is space in between month and year. */
 		if (ctl->week_width < strlen(ctl->full_month[i]) + year_len + 1)
 			ctl->header_hint = 1;
@@ -612,13 +682,13 @@ static void cal_output_header(struct cal_month *month, const struct cal_control 
 		if (!ctl->header_year) {
 			my_putstring("\n");
 			for (i = month; i; i = i->next) {
-				sprintf(out, _("%d"), i->year);
+				sprintf(out, _("%04d"), i->year);
 				center(out, ctl->week_width - 1, i->next == NULL ? 0 : ctl->gutter_width);
 			}
 		}
 	} else {
 		for (i = month; i; i = i->next) {
-			sprintf(out, _("%s %d"), ctl->full_month[i->month - 1], i->year);
+			sprintf(out, _("%s %04d"), ctl->full_month[i->month - 1], i->year);
 			center(out, ctl->week_width - 1, i->next == NULL ? 0 : ctl->gutter_width);
 		}
 	}
@@ -762,7 +832,7 @@ static void yearly(const struct cal_control *ctl)
 		year_width--;
 
 	if (ctl->header_year) {
-		sprintf(out, "%d", ctl->req.year);
+		sprintf(out, "%04d", ctl->req.year);
 		center(out, year_width, 0);
 		my_putstring("\n\n");
 	}
@@ -848,10 +918,8 @@ static int week_number(int day, int month, int32_t year, const struct cal_contro
 		month = JANUARY;
 
 	yday = day_in_year(day,month,year);
-	if (year == REFORMATION_YEAR) {
-		if (yday >= YDAY_AFTER_MISSING)
-			fday -= NUMBER_MISSING_DAYS;
-	}
+	if (year == REFORMATION_YEAR && yday >= YDAY_AFTER_MISSING)
+		fday -= NUMBER_MISSING_DAYS;
 
 	/* Last year is last year */
 	if (yday + fday < DAYS_IN_WEEK)
@@ -923,6 +991,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 {
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [[[day] month] year]\n"), program_invocation_short_name);
+	fprintf(out, _(" %s [options] <timestamp|monthname>\n"), program_invocation_short_name);
 
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_("Display a calendar, or some part of it.\n"), out);

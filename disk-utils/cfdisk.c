@@ -23,10 +23,6 @@
 #include <sys/ioctl.h>
 #include <libfdisk.h>
 
-#ifdef HAVE_LIBBLKID
-# include <blkid.h>	/* keep it optional */
-#endif
-
 #ifdef HAVE_LIBMOUNT
 # include <libmount.h>	/* keep it optional for non-linux systems */
 #endif
@@ -64,16 +60,19 @@
 #include "debug.h"
 #include "list.h"
 
+static const char *default_disks[] = {
 #ifdef __GNU__
-# define DEFAULT_DEVICE "/dev/hd0"
-# define ALTERNATE_DEVICE "/dev/sd0"
+		"/dev/hd0",
+		"/dev/sd0",
 #elif defined(__FreeBSD__)
-# define DEFAULT_DEVICE "/dev/ad0"
-# define ALTERNATE_DEVICE "/dev/da0"
+		"/dev/ad0",
+		"/dev/da0",
 #else
-# define DEFAULT_DEVICE "/dev/sda"
-# define ALTERNATE_DEVICE "/dev/hda"
+		"/dev/sda",
+		"/dev/vda",
+		"/dev/hda",
 #endif
+};
 
 #define ARROW_CURSOR_STRING	">>  "
 #define ARROW_CURSOR_DUMMY	"    "
@@ -180,7 +179,7 @@ static struct cfdisk_menuitem main_menuitems[] = {
 	{ 'b', N_("Bootable"), N_("Toggle bootable flag of the current partition") },
 	{ 'd', N_("Delete"), N_("Delete the current partition") },
 	{ 'n', N_("New"), N_("Create new partition from free space") },
-	{ 'q', N_("Quit"), N_("Quit program without writing partition table") },
+	{ 'q', N_("Quit"), N_("Quit program without writing changes") },
 	{ 't', N_("Type"), N_("Change the partition type") },
 	{ 'h', N_("Help"), N_("Print help screen") },
 	{ 's', N_("Sort"), N_("Fix partitions order") },
@@ -537,7 +536,7 @@ static int is_freespace(struct cfdisk *cf, size_t i)
 }
 
 /* converts libfdisk FDISK_ASKTYPE_MENU to cfdisk menu and returns user's
- * responseback to libfdisk
+ * response back to libfdisk
  */
 static int ask_menu(struct fdisk_ask *ask, struct cfdisk *cf)
 {
@@ -1202,16 +1201,24 @@ inline static int extra_insert_pair(struct cfdisk_line *l, const char *name, con
 	return rc;
 }
 
-#ifdef HAVE_LIBMOUNT
-static char *get_mountpoint(struct cfdisk *cf, const char *uuid, const char *label)
+#ifndef HAVE_LIBMOUNT
+static char *get_mountpoint(	struct cfdisk *cf __attribute__((unused)),
+				const char *tagname __attribute__((unused)),
+				const char *tagdata __attribute__((unused)))
+{
+	return NULL;
+}
+#else
+static char *get_mountpoint(struct cfdisk *cf, const char *tagname, const char *tagdata)
 {
 	struct libmnt_fs *fs = NULL;
 	char *target = NULL;
 	int mounted = 0;
 
-	assert(uuid || label);
+	assert(tagname);
+	assert(tagdata);
 
-	DBG(UI, ul_debug("asking for mountpoint [uuid=%s, label=%s]", uuid, label));
+	DBG(UI, ul_debug("asking for mountpoint [%s=%s]", tagname, tagdata));
 
 	if (!cf->mntcache)
 		cf->mntcache = mnt_new_cache();
@@ -1226,9 +1233,7 @@ static char *get_mountpoint(struct cfdisk *cf, const char *uuid, const char *lab
 	}
 
 	if (cf->mtab)
-		fs = mnt_table_find_tag(cf->mtab,
-					uuid ? "UUID" : "LABEL",
-					uuid ? : label,	MNT_ITER_FORWARD);
+		fs = mnt_table_find_tag(cf->mtab, tagname, tagdata, MNT_ITER_FORWARD);
 
 	/* 2nd try fstab */
 	if (!fs) {
@@ -1240,9 +1245,7 @@ static char *get_mountpoint(struct cfdisk *cf, const char *uuid, const char *lab
 			}
 		}
 		if (cf->fstab)
-			fs = mnt_table_find_tag(cf->fstab,
-					uuid ? "UUID" : "LABEL",
-					uuid ? : label,	MNT_ITER_FORWARD);
+			fs = mnt_table_find_tag(cf->fstab, tagname, tagdata, MNT_ITER_FORWARD);
 	} else
 		mounted = 1;
 
@@ -1262,18 +1265,22 @@ static void extra_prepare_data(struct cfdisk *cf)
 	struct fdisk_partition *pa = get_current_partition(cf);
 	struct cfdisk_line *l = &cf->lines[cf->lines_idx];
 	char *data = NULL;
-	char *devuuid = NULL, *devlabel = NULL;
+	char *mountpoint = NULL;
 
 	DBG(UI, ul_debug("preparing extra data"));
 
 	/* string data should not equal an empty string */
 	if (!fdisk_partition_to_string(pa, cf->cxt, FDISK_FIELD_NAME, &data) && data) {
 		extra_insert_pair(l, _("Partition name:"), data);
+		if (!mountpoint)
+			mountpoint = get_mountpoint(cf, "PARTLABEL", data);
 		free(data);
 	}
 
 	if (!fdisk_partition_to_string(pa, cf->cxt, FDISK_FIELD_UUID, &data) && data) {
 		extra_insert_pair(l, _("Partition UUID:"), data);
+		if (!mountpoint)
+			mountpoint = get_mountpoint(cf, "PARTUUID", data);
 		free(data);
 	}
 
@@ -1313,52 +1320,28 @@ static void extra_prepare_data(struct cfdisk *cf)
 		free(data);
 	}
 
-#ifdef HAVE_LIBBLKID
-	if (fdisk_partition_has_start(pa) && fdisk_partition_has_size(pa)) {
-		int fd;
-		uintmax_t start, size;
-		blkid_probe pr = blkid_new_probe();
-
-		if (!pr)
-			goto done;
-
-		DBG(UI, ul_debug("blkid prober: %p", pr));
-
-		start = fdisk_partition_get_start(pa) * fdisk_get_sector_size(cf->cxt);
-		size = fdisk_partition_get_size(pa) * fdisk_get_sector_size(cf->cxt);
-		fd = fdisk_get_devfd(cf->cxt);
-
-		if (blkid_probe_set_device(pr, fd, start, size) == 0 &&
-		    blkid_do_fullprobe(pr) == 0) {
-			const char *bdata = NULL;
-
-			if (!blkid_probe_lookup_value(pr, "TYPE", &bdata, NULL))
-				extra_insert_pair(l, _("Filesystem:"), bdata);
-			if (!blkid_probe_lookup_value(pr, "LABEL", &bdata, NULL)) {
-				extra_insert_pair(l, _("Filesystem label:"), bdata);
-				devlabel = xstrdup(bdata);
-			}
-			if (!blkid_probe_lookup_value(pr, "UUID", &bdata, NULL)) {
-				extra_insert_pair(l, _("Filesystem UUID:"), bdata);
-				devuuid = xstrdup(bdata);
-			}
-		}
-		blkid_free_probe(pr);
+	if (!fdisk_partition_to_string(pa, cf->cxt, FDISK_FIELD_FSUUID, &data) && data) {
+		extra_insert_pair(l, _("Filesystem UUID:"), data);
+		if (!mountpoint)
+			mountpoint = get_mountpoint(cf, "UUID", data);
+		free(data);
 	}
-#endif /* HAVE_LIBBLKID */
 
-#ifdef HAVE_LIBMOUNT
-	if (devuuid || devlabel) {
-		data = get_mountpoint(cf, devuuid, devlabel);
-		if (data) {
-			extra_insert_pair(l, _("Mountpoint:"), data);
-			free(data);
-		}
+	if (!fdisk_partition_to_string(pa, cf->cxt, FDISK_FIELD_FSLABEL, &data) && data) {
+		extra_insert_pair(l, _("Filesystem LABEL:"), data);
+		if (!mountpoint)
+			mountpoint = get_mountpoint(cf, "LABEL", data);
+		free(data);
 	}
-#endif /* HAVE_LIBMOUNT */
-done:
-	free(devlabel);
-	free(devuuid);
+	if (!fdisk_partition_to_string(pa, cf->cxt, FDISK_FIELD_FSTYPE, &data) && data) {
+		extra_insert_pair(l, _("Filesystem:"), data);
+		free(data);
+	}
+
+	if (mountpoint) {
+		extra_insert_pair(l, _("Mountpoint:"), mountpoint);
+		free(mountpoint);
+	}
 }
 
 static int ui_draw_extra(struct cfdisk *cf)
@@ -2569,7 +2552,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 
 int main(int argc, char *argv[])
 {
-	const char *diskpath;
+	const char *diskpath = NULL;
 	int rc, c, colormode = UL_COLORMODE_UNDEF;
 	struct cfdisk _cf = { .lines_idx = 0 },
 		      *cf = &_cf;
@@ -2618,18 +2601,25 @@ int main(int argc, char *argv[])
 
 	fdisk_set_ask(cf->cxt, ask_callback, (void *) cf);
 
-	if (optind == argc)
-		diskpath = access(DEFAULT_DEVICE, F_OK) == 0 ?
-					DEFAULT_DEVICE : ALTERNATE_DEVICE;
-	else
+	if (optind == argc) {
+		size_t i;
+
+		for (i = 0; i < ARRAY_SIZE(default_disks); i++) {
+			if (access(default_disks[i], F_OK) == 0) {
+				diskpath = default_disks[i];
+				break;
+			}
+		}
+		if (!diskpath)
+			diskpath = default_disks[0];	/* default, used for "cannot open" */
+	} else
 		diskpath = argv[optind];
 
 	rc = fdisk_assign_device(cf->cxt, diskpath, 0);
 	if (rc == -EACCES)
 		rc = fdisk_assign_device(cf->cxt, diskpath, 1);
 	if (rc != 0)
-		err(EXIT_FAILURE, _("cannot open %s"),
-				optind == argc ? DEFAULT_DEVICE : diskpath);
+		err(EXIT_FAILURE, _("cannot open %s"), diskpath);
 
 	/* Don't use err(), warn() from this point */
 	ui_init(cf);

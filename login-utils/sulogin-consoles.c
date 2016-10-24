@@ -160,7 +160,7 @@ char *oneline(const char *file)
 
 	DBG(dbgprint("reading %s", file));
 
-	if (!(fp = fopen(file, "re")))
+	if (!(fp = fopen(file, "r" UL_CLOEXECSTR)))
 		return NULL;
 	len = getline(&ret, &dummy, fp);
 	if (len >= 0) {
@@ -311,7 +311,7 @@ out:
  */
 static
 #ifdef __GNUC__
-__attribute__((__nonnull__,__hot__))
+__attribute__((__hot__))
 #endif
 int append_console(struct list_head *consoles, const char *name)
 {
@@ -361,7 +361,7 @@ static int detect_consoles_from_proc(struct list_head *consoles)
 
 	DBG(dbgprint("trying /proc"));
 
-	fc = fopen("/proc/consoles", "re");
+	fc = fopen("/proc/consoles", "r" UL_CLOEXECSTR);
 	if (!fc) {
 		rc = 2;
 		goto done;
@@ -718,7 +718,7 @@ int detect_consoles(const char *device, int fallback, struct list_head *consoles
 #ifdef __linux__
 console:
 	/*
-	 * Detection of devices used for Linux system consolei using
+	 * Detection of devices used for Linux system console using
 	 * the /proc/consoles API with kernel 2.6.38 and higher.
 	 */
 	rc = detect_consoles_from_proc(consoles);

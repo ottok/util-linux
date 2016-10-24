@@ -20,7 +20,7 @@
 
 /*
  * Old version would die on largish filesystems. Change to mmap the
- * files one by one instaed of all simultaneously. - aeb, 2002-11-01
+ * files one by one instead of all simultaneously. - aeb, 2002-11-01
  */
 
 #include <sys/types.h>
@@ -36,15 +36,24 @@
 #include <string.h>
 #include <getopt.h>
 #include <zconf.h>
+
+/* We don't use our include/crc32.h, but crc32 from zlib!
+ *
+ * The zlib implemenation performs pre/post-conditioning. The util-linux
+ * imlemenation requires post-conditioning (xor) in the applications.
+ */
 #include <zlib.h>
 
 #include "c.h"
 #include "cramfs.h"
-#include "closestream.h"
 #include "md5.h"
 #include "nls.h"
 #include "exitcodes.h"
 #include "strutils.h"
+
+#define CLOSE_EXIT_CODE	 MKFS_EX_ERROR
+#include "closestream.h"
+
 #define XALLOC_EXIT_CODE MKFS_EX_ERROR
 #include "xalloc.h"
 
@@ -313,10 +322,9 @@ static unsigned int parse_directory(struct entry *root_entry, const char *name, 
 		if (dirent->d_name[0] == '.') {
 			if (dirent->d_name[1] == '\0')
 				continue;
-			if (dirent->d_name[1] == '.') {
-				if (dirent->d_name[2] == '\0')
-					continue;
-			}
+			if (dirent->d_name[1] == '.' &&
+			    dirent->d_name[2] == '\0')
+				continue;
 		}
 		namelen = strlen(dirent->d_name);
 		if (namelen > MAX_INPUT_NAMELEN) {
@@ -352,11 +360,9 @@ static unsigned int parse_directory(struct entry *root_entry, const char *name, 
 			entry->size = parse_directory(root_entry, path, &entry->child, fslen_ub);
 		} else if (S_ISREG(st.st_mode)) {
 			entry->path = xstrdup(path);
-			if (entry->size) {
-				if (entry->size >= (1 << CRAMFS_SIZE_WIDTH)) {
-					warn_size = 1;
-					entry->size = (1 << CRAMFS_SIZE_WIDTH) - 1;
-				}
+			if (entry->size && entry->size >= (1 << CRAMFS_SIZE_WIDTH)) {
+				warn_size = 1;
+				entry->size = (1 << CRAMFS_SIZE_WIDTH) - 1;
 			}
 		} else if (S_ISLNK(st.st_mode)) {
 			entry->path = xstrdup(path);

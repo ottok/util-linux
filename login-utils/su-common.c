@@ -35,7 +35,7 @@
    (setting argv[0] to "-su", passing -c only to certain shells, etc.).
    I don't see the point in doing that, and it's ugly.
 
-   Based on an implemenation by David MacKenzie <djm@gnu.ai.mit.edu>.  */
+   Based on an implementation by David MacKenzie <djm@gnu.ai.mit.edu>.  */
 
 enum
 {
@@ -165,7 +165,7 @@ log_syslog(struct passwd const *pw, bool successful)
       old_user = pwd ? pwd->pw_name : "";
     }
 
-  if (get_terminal_name(STDERR_FILENO, NULL, &tty, NULL) != 0 || !tty)
+  if (get_terminal_name(NULL, &tty, NULL) != 0 || !tty)
     tty = "none";
 
   openlog (program_invocation_short_name, 0 , LOG_AUTH);
@@ -192,7 +192,7 @@ static void log_btmp(struct passwd const *pw)
 		pw && pw->pw_name ? pw->pw_name : "(unknown)",
 		sizeof(ut.ut_user));
 
-	get_terminal_name(STDERR_FILENO, NULL, &tty_name, &tty_num);
+	get_terminal_name(NULL, &tty_name, &tty_num);
 	if (tty_num)
 		xstrncpy(ut.ut_id, tty_num, sizeof(ut.ut_id));
 	if (tty_name)
@@ -520,7 +520,7 @@ set_path(const struct passwd* pw)
     r = logindefs_setenv("PATH", "ENV_SUPATH", _PATH_DEFPATH_ROOT);
 
   if (r != 0)
-    err (EXIT_FAILURE,  _("failed to set PATH"));
+    err (EXIT_FAILURE,  _("failed to set the %s environment variable"), "PATH");
 }
 
 /* Update `environ' for the new shell based on PW, with SHELL being

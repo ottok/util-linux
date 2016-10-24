@@ -27,7 +27,7 @@ static int all;
 #define CANONIC	1
 
 /*
- * This function works like mnt_resolve_tag(), but it's able to read UUiD/LABEL
+ * This function works like mnt_resolve_tag(), but it's able to read UUID/LABEL
  * from regular swap files too (according to entries in /proc/swaps). Note that
  * mnt_resolve_tag() and mnt_resolve_spec() works with system visible block
  * devices only.
@@ -89,8 +89,11 @@ static int do_swapoff(const char *orig_special, int quiet, int canonic)
 		char *n, *v;
 
 		special = mnt_resolve_spec(orig_special, mntcache);
-		if (!special && blkid_parse_tag_string(orig_special, &n, &v) == 0)
+		if (!special && blkid_parse_tag_string(orig_special, &n, &v) == 0) {
 			special = swapoff_resolve_tag(n, v, mntcache);
+			free(n);
+			free(v);
+		}
 		if (!special)
 			return cannot_find(orig_special);
 	}

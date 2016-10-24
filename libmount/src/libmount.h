@@ -29,10 +29,10 @@ extern "C" {
 #include <mntent.h>
 #include <sys/types.h>
 
-#define LIBMOUNT_VERSION   "2.28.2"
+#define LIBMOUNT_VERSION   "2.29."
 #define LIBMOUNT_MAJOR_VERSION   2
-#define LIBMOUNT_MINOR_VERSION   28
-#define LIBMOUNT_PATCH_VERSION   2
+#define LIBMOUNT_MINOR_VERSION   29
+#define LIBMOUNT_PATCH_VERSION   
 
 /**
  * libmnt_cache:
@@ -159,7 +159,7 @@ enum {
  *
  * loopdev setup failed, errno set by libc
  */
-#define MNT_ERR_LOOPDEV	     5003
+#define MNT_ERR_LOOPDEV      5003
 /**
  * MNT_ERR_MOUNTOPT:
  *
@@ -178,6 +178,12 @@ enum {
  * libblkid detected more filesystems on the device
  */
 #define MNT_ERR_AMBIFS       5006
+/**
+ * MNT_ERR_LOOPOVERLAP:
+ *
+ * detected overlapping loop device that cannot be re-used
+ */
+#define MNT_ERR_LOOPOVERLAP 5007
 
 #ifndef __GNUC_PREREQ
 # if defined __GNUC__ && defined __GNUC_MINOR__
@@ -339,7 +345,7 @@ extern const char *mnt_fs_get_srcpath(struct libmnt_fs *fs);
 extern int mnt_fs_get_tag(struct libmnt_fs *fs, const char **name,
 			  const char **value);
 extern const char *mnt_fs_get_target(struct libmnt_fs *fs);
-extern int mnt_fs_set_target(struct libmnt_fs *fs, const char *target);
+extern int mnt_fs_set_target(struct libmnt_fs *fs, const char *tgt);
 extern const char *mnt_fs_get_fstype(struct libmnt_fs *fs);
 extern int mnt_fs_set_fstype(struct libmnt_fs *fs, const char *fstype);
 
@@ -379,7 +385,7 @@ extern int mnt_fs_set_freq(struct libmnt_fs *fs, int freq);
 extern int mnt_fs_get_passno(struct libmnt_fs *fs);
 extern int mnt_fs_set_passno(struct libmnt_fs *fs, int passno);
 extern const char *mnt_fs_get_root(struct libmnt_fs *fs);
-extern int mnt_fs_set_root(struct libmnt_fs *fs, const char *root);
+extern int mnt_fs_set_root(struct libmnt_fs *fs, const char *path);
 extern const char *mnt_fs_get_bindsrc(struct libmnt_fs *fs);
 extern int mnt_fs_set_bindsrc(struct libmnt_fs *fs, const char *src);
 extern int mnt_fs_get_id(struct libmnt_fs *fs);

@@ -117,7 +117,7 @@ declare -a comps
 if [ -n "$SUBTESTS" ]; then
 	# selected tests only
 	for s in $SUBTESTS; do
-		if [ -d "$top_srcdir/tests/ts/$s" ]; then
+		if [ -e "$top_srcdir/tests/ts/$s" ]; then
 			comps+=( $(find_test_scripts "$top_srcdir/tests/ts/$s") ) || exit 1
 		else
 			echo "Unknown test component '$s'"
@@ -158,6 +158,11 @@ echo "-------------------- util-linux regression tests --------------------"
 echo
 echo "                    For development purpose only.                    "
 echo "                 Don't execute on production system!                 "
+echo
+
+# TODO: add more information about system
+printf "%13s: %-30s    " "kernel" "$(uname -r)"
+echo
 echo
 
 if [ $paraller_jobs -gt 1 ]; then

@@ -30,7 +30,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{print $3}' \
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="07-Sep-2016"
+LIBBLKID_DATE="19-Oct-2016"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -356,6 +356,22 @@ AC_CHECK_DECL([strsignal],
 		[Define to 1 if have strsignal function prototype])],
 )
 
+AC_CHECK_DECL([TIOCGLCKTRMIOS],
+	      [have_tiocglcktrmios=yes], [have_tiocglcktrmios=no],
+              [#include <sys/ioctl.h>])
+AC_CHECK_DECL([SOCK_CLOEXEC],
+	      [have_sock_cloexec=yes], [have_sock_cloexec=no],
+	      [#include <sys/types.h>
+               #include <sys/socket.h>])
+AC_CHECK_DECL([SOCK_NONBLOCK],
+	      [have_sock_nonblock=yes], [have_sock_nonblock=no],
+	      [#include <sys/types.h>
+               #include <sys/socket.h>])
+AC_CHECK_DECL([SO_PASSCRED],
+	      [have_so_passcred=yes], [have_so_passcred=no],
+	      [#include <sys/types.h>
+               #include <sys/socket.h>])
+
 AC_CHECK_FUNCS([ \
 	__fpending \
 	secure_getenv \
@@ -496,7 +512,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 
 AC_MSG_CHECKING([whether __progname is defined])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([extern char *__progname;],
-	   [if (*__progname == 0) return;])],
+	   [if (*__progname == 0) return 1;])],
 	   AC_DEFINE([HAVE___PROGNAME], [1], [Define if __progname is defined])
 	   AC_MSG_RESULT([yes]),
 	   AC_MSG_RESULT([no]))
@@ -622,20 +638,30 @@ AC_CHECK_TYPES([union semun], [], [], [[
 ]])
 AC_CHECK_TYPES([loff_t])
 
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <wchar.h>
-#include <wctype.h>
-#include <stdio.h>
-]], [[
-  wchar_t wc;
-  wint_t w;
-  w = fgetwc(stdin);
-  if (w == WEOF) exit(1);
-  wc = w;
-  fputwc(wc,stdout);
-]])],
-[AC_DEFINE([HAVE_WIDECHAR], [1], [Do we have wide character support?])
+
+AC_ARG_ENABLE([widechar],
+  AS_HELP_STRING([--disable-widechar], [do not compile wide character support]),
+  [], [enable_widechar=check]
+)
+UL_BUILD_INIT([widechar])
+UL_REQUIRES_COMPILE([widechar], [[
+  #include <wchar.h>
+  #include <wctype.h>
+  #include <stdio.h>
+  ]], [[
+    wchar_t wc;
+    wint_t w;
+    w = fgetwc(stdin);
+    if (w == WEOF) exit(1);
+    wc = w;
+    fputwc(wc,stdout);
+  ]],
+  [wchar_t support])
+
+AS_IF([test "x$build_widechar" = xyes ], [
+  AC_DEFINE([HAVE_WIDECHAR], [1], [Do we have wide character support?])
 ])
+
 
 AC_CHECK_TYPES([cpu_set_t], [have_cpu_set_t=yes], [], [[
 #include <sched.h>
@@ -744,68 +770,55 @@ AS_IF([test "x$with_udev" = xno], [
   )
 ])
 
-AC_ARG_WITH([ncurses],
-  AS_HELP_STRING([--with-ncurses], [build with non-wide ncurses, default is wide version
-				    (--without-ncurses disables all ncurses(w) support)]),
-  [], [with_ncurses=auto]
-)
-AM_CONDITIONAL([HAVE_NCURSES], [false])
-AS_IF([test "x$with_ncurses" != xno], [
-  have_ncurses=no
 
-  dnl First try to find the pkg-config module.
+dnl wide-char ncurses
+AC_ARG_WITH([ncursesw],
+  AS_HELP_STRING([--with-ncursesw], [build with wide-char ncurses, enabled by default]),
+  [], [with_ncursesw=auto]
+)
+have_ncursesw=no
+AS_IF([test "x$with_ncursesw" != xno], [
   PKG_CHECK_MODULES(NCURSESW, [ncursesw], [
-    have_ncurses=yes
+    have_ncursesw=yes
     NCURSES_LIBS=${NCURSESW_LIBS}
     NCURSES_CFLAGS=${NCURSESW_CFLAGS}
-    AC_DEFINE([HAVE_LIBNCURSESW])
+    AC_DEFINE([HAVE_LIBNCURSESW], [1], [Define if ncursesw library available])
     CURSES_LIB_NAME="ncursesw"
-  ], [
-    PKG_CHECK_MODULES(NCURSES, [ncurses], [
-      have_ncurses=yes
-      AC_DEFINE([HAVE_LIBNCURSES])
-      CURSES_LIB_NAME="ncursesw"
-    ], [:])
-  ])
-
-  AS_IF([test "x$have_ncurses" = xyes], [
-    dnl If that worked, setup the defines that the code expects.
-    save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $NCURSES_CFLAGS"
-    AC_CHECK_HEADERS([ncurses.h])
-    CPPFLAGS="$save_CPPFLAGS"
-  ], [
-    dnl If that failed, fall back to classic searching.
-    AC_CHECK_HEADERS([ncurses.h ncurses/ncurses.h], [
-      AS_IF([test "x$with_ncurses" = xauto], [
-	UL_CHECK_LIB([ncursesw], [initscr], [ncurses])
-	AS_IF([test "x$have_ncurses" = xyes], [
-	  AC_CHECK_HEADERS([ncursesw/ncurses.h])
-	  NCURSES_LIBS="-lncursesw"
-	  CURSES_LIB_NAME="ncursesw"
-	])
-      ])
-      AS_IF([test "x$have_ncurses" = xno], [
-	UL_CHECK_LIB(ncurses, initscr)
-	AS_IF([test "x$have_ncurses" = xyes], [
-	  NCURSES_LIBS="-lncurses"
-	  CURSES_LIB_NAME="ncurses"
-	])
-      ])
-    ])
-  ])
-
-  AS_CASE([$with_ncurses:$have_ncurses],
-    [yes:no], [AC_MSG_ERROR([ncurses or ncursesw selected, but library not found])]
-  )
-
+    AC_CHECK_HEADERS([ncursesw/ncurses.h ncurses.h])
+  ], [have_ncursesw=no])
 ])
+AS_CASE([$with_ncursesw:$have_ncursesw],
+  [yes:no], [AC_MSG_ERROR([ncursesw selected, but library not found])])
+
+
+dnl non-wide ncurses
+AC_ARG_WITH([ncurses],
+  AS_HELP_STRING([--with-ncurses], [build with non-wide ncurses, disabled by default]),
+  [], [with_ncurses=auto]
+)
+have_ncurses=no
+
+AS_CASE([$with_ncurses:$build_widechar],
+  [yes:yes], [AC_MSG_ERROR([wide-char support enabled, but non-wide ncurses selects])])
+
+AS_IF([test "x$have_ncursesw" = xno -a "x$with_ncurses" != xno ], [
+  PKG_CHECK_MODULES(NCURSES, [ncurses], [
+    have_ncurses=yes
+    AC_DEFINE([HAVE_LIBNCURSES], [1], [Define if ncurses library available])
+    CURSES_LIB_NAME="ncurses"
+    AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h])
+  ],[have_ncurses=no])
+])
+AS_CASE([$with_ncurses:$have_ncurses],
+  [yes:no], [AC_MSG_ERROR([ncurses selected, but library not found])])
+
 AC_SUBST([NCURSES_CFLAGS])
 AC_SUBST([NCURSES_LIBS])
+AM_CONDITIONAL([HAVE_NCURSES], [test "x$have_ncursesw" = xyes -o  "x$have_ncurses" = xyes])
 
 
 AC_ARG_WITH([slang],
-  AS_HELP_STRING([--with-slang], [compile cfdisk with slang]),
+  AS_HELP_STRING([--with-slang], [compile cfdisk with slang rather than ncurses]),
   [], [with_slang=no]
 )
 have_slang=no
@@ -827,7 +840,7 @@ AS_IF([test "x$with_slang" = xyes], [
 AM_CONDITIONAL([HAVE_SLANG], [test "x$have_slang" = xyes])
 
 
-AS_IF([test "x$have_slang" = xyes -o "x$have_ncurses" = xyes], [
+AS_IF([test "x$have_slang" = xyes -o "x$have_ncursesw" = xyes -o "x$have_ncurses" = xyes], [
 	AC_CHECK_LIB([$CURSES_LIB_NAME], use_default_colors, [
 		     AC_DEFINE(HAVE_USE_DEFAULT_COLORS, 1,
 			       [Define if curses library has the use_default_colors().])
@@ -967,13 +980,13 @@ AC_SUBST([LIBMOUNT_PATCH_VERSION], $PACKAGE_VERSION_RELEASE)
 AC_SUBST([LIBMOUNT_VERSION_INFO])
 AC_DEFINE_UNQUOTED([LIBMOUNT_VERSION], ["$LIBMOUNT_VERSION"], [libmount version string])
 
-AC_ARG_ENABLE([libmount-force-mountinfo],
-  AS_HELP_STRING([--enable-libmount-force-mountinfo], [ignore /etc/mtab in all situations (recommended for systemd)]),
-  [], [enable_libmount_force_mountinfo=no]
+AC_ARG_ENABLE([libmount-support-mtab],
+  AS_HELP_STRING([--enable-libmount-support-mtab], [support /etc/mtab (default is use /proc/self/mountinfo)]),
+  [], [enable_libmount_support_mtab=no]
 )
 
-AS_IF([test "x$enable_libmount_force_mountinfo" == xyes], [
-  AC_DEFINE([USE_LIBMOUNT_FORCE_MOUNTINFO], [1], [Define to 1 if want to ignore mtab in all situations.])
+AS_IF([test "x$enable_libmount_support_mtab" == xyes], [
+  AC_DEFINE([USE_LIBMOUNT_SUPPORT_MTAB], [1], [Define to 1 if want to support mtab.])
 ])
 
 
@@ -1034,7 +1047,7 @@ UL_BUILD_INIT([cfdisk], [check])
 UL_REQUIRES_BUILD([cfdisk], [libfdisk])
 UL_REQUIRES_BUILD([cfdisk], [libsmartcols])
 UL_REQUIRES_HAVE([cfdisk], [open_memstream], [open_memstream function])
-UL_REQUIRES_HAVE([cfdisk], [ncurses,slang], [ncurses or slang library])
+UL_REQUIRES_HAVE([cfdisk], [ncursesw,slang,ncurses], [ncursesw, ncurses or slang library])
 AM_CONDITIONAL([BUILD_CFDISK], [test "x$build_cfdisk" = xyes])
 
 
@@ -1118,6 +1131,7 @@ AM_CONDITIONAL([BUILD_WIPEFS], [test "x$build_wipefs" = xyes])
 
 UL_BUILD_INIT([findmnt], [check])
 UL_REQUIRES_BUILD([findmnt], [libmount])
+UL_REQUIRES_BUILD([findmnt], [libblkid])
 UL_REQUIRES_BUILD([findmnt], [libsmartcols])
 AM_CONDITIONAL([BUILD_FINDMNT], [test "x$build_findmnt" = xyes])
 
@@ -1239,6 +1253,21 @@ AS_IF([test "x$have_futimens" = xyes -a "x$have_inotify_init1" = xyes ], [
   AC_DEFINE([AGETTY_RELOAD], [1], [Enable agetty --reload feature])
 ],[
   AC_MSG_WARN([futimens or inotify_init1 not found; agetty(8) will not provide ---reload functionality])
+])
+
+
+AC_ARG_ENABLE([plymouth_support],
+  AS_HELP_STRING([--disable-plymouth_support], [don not care about plymouth in sylogin(8) and agetty(8)]),
+  [], [enable_plymouth_support=check]
+)
+UL_BUILD_INIT([plymouth_support])
+UL_REQUIRES_HAVE([plymouth_support], [tiocglcktrmios], [TIOCGLCKTRMIOS flag])
+UL_REQUIRES_HAVE([plymouth_support], [sock_cloexec], [SOCK_CLOEXEC flag])
+UL_REQUIRES_HAVE([plymouth_support], [sock_nonblock], [SOCK_NONBLOCK flag])
+UL_REQUIRES_HAVE([plymouth_support], [so_passcred], [SO_PASSCRED flag])
+AM_CONDITIONAL([USE_PLYMOUTH_SUPPORT], [test "x$build_plymouth_support" = xyes])
+AS_IF([test "x$build_plymouth_support" = xyes ], [
+    AC_DEFINE([USE_PLYMOUTH_SUPPORT], [1], [Enable plymouth support feature for sulogin and aggety])
 ])
 
 
@@ -1762,7 +1791,7 @@ AC_ARG_ENABLE([ul],
   [], [UL_DEFAULT_ENABLE([ul], [check])]
 )
 UL_BUILD_INIT([ul])
-UL_REQUIRES_HAVE([ul], [ncurses, tinfo], [ncurses or tinfo libraries])
+UL_REQUIRES_HAVE([ul], [ncursesw, tinfo, ncurses], [ncursesw, ncurses or tinfo libraries])
 AM_CONDITIONAL([BUILD_UL], [test "x$build_ul" = xyes])
 
 
@@ -1771,16 +1800,16 @@ AC_ARG_ENABLE([more],
   [], [UL_DEFAULT_ENABLE([more], [check])]
 )
 UL_BUILD_INIT([more])
-UL_REQUIRES_HAVE([more], [ncurses, tinfo, termcap], [ncurses, tinfo or termcap libraries])
+UL_REQUIRES_HAVE([more], [ncursesw, tinfo, ncurses, termcap], [ncursesw, ncurses, tinfo or termcap libraries])
 AM_CONDITIONAL([BUILD_MORE], [test "x$build_more" = xyes])
 
 
 AC_ARG_ENABLE([pg],
-  AS_HELP_STRING([--disable-pg], [do not build pg]),
-  [], [UL_DEFAULT_ENABLE([pg], [check])]
+  AS_HELP_STRING([--enable-pg], [build pg]),
+  [], [UL_DEFAULT_ENABLE([pg], [no])]
 )
 UL_BUILD_INIT([pg])
-UL_REQUIRES_HAVE([pg], [ncurses], [ncurses or ncursesw library])
+UL_REQUIRES_HAVE([pg], [ncursesw, ncurses], [ncurses or ncursesw library])
 AM_CONDITIONAL([BUILD_PG], [test "x$build_pg" = xyes])
 
 
@@ -1790,7 +1819,7 @@ AC_ARG_ENABLE([setterm],
 )
 UL_BUILD_INIT([setterm])
 UL_REQUIRES_LINUX([setterm])
-UL_REQUIRES_HAVE([setterm], [ncurses], [ncurses library])
+UL_REQUIRES_HAVE([setterm], [ncursesw, ncurses], [ncurses or ncurses library])
 AM_CONDITIONAL([BUILD_SETTERM], [test "x$build_setterm" = xyes])
 
 # build_schedutils= is just configure-only variable to control
@@ -2177,6 +2206,7 @@ AC_MSG_RESULT([
 	Bash completions:  ${with_bashcompletiondir}
 	Systemd support:   ${have_systemd}
 	Btrfs support:     ${have_btrfs}
+	Wide-char support: ${build_widechar}
 
 	warnings:
 

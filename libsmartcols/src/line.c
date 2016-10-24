@@ -71,7 +71,6 @@ void scols_ref_line(struct libscols_line *ln)
  */
 void scols_unref_line(struct libscols_line *ln)
 {
-
 	if (ln && --ln->refcount <= 0) {
 		DBG(CELL, ul_debugobj(ln, "dealloc"));
 		list_del(&ln->ln_lines);
@@ -168,12 +167,11 @@ int scols_line_set_userdata(struct libscols_line *ln, void *data)
  * scols_line_get_userdata:
  * @ln: a pointer to a struct libscols_line instance
  *
- * Returns: 0, a negative value in case of an error.
+ * Returns: user data
  */
 void *scols_line_get_userdata(struct libscols_line *ln)
 {
-	assert(ln);
-	return ln ? ln->userdata : NULL;
+	return ln->userdata;
 }
 
 /**
@@ -236,7 +234,7 @@ int scols_line_add_child(struct libscols_line *ln, struct libscols_line *child)
  *
  * Returns: a pointer to @ln's parent, NULL in case it has no parent or if there was an error.
  */
-struct libscols_line *scols_line_get_parent(struct libscols_line *ln)
+struct libscols_line *scols_line_get_parent(const struct libscols_line *ln)
 {
 	return ln ? ln->parent : NULL;
 }
@@ -291,25 +289,12 @@ int scols_line_next_child(struct libscols_line *ln,
  */
 int scols_line_set_color(struct libscols_line *ln, const char *color)
 {
-	char *p = NULL;
-
-	if (!ln)
-		return -EINVAL;
-	if (color) {
-		if (isalnum(*color)) {
-			color = color_sequence_from_colorname(color);
-
-			if (!color)
-				return -EINVAL;
-		}
-		p = strdup(color);
-		if (!p)
-			return -ENOMEM;
+	if (color && isalnum(*color)) {
+		color = color_sequence_from_colorname(color);
+		if (!color)
+			return -EINVAL;
 	}
-
-	free(ln->color);
-	ln->color = p;
-	return 0;
+	return strdup_to_struct_member(ln, color, color);
 }
 
 /**
@@ -318,20 +303,20 @@ int scols_line_set_color(struct libscols_line *ln, const char *color)
  *
  * Returns: @ln's color string, NULL in case of an error.
  */
-const char *scols_line_get_color(struct libscols_line *ln)
+const char *scols_line_get_color(const struct libscols_line *ln)
 {
-	return ln ? ln->color : NULL;
+	return ln->color;
 }
 
 /**
  * scols_line_get_ncells:
  * @ln: a pointer to a struct libscols_line instance
  *
- * Returns: @ln's number of cells
+ * Returns: number of cells
  */
-size_t scols_line_get_ncells(struct libscols_line *ln)
+size_t scols_line_get_ncells(const struct libscols_line *ln)
 {
-	return ln ? ln->ncells : 0;
+	return ln->ncells;
 }
 
 /**
@@ -370,7 +355,7 @@ struct libscols_cell *scols_line_get_column_cell(
 
 /**
  * scols_line_set_data:
- * @ln: a pointer to a struct libscols_cell instance
+ * @ln: a pointer to a struct libscols_line instance
  * @n: number of the cell, whose data is to be set
  * @data: actual data to set
  *
@@ -387,7 +372,7 @@ int scols_line_set_data(struct libscols_line *ln, size_t n, const char *data)
 
 /**
  * scols_line_set_column_data:
- * @ln: a pointer to a struct libscols_cell instance
+ * @ln: a pointer to a struct libscols_line instance
  * @cl: column, whose data is to be set
  * @data: actual data to set
  *
@@ -406,7 +391,7 @@ int scols_line_set_column_data(struct libscols_line *ln,
 
 /**
  * scols_line_refer_data:
- * @ln: a pointer to a struct libscols_cell instance
+ * @ln: a pointer to a struct libscols_line instance
  * @n: number of the cell which will refer to @data
  * @data: actual data to refer to
  *
@@ -423,7 +408,7 @@ int scols_line_refer_data(struct libscols_line *ln, size_t n, char *data)
 
 /**
  * scols_line_refer_column_data:
- * @ln: a pointer to a struct libscols_cell instance
+ * @ln: a pointer to a struct libscols_line instance
  * @cl: column, whose data is to be set
  * @data: actual data to refer to
  *
@@ -442,11 +427,11 @@ int scols_line_refer_column_data(struct libscols_line *ln,
 
 /**
  * scols_copy_line:
- * @ln: a pointer to a struct libscols_cell instance
+ * @ln: a pointer to a struct libscols_line instance
  *
  * Returns: A newly allocated copy of @ln, NULL in case of an error.
  */
-struct libscols_line *scols_copy_line(struct libscols_line *ln)
+struct libscols_line *scols_copy_line(const struct libscols_line *ln)
 {
 	struct libscols_line *ret;
 	size_t i;

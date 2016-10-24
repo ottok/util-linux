@@ -152,7 +152,7 @@ void mnt_unref_table(struct libmnt_table *tb)
  * Deallocates the table. This function does not care about reference count. Don't
  * use this function directly -- it's better to use use mnt_unref_table().
  *
- * The table entries (filesystems) are unrefrenced by mnt_reset_table() and
+ * The table entries (filesystems) are unreferenced by mnt_reset_table() and
  * cache by mnt_unref_cache().
  */
 void mnt_free_table(struct libmnt_table *tb)
@@ -287,18 +287,7 @@ const char *mnt_table_get_intro_comment(struct libmnt_table *tb)
  */
 int mnt_table_set_intro_comment(struct libmnt_table *tb, const char *comm)
 {
-	char *p = NULL;
-
-	if (!tb)
-		return -EINVAL;
-	if (comm) {
-		p = strdup(comm);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(tb->comm_intro);
-	tb->comm_intro = p;
-	return 0;
+	return strdup_to_struct_member(tb, comm_intro, comm);
 }
 
 /**
@@ -339,18 +328,7 @@ const char *mnt_table_get_trailing_comment(struct libmnt_table *tb)
  */
 int mnt_table_set_trailing_comment(struct libmnt_table *tb, const char *comm)
 {
-	char *p = NULL;
-
-	if (!tb)
-		return -EINVAL;
-	if (comm) {
-		p = strdup(comm);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(tb->comm_tail);
-	tb->comm_tail = p;
-	return 0;
+	return strdup_to_struct_member(tb, comm_tail, comm);
 }
 
 /**
@@ -381,7 +359,7 @@ int mnt_table_append_trailing_comment(struct libmnt_table *tb, const char *comm)
  * same cache between more threads -- currently the cache does not provide any
  * locking method.
  *
- * This function increments cache reference counter. It's recomented to use
+ * This function increments cache reference counter. It's recommended to use
  * mnt_unref_cache() after mnt_table_set_cache() if you want to keep the cache
  * referenced by @tb only.
  *
@@ -712,7 +690,7 @@ static int mnt_table_move_parent(struct libmnt_table *tb, int oldid, int newid)
  * backward mode iterator).
  *
  * @MNT_UNIQ_FORWARD:  remove later mounted filesystems
- * @MNT_UNIQ_KEEPTREE: keep parent->id relation ship stil valid
+ * @MNT_UNIQ_KEEPTREE: keep parent->id relationship still valid
  *
  * Returns: negative number in case of error, or 0 o success.
  */
@@ -867,6 +845,20 @@ struct libmnt_fs *mnt_table_find_target(struct libmnt_table *tb, const char *pat
 		if (mnt_fs_streq_target(fs, path))
 			return fs;
 	}
+
+	/* try absolute path */
+	if (is_relative_path(path) && (cn = absolute_path(path))) {
+		DBG(TAB, ul_debugobj(tb, "lookup absolute TARGET: '%s'", cn));
+		mnt_reset_iter(&itr, direction);
+		while (mnt_table_next_fs(tb, &itr, &fs) == 0) {
+			if (mnt_fs_streq_target(fs, cn)) {
+				free(cn);
+				return fs;
+			}
+		}
+		free(cn);
+	}
+
 	if (!tb->cache || !(cn = mnt_resolve_path(path, tb->cache)))
 		return NULL;
 
@@ -879,7 +871,7 @@ struct libmnt_fs *mnt_table_find_target(struct libmnt_table *tb, const char *pat
 			return fs;
 	}
 
-	/* non-canonicaled path in struct libmnt_table
+	/* non-canonical path in struct libmnt_table
 	 * -- note that mountpoint in /proc/self/mountinfo is already
 	 *    canonicalized by the kernel
 	 */
@@ -1337,6 +1329,20 @@ err:
 }
 #endif /* HAVE_BTRFS_SUPPORT */
 
+static const char *get_cifs_unc_subdir_path (const char *unc)
+{
+	/*
+	 *  1 or more slash:     %*[/]
+	 *  1 or more non-slash: %*[^/]
+	 *  number of byte read: %n
+	 */
+	int share_end = 0;
+	int r = sscanf(unc, "%*[/]%*[^/]%*[/]%*[^/]%n", &share_end);
+	if (r == EOF || share_end == 0)
+		return NULL;
+	return unc + share_end;
+}
+
 /*
  * tb: /proc/self/mountinfo
  * fs: filesystem
@@ -1563,7 +1569,7 @@ int mnt_table_is_fs_mounted(struct libmnt_table *tb, struct libmnt_fs *fstab_fs)
 
 			DBG(FS, ul_debugobj(fs, "checking for loop: src=%s", mnt_fs_get_srcpath(fs)));
 #if __linux__
-			if (!loopdev_is_used(mnt_fs_get_srcpath(fs), src, offset, flags))
+			if (!loopdev_is_used(mnt_fs_get_srcpath(fs), src, offset, 0, flags))
 				continue;
 
 			DBG(FS, ul_debugobj(fs, "used loop"));
@@ -1571,9 +1577,18 @@ int mnt_table_is_fs_mounted(struct libmnt_table *tb, struct libmnt_fs *fstab_fs)
 		}
 
 		if (root) {
-			const char *r = mnt_fs_get_root(fs);
-			if (!r || strcmp(r, root) != 0)
-				continue;
+			const char *fstype = mnt_fs_get_fstype(fs);
+
+			if (fstype && strcmp(fstype, "cifs") == 0) {
+				const char *unc_subdir = get_cifs_unc_subdir_path(src);
+				const char *path_on_fs = mnt_fs_get_root(fs);
+				if (!unc_subdir || !path_on_fs || !streq_paths(unc_subdir, path_on_fs))
+					continue;
+			} else {
+				const char *r = mnt_fs_get_root(fs);
+				if (!r || strcmp(r, root) != 0)
+					continue;
+			}
 		}
 
 		/*

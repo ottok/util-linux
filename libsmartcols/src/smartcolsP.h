@@ -13,6 +13,7 @@
 
 #include "c.h"
 #include "list.h"
+#include "strutils.h"
 #include "color-names.h"
 #include "debug.h"
 
@@ -53,6 +54,7 @@ struct libscols_symbols {
 	char	*vert;
 	char	*right;
 	char	*title_padding;
+	char	*cell_padding;
 };
 
 /*
@@ -83,6 +85,7 @@ struct libscols_column {
 	int	flags;
 	int	is_extreme;
 	char	*color;		/* default column color */
+	char	*safechars;	/* do not encode this bytes */
 
 	char	*pending_data;
 	size_t	pending_data_sz;
@@ -92,6 +95,13 @@ struct libscols_column {
 		       struct libscols_cell *,
 		       void *);			/* cells comparison function */
 	void *cmpfunc_data;
+
+	size_t (*wrap_chunksize)(const struct libscols_column *,
+			const char *, void *);
+	char *(*wrap_nextchunk)(const struct libscols_column *,
+			char *, void *);
+	void *wrapfunc_data;
+
 
 	struct libscols_cell	header;
 	struct list_head	cl_columns;
@@ -137,6 +147,7 @@ struct libscols_table {
 	size_t	nlines;		/* number of lines */
 	size_t	termwidth;	/* terminal width */
 	size_t  termreduce;	/* extra blank space */
+	int	termforce;	/* SCOLS_TERMFORCE_* */
 	FILE	*out;		/* output stream */
 
 	char	*colsep;	/* column separator */
@@ -155,8 +166,10 @@ struct libscols_table {
 	unsigned int	ascii		:1,	/* don't use unicode */
 			colors_wanted	:1,	/* enable colors */
 			is_term		:1,	/* isatty() */
-			maxout		:1,	/* maximalize output */
+			padding_debug	:1,	/* output visible padding chars */
+			maxout		:1,	/* maximize output */
 			header_printed  :1,	/* header already printed */
+			priv_symbols	:1,	/* default private symbols */
 			no_headings	:1,	/* don't print header */
 			no_linesep	:1,	/* don't print line separator */
 			no_wrap		:1;	/* never wrap lines */
@@ -180,7 +193,7 @@ struct libscols_table {
 	} while(0)
 
 
-static inline int scols_iter_is_last(struct libscols_iter *itr)
+static inline int scols_iter_is_last(const struct libscols_iter *itr)
 {
 	if (!itr || !itr->head || !itr->p)
 		return 0;

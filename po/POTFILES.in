@@ -60,6 +60,7 @@ include/pager.h
 include/pamfail.h
 include/path.h
 include/pathnames.h
+include/plymouth-ctrl.h
 include/procutils.h
 include/pt-bsd.h
 include/pt-mbr.h
@@ -185,8 +186,10 @@ libfdisk/src/bsd.c
 libfdisk/src/context.c
 libfdisk/src/dos.c
 libfdisk/src/fdiskP.h
+libfdisk/src/field.c
 libfdisk/src/gpt.c
 libfdisk/src/init.c
+libfdisk/src/item.c
 libfdisk/src/iter.c
 libfdisk/src/label.c
 libfdisk/src/partition.c
@@ -198,6 +201,7 @@ libfdisk/src/table.c
 libfdisk/src/test.c
 libfdisk/src/utils.c
 libfdisk/src/version.c
+libfdisk/src/wipe.c
 lib/fileutils.c
 lib/idcache.c
 lib/ismounted.c
@@ -237,6 +241,7 @@ libmount/src/utils.c
 libmount/src/version.c
 lib/pager.c
 lib/path.c
+lib/plymouth-ctrl.c
 lib/procutils.c
 lib/randutils.c
 lib/setproctitle.c
@@ -305,6 +310,8 @@ misc-utils/blkid.c
 misc-utils/cal.c
 misc-utils/findfs.c
 misc-utils/findmnt.c
+misc-utils/findmnt.h
+misc-utils/findmnt-verify.c
 misc-utils/getopt.c
 misc-utils/kill.c
 misc-utils/logger.c

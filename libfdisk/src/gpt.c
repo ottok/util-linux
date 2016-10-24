@@ -50,7 +50,7 @@
 #define EFI_PMBR_OSTYPE     0xEE
 #define MSDOS_MBR_SIGNATURE 0xAA55
 #define GPT_PART_NAME_LEN   (72 / sizeof(uint16_t))
-#define GPT_NPARTITIONS     128
+#define GPT_NPARTITIONS     FDISK_GPT_NPARTITIONS_DEFAULT
 
 /* Globally unique identifier */
 struct gpt_guid {
@@ -85,7 +85,8 @@ enum {
 	GPT_ATTRBIT_GUID_COUNT	= 16
 };
 
-#define GPT_ATTRSTR_REQ		"RequiredPartiton"
+#define GPT_ATTRSTR_REQ		"RequiredPartition"
+#define GPT_ATTRSTR_REQ_TYPO	"RequiredPartiton"
 #define GPT_ATTRSTR_NOBLOCK	"NoBlockIOProtocol"
 #define GPT_ATTRSTR_LEGACY	"LegacyBIOSBootable"
 
@@ -674,7 +675,7 @@ static int gpt_mknew_header(struct fdisk_context *cxt,
 
 	/* According to EFI standard it's valid to count all the first
 	 * sector into header size, but some tools may have a problem
-	 * to accept it, so use the header without the zerozied area.
+	 * to accept it, so use the header without the zeroed area.
 	 * This does not have any impact to CRC, etc.   --kzak Jan-2015
 	 */
 	header->size = cpu_to_le32(sizeof(struct gpt_header)
@@ -712,7 +713,7 @@ static int gpt_mknew_header(struct fdisk_context *cxt,
 /*
  * Checks if there is a valid protective MBR partition table.
  * Returns 0 if it is invalid or failure. Otherwise, return
- * GPT_MBR_PROTECTIVE or GPT_MBR_HYBRID, depeding on the detection.
+ * GPT_MBR_PROTECTIVE or GPT_MBR_HYBRID, depending on the detection.
  */
 static int valid_pmbr(struct fdisk_context *cxt)
 {
@@ -849,7 +850,7 @@ fail:
 static inline uint32_t count_crc32(const unsigned char *buf, size_t len,
 				   size_t ex_off, size_t ex_len)
 {
-	return (crc32_exclude_offset(~0L, buf, len, ex_off, ex_len) ^ ~0L);
+	return (ul_crc32_exclude_offset(~0L, buf, len, ex_off, ex_len) ^ ~0L);
 }
 
 static inline uint32_t gpt_header_count_crc32(struct gpt_header *header)
@@ -874,7 +875,7 @@ static inline uint32_t gpt_entryarr_count_crc32(struct gpt_header *header, struc
 /*
  * Recompute header and partition array 32bit CRC checksums.
  * This function does not fail - if there's corruption, then it
- * will be reported when checksuming it again (ie: probing or verify).
+ * will be reported when checksumming it again (ie: probing or verify).
  */
 static void gpt_recompute_crc(struct gpt_header *header, struct gpt_entry *ents)
 {
@@ -1119,7 +1120,7 @@ static int gpt_get_disklabel_item(struct fdisk_context *cxt, struct fdisk_labeli
 		break;
 	default:
 		if (item->id < __FDISK_NLABELITEMS)
-			rc = 1;	/* unssupported generic item */
+			rc = 1;	/* unsupported generic item */
 		else
 			rc = 2;	/* out of range */
 		break;
@@ -1169,7 +1170,7 @@ static uint32_t check_too_big_partitions(struct gpt_header *header,
  * Check if a partition ends before it begins
  * Returns the faulting partition number, otherwise 0.
  */
-static uint32_t check_start_after_end_paritions(struct gpt_header *header,
+static uint32_t check_start_after_end_partitions(struct gpt_header *header,
 						struct gpt_entry *ents)
 {
 	uint32_t i;
@@ -1589,6 +1590,10 @@ static int gpt_entry_attrs_from_string(
 					sizeof(GPT_ATTRSTR_REQ) - 1) == 0) {
 			bit = GPT_ATTRBIT_REQ;
 			p += sizeof(GPT_ATTRSTR_REQ) - 1;
+		} else if (strncmp(p, GPT_ATTRSTR_REQ_TYPO,
+					sizeof(GPT_ATTRSTR_REQ_TYPO) - 1) == 0) {
+			bit = GPT_ATTRBIT_REQ;
+			p += sizeof(GPT_ATTRSTR_REQ_TYPO) - 1;
 		} else if (strncmp(p, GPT_ATTRSTR_LEGACY,
 					sizeof(GPT_ATTRSTR_LEGACY) - 1) == 0) {
 			bit = GPT_ATTRBIT_LEGACY;
@@ -1928,7 +1933,7 @@ err1:
 /*
  * Verify data integrity and report any found problems for:
  *   - primary and backup header validations
- *   - paritition validations
+ *   - partition validations
  */
 static int gpt_verify_disklabel(struct fdisk_context *cxt)
 {
@@ -2010,7 +2015,7 @@ static int gpt_verify_disklabel(struct fdisk_context *cxt)
 				ptnum);
 	}
 
-	ptnum = check_start_after_end_paritions(gpt->pheader, gpt->ents);
+	ptnum = check_start_after_end_partitions(gpt->pheader, gpt->ents);
 	if (ptnum) {
 		nerror++;
 		fdisk_warnx(cxt, _("Partition %u ends before it starts."),
@@ -2447,6 +2452,120 @@ static int gpt_set_disklabel_id(struct fdisk_context *cxt)
 
 	free(old);
 	free(new);
+	fdisk_label_set_changed(cxt->label, 1);
+	return 0;
+}
+
+static int gpt_check_table_overlap(struct fdisk_context *cxt,
+				   uint64_t first_usable,
+				   uint64_t last_usable)
+{
+	struct fdisk_gpt_label *gpt = self_label(cxt);
+	unsigned int i;
+	int rc = 0;
+
+	/* First check if there's enough room for the table. last_lba may have wrapped */
+	if (first_usable > cxt->total_sectors || /* far too little space */
+	    last_usable > cxt->total_sectors || /* wrapped */
+	    first_usable > last_usable) { /* too little space */
+		fdisk_warnx(cxt, _("Not enough space for new partition table!"));
+		return -ENOSPC;
+	}
+
+	/* check that all partitions fit in the remaining space */
+	for (i = 0; i < le32_to_cpu(gpt->pheader->npartition_entries); i++) {
+		if (partition_unused(&gpt->ents[i]))
+		        continue;
+		if (gpt_partition_start(&gpt->ents[i]) < first_usable) {
+			fdisk_warnx(cxt, _("Partition #%u out of range (minimal start is %"PRIu64" sectors)"),
+		                    i + 1, first_usable);
+			rc = -EINVAL;
+		}
+		if (gpt_partition_end(&gpt->ents[i]) > last_usable) {
+			fdisk_warnx(cxt, _("Partition #%u out of range (maximal end is %"PRIu64" sectors)"),
+		                    i + 1, last_usable - 1ULL);
+			rc = -EINVAL;
+		}
+	}
+	return rc;
+}
+
+/**
+ * fdisk_gpt_set_npartitions:
+ * @cxt: context
+ * @entries: new size
+ *
+ * Elarge GPT entries array if possible. The function check if an existing
+ * partition does not overlap the entries array area. If yes, then it report
+ * warning and returns -EINVAL.
+ *
+ * Returns: 0 on success, < 0 on error.
+ * Since: 2.29
+ */
+int fdisk_gpt_set_npartitions(struct fdisk_context *cxt, uint32_t entries)
+{
+	struct fdisk_gpt_label *gpt;
+	size_t old_size, new_size;
+	uint32_t old;
+	struct gpt_entry *ents;
+	uint64_t first_usable, last_usable;
+	int rc;
+
+	assert(cxt);
+	assert(cxt->label);
+	assert(fdisk_is_label(cxt, GPT));
+
+	gpt = self_label(cxt);
+
+	old = le32_to_cpu(gpt->pheader->npartition_entries);
+	if (old == entries)
+		return 0;	/* do nothing, say nothing */
+
+	/* calculate the size (bytes) of the entries array */
+	new_size = entries * le32_to_cpu(gpt->pheader->sizeof_partition_entry);
+	old_size = old * le32_to_cpu(gpt->pheader->sizeof_partition_entry);
+
+	/* calculate new range of usable LBAs */
+	first_usable = (uint64_t) (new_size / cxt->sector_size) + 2ULL;
+	last_usable = cxt->total_sectors - 2ULL - (uint64_t) (new_size / cxt->sector_size);
+
+	/* if expanding the table, first check that everything fits,
+	 * then allocate more memory and zero. */
+	if (entries > old) {
+		rc = gpt_check_table_overlap(cxt, first_usable, last_usable);
+		if (rc)
+			return rc;
+		ents = realloc(gpt->ents, new_size);
+		if (!ents) {
+			fdisk_warnx(cxt, _("Cannot allocate memory!"));
+			return -ENOMEM;
+		}
+		memset(ents + old, 0, new_size - old_size);
+		gpt->ents = ents;
+	}
+
+	/* everything's ok, apply the new size */
+	gpt->pheader->npartition_entries = cpu_to_le32(entries);
+	gpt->bheader->npartition_entries = cpu_to_le32(entries);
+
+	/* usable LBA addresses will have changed */
+	fdisk_set_first_lba(cxt, first_usable);
+	fdisk_set_last_lba(cxt, last_usable);
+	gpt->pheader->first_usable_lba = cpu_to_le64(first_usable);
+	gpt->bheader->first_usable_lba = cpu_to_le64(first_usable);
+	gpt->pheader->last_usable_lba = cpu_to_le64(last_usable);
+	gpt->bheader->last_usable_lba = cpu_to_le64(last_usable);
+
+
+	/* The backup header must be recalculated */
+	gpt_mknew_header_common(cxt, gpt->bheader, le64_to_cpu(gpt->pheader->alternative_lba));
+
+	/* CRCs will have changed */
+	gpt_recompute_crc(gpt->pheader, gpt->ents);
+	gpt_recompute_crc(gpt->bheader, gpt->ents);
+
+	fdisk_info(cxt, _("Partition table length changed from %"PRIu32" to %"PRIu64"."), old, entries);
+
 	fdisk_label_set_changed(cxt->label, 1);
 	return 0;
 }

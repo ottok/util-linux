@@ -204,27 +204,28 @@ static int context_init_paths(struct libmnt_context *cxt, int writable)
 {
 	assert(cxt);
 
+#ifdef USE_LIBMOUNT_SUPPORT_MTAB
 	if (!cxt->mtab_path)
 		cxt->mtab_path = mnt_get_mtab_path();
+#endif
 	if (!cxt->utab_path)
 		cxt->utab_path = mnt_get_utab_path();
 
 	if (!writable)
 		return 0;		/* only paths wanted */
 	if (mnt_context_is_nomtab(cxt))
-		return 0;		/* write mode overrided by mount -n */
+		return 0;		/* write mode overridden by mount -n */
 	if (cxt->flags & MNT_FL_TABPATHS_CHECKED)
 		return 0;
 
 	DBG(CXT, ul_debugobj(cxt, "checking for writable tab files"));
 
-#ifdef USE_LIBMOUNT_FORCE_MOUNTINFO
 	cxt->mtab_writable = 0;
-#else
-	mnt_has_regular_mtab(&cxt->mtab_path, &cxt->mtab_writable);
-#endif
 
+#ifdef USE_LIBMOUNT_SUPPORT_MTAB
+	mnt_has_regular_mtab(&cxt->mtab_path, &cxt->mtab_writable);
 	if (!cxt->mtab_writable)
+#endif
 		/* use /run/mount/utab if /etc/mtab is useless */
 		mnt_has_regular_utab(&cxt->utab_path, &cxt->utab_writable);
 
@@ -348,7 +349,7 @@ int mnt_context_get_optsmode(struct libmnt_context *cxt)
  * canonicalizes paths when searching in fstab and when preparing source and target paths
  * for mount(2) syscall.
  *
- * This fuction has an effect on the private (within context) fstab instance only
+ * This function has an effect on the private (within context) fstab instance only
  * (see mnt_context_set_fstab()). If you want to use an external fstab then you
  * need to manage your private struct libmnt_cache (see mnt_table_set_cache(fstab,
  * NULL).
@@ -368,7 +369,7 @@ int mnt_context_disable_canonicalize(struct libmnt_context *cxt, int disable)
  */
 int mnt_context_is_nocanonicalize(struct libmnt_context *cxt)
 {
-	return cxt && (cxt->flags & MNT_FL_NOCANONICALIZE) ? 1 : 0;
+	return cxt->flags & MNT_FL_NOCANONICALIZE ? 1 : 0;
 }
 
 /**
@@ -685,7 +686,7 @@ int mnt_context_is_loopdel(struct libmnt_context *cxt)
  *
  * The mount context uses private @fs by default. This function allows to
  * overwrite the private @fs with an external instance. This function
- * increments @fs reference counter (and deincrement reference counter of the
+ * increments @fs reference counter (and decrement reference counter of the
  * old fs).
  *
  * The @fs will be modified by mnt_context_set_{source,target,options,fstype}
@@ -765,7 +766,7 @@ void *mnt_context_get_mtab_userdata(struct libmnt_context *cxt)
  * Note that libmount does not interpret "nofail" (MNT_MS_NOFAIL)
  * mount option. The real return code is always returned, when
  * the device does not exist then it's usually MNT_ERR_NOSOURCE
- * from libmount or ENOENT, ENOTDIR, ENOTBLK, ENXIO from moun(2).
+ * from libmount or ENOENT, ENOTDIR, ENOTBLK, ENXIO from mount(2).
  *
  * Returns: 0 on success, negative number in case of error.
  */
@@ -1023,6 +1024,10 @@ int mnt_context_get_mtab(struct libmnt_context *cxt, struct libmnt_table **tb)
 					cxt->table_fltrcb_data);
 
 		mnt_table_set_cache(cxt->mtab, mnt_context_get_cache(cxt));
+
+		/*
+		 * Note that mtab_path is NULL if mtab is useless or unsupported
+		 */
 		if (cxt->utab)
 			/* utab already parsed, don't parse it again */
 			rc = __mnt_table_parse_mtab(cxt->mtab,
@@ -1186,7 +1191,7 @@ int mnt_context_set_tables_errcb(struct libmnt_context *cxt,
 /**
  * mnt_context_set_cache:
  * @cxt: mount context
- * @cache: cache instance or nULL
+ * @cache: cache instance or NULL
  *
  * The mount context maintains a private struct libmnt_cache by default. This
  * function allows to overwrite the private cache with an external instance.
@@ -1243,7 +1248,7 @@ struct libmnt_cache *mnt_context_get_cache(struct libmnt_context *cxt)
  * mnt_context_set_passwd_cb:
  * @cxt: mount context
  * @get: callback to get password
- * @release: callback to release (delallocate) password
+ * @release: callback to release (deallocate) password
  *
  * Sets callbacks for encryption password (e.g encrypted loopdev). This
  * function is deprecated (encrypted loops are no longer supported).
@@ -1270,7 +1275,7 @@ int mnt_context_set_passwd_cb(struct libmnt_context *cxt,
  * interrupted by signal or signals have to be ignored when the lock is locked.
  *
  * The default behavior is to ignore all signals (except SIGALRM and
- * SIGTRAP for mtab udate) when the lock is locked. If this behavior
+ * SIGTRAP for mtab update) when the lock is locked. If this behavior
  * is unacceptable, then use:
  *
  *	lc = mnt_context_get_lock(cxt);
@@ -1344,7 +1349,7 @@ int mnt_context_set_mflags(struct libmnt_context *cxt, unsigned long flags)
  * @cxt: mount context
  * @flags: returns MS_* mount flags
  *
- * Converts mount options string to MS_* flags and bitewise-OR the result with
+ * Converts mount options string to MS_* flags and bitwise-OR the result with
  * the already defined flags (see mnt_context_set_mflags()).
  *
  * Returns: 0 on success, negative number in case of error.
@@ -1401,7 +1406,7 @@ int mnt_context_set_user_mflags(struct libmnt_context *cxt, unsigned long flags)
  * @cxt: mount context
  * @flags: returns mount flags
  *
- * Converts mount options string to MNT_MS_* flags and bitewise-OR the result
+ * Converts mount options string to MNT_MS_* flags and bitwise-OR the result
  * with the already defined flags (see mnt_context_set_user_mflags()).
  *
  * Returns: 0 on success, negative number in case of error.
@@ -2435,7 +2440,7 @@ static int test_mount(struct libmnt_test *ts, int argc, char *argv[])
 	}
 
 	if (argc == idx + 1)
-		/* mount <mountpont>|<device> */
+		/* mount <mountpoint>|<device> */
 		mnt_context_set_target(cxt, argv[idx++]);
 
 	else if (argc == idx + 2) {
@@ -2495,7 +2500,7 @@ static int test_umount(struct libmnt_test *ts, int argc, char *argv[])
 	}
 
 	if (argc == idx + 1) {
-		/* mount <mountpont>|<device> */
+		/* mount <mountpoint>|<device> */
 		mnt_context_set_target(cxt, argv[idx++]);
 	} else {
 		rc = -EINVAL;
@@ -2537,7 +2542,7 @@ static int test_flags(struct libmnt_test *ts, int argc, char *argv[])
 	}
 
 	if (argc == idx + 1)
-		/* mount <mountpont>|<device> */
+		/* mount <mountpoint>|<device> */
 		mnt_context_set_target(cxt, argv[idx++]);
 
 	rc = mnt_context_prepare_mount(cxt);

@@ -68,7 +68,6 @@ wchar_t *buf;
 
 static void sig_handler(int signo __attribute__ ((__unused__)))
 {
-	free(buf);
 	_exit(EXIT_SUCCESS);
 }
 
@@ -149,6 +148,9 @@ int main(int argc, char *argv[])
 
 		while (fgetws(buf, bufsiz, fp)) {
 			len = wcslen(buf);
+
+			if (len == 0)
+				continue;
 
 			/* This is my hack from setpwnam.c -janl */
 			while (buf[len-1] != '\n' && !feof(fp)) {

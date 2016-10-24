@@ -65,7 +65,7 @@
  *
  * @SBMAGIC_OFFSET: offset of SBMAGIC
  *
- * @FSSIZE: size of filessystem [not-implemented yet]
+ * @FSSIZE: size of filesystem [not-implemented yet]
  *
  * @SYSTEM_ID: ISO9660 system identifier
  *
@@ -185,8 +185,6 @@ const struct blkid_chaindrv superblocks_drv = {
  */
 int blkid_probe_enable_superblocks(blkid_probe pr, int enable)
 {
-	if (!pr)
-		return -1;
 	pr->chains[BLKID_CHAIN_SUBLKS].enabled = enable;
 	return 0;
 }
@@ -203,9 +201,6 @@ int blkid_probe_enable_superblocks(blkid_probe pr, int enable)
  */
 int blkid_probe_set_superblocks_flags(blkid_probe pr, int flags)
 {
-	if (!pr)
-		return -1;
-
 	pr->chains[BLKID_CHAIN_SUBLKS].flags = flags;
 	return 0;
 }
@@ -294,14 +289,11 @@ int blkid_probe_filter_superblocks_usage(blkid_probe pr, int flag, int usage)
  * blkid_known_fstype:
  * @fstype: filesystem name
  *
- * Returns: 1 for known filesytems, or 0 for unknown filesystem.
+ * Returns: 1 for known filesystems, or 0 for unknown filesystem.
  */
 int blkid_known_fstype(const char *fstype)
 {
 	size_t i;
-
-	if (!fstype)
-		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(idinfos); i++) {
 		const struct blkid_idinfo *id = idinfos[i];
@@ -339,7 +331,7 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 	size_t i;
 	int rc = BLKID_PROBE_NONE;
 
-	if (!pr || chn->idx < -1)
+	if (chn->idx < -1)
 		return -EINVAL;
 
 	blkid_probe_chain_reset_values(pr, chn);
@@ -410,7 +402,7 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 			}
 		}
 
-		/* all cheks passed */
+		/* all checks passed */
 		if (chn->flags & BLKID_SUBLKS_TYPE)
 			rc = blkid_probe_set_value(pr, "TYPE",
 				(unsigned char *) id->name,
@@ -440,7 +432,7 @@ static int superblocks_probe(blkid_probe pr, struct blkid_chain *chn)
 
 /*
  * This is the same function as blkid_do_probe(), but returns only one result
- * (cannot be used in while()) and checks for ambivalen results (more
+ * (cannot be used in while()) and checks for ambivalent results (more
  * filesystems on the device) -- in such case returns -2.
  *
  * The function does not check for filesystems when a RAID or crypto signature
@@ -509,7 +501,7 @@ static int superblocks_safeprobe(blkid_probe pr, struct blkid_chain *chn)
 
 	/*
 	 * The RAID device could be partitioned. The problem are RAID1 devices
-	 * where the partition table is visible from underlaying devices. We
+	 * where the partition table is visible from underlying devices. We
 	 * have to ignore such partition tables.
 	 */
 	if (chn->idx >= 0 && idinfos[chn->idx]->usage & BLKID_USAGE_RAID)
@@ -713,7 +705,7 @@ int blkid_probe_sprintf_uuid(blkid_probe pr, unsigned char *uuid,
 	return rc;
 }
 
-/* function to set UUIDs that are in suberblocks stored as strings */
+/* function to set UUIDs that are in superblocks stored as strings */
 int blkid_probe_strncpy_uuid(blkid_probe pr, unsigned char *str, size_t len)
 {
 	struct blkid_chain *chn = blkid_probe_get_chain(pr);

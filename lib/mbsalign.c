@@ -30,7 +30,6 @@
 #include "strutils.h"
 #include "widechar.h"
 
-#ifdef HAVE_WIDECHAR
 /* Replace non printable chars.
    Note \t and \n etc. are non printable.
    Return 1 if replacement made, 0 otherwise.  */
@@ -44,12 +43,13 @@
  */
 size_t mbs_safe_nwidth(const char *buf, size_t bufsz, size_t *sz)
 {
-	mbstate_t st;
 	const char *p = buf, *last = buf;
 	size_t width = 0, bytes = 0;
 
+#ifdef HAVE_WIDECHAR
+	mbstate_t st;
 	memset(&st, 0, sizeof(st));
-
+#endif
 	if (p && *p && bufsz)
 		last = p + (bufsz - 1);
 
@@ -107,27 +107,34 @@ size_t mbs_safe_width(const char *s)
 
 /*
  * Copy @s to @buf and replace control and non-printable chars with
- * \x?? hex sequence. The @width returns number of cells.
+ * \x?? hex sequence. The @width returns number of cells. The @safechars
+ * are not encoded.
  *
  * The @buf has to be big enough to store mbs_safe_encode_size(strlen(s)))
  * bytes.
  */
-char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf)
+char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf, const char *safechars)
 {
-	mbstate_t st;
 	const char *p = s;
 	char *r;
 	size_t sz = s ? strlen(s) : 0;
 
+#ifdef HAVE_WIDECHAR
+	mbstate_t st;
+	memset(&st, 0, sizeof(st));
+#endif
 	if (!sz || !buf)
 		return NULL;
-
-	memset(&st, 0, sizeof(st));
 
 	r = buf;
 	*width = 0;
 
 	while (p && *p) {
+		if (safechars && strchr(safechars, *p)) {
+			*r++ = *p++;
+			continue;
+		}
+
 		if (iscntrl((unsigned char) *p)) {
 			sprintf(r, "\\x%02x", (unsigned char) *p);
 			r += 4;
@@ -153,7 +160,7 @@ char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf)
 					r += 4;
 					*width += 4;
 				} else {
-					width++;
+					(*width)++;
 					*r++ = *p;
 				}
 			} else if (!iswprint(wc)) {
@@ -178,13 +185,12 @@ char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf)
 			*width += 4;
 		} else {
 			*r++ = *p++;
-			*width++;
+			(*width)++;
 		}
 #endif
 	}
 
 	*r = '\0';
-
 	return buf;
 }
 
@@ -200,16 +206,19 @@ size_t mbs_safe_encode_size(size_t bytes)
 char *mbs_safe_encode(const char *s, size_t *width)
 {
 	size_t sz = s ? strlen(s) : 0;
-	char *buf;
+	char *buf, *ret = NULL;;
 
 	if (!sz)
 		return NULL;
 	buf = malloc(mbs_safe_encode_size(sz));
-	if (!buf)
-		return NULL;
-
-	return mbs_safe_encode_to_buffer(s, width, buf);
+	if (buf)
+		ret = mbs_safe_encode_to_buffer(s, width, buf, NULL);
+	if (!ret)
+		free(buf);
+	return ret;
 }
+
+#ifdef HAVE_WIDECHAR
 
 static bool
 wc_ensure_printable (wchar_t *wchars)
@@ -275,7 +284,7 @@ rpl_wcswidth (const wchar_t *s, size_t n)
 
   return ret;
 }
-#endif
+#endif /* HAVE_WIDECHAR */
 
 /* Truncate multi-byte string to @width and returns number of
  * bytes of the new string @str, and in @width returns number
@@ -349,7 +358,12 @@ mbsalign (const char *src, char *dest, size_t dest_size,
 
 size_t
 mbsalign_with_padding (const char *src, char *dest, size_t dest_size,
-	               size_t *width, mbs_align_t align, int flags,
+	               size_t *width, mbs_align_t align,
+#ifdef HAVE_WIDECHAR
+		       int flags,
+#else
+		       int flags __attribute__((__unused__)),
+#endif
 		       int padchar)
 {
   size_t ret = -1;

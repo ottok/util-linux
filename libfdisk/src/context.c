@@ -47,6 +47,8 @@ struct fdisk_context *fdisk_new_context(void)
 	cxt->dev_fd = -1;
 	cxt->refcount = 1;
 
+	INIT_LIST_HEAD(&cxt->wipes);
+
 	/*
 	 * Allocate label specific structs.
 	 *
@@ -111,6 +113,8 @@ static int init_nested_from_parent(struct fdisk_context *cxt, int isnew)
 		if (!cxt->dev_path)
 			return -ENOMEM;
 	}
+
+	INIT_LIST_HEAD(&cxt->wipes);
 
 	return 0;
 }
@@ -202,7 +206,7 @@ void fdisk_ref_context(struct fdisk_context *cxt)
  * If no @name specified then returns the current context label.
  *
  * The label is allocated and maintained within the context #cxt. There is
- * nothing like reference counting for labels, you cannot delallocate the
+ * nothing like reference counting for labels, you cannot deallocate the
  * label.
  *
  * Returns: label struct or NULL in case of error.
@@ -339,9 +343,15 @@ int fdisk_enable_bootbits_protection(struct fdisk_context *cxt, int enable)
  * @cxt: fdisk context
  * @enable: 1 or 0
  *
- * The library removes all filesystem/RAID signatures before write PT. This is
- * no-op if any collision has not been detected by fdisk_assign_device(). See
- * fdisk_has_collision(). The default is not wipe a device.
+ * The library removes all filesystem/RAID signatures before it writes
+ * partition table. The probing area where it looks for filesystem/RAID is from
+ * the begin of the disk. The device is wiped by libblkid.
+ *
+ * See also fdisk_wipe_partition().
+ *
+ * This is no-op if any collision has not been detected by
+ * fdisk_assign_device(). See fdisk_has_collision(). The default is not wipe a
+ * device.
  *
  * Returns: 0 on success, < 0 on error.
  */
@@ -349,7 +359,8 @@ int fdisk_enable_wipe(struct fdisk_context *cxt, int enable)
 {
 	if (!cxt)
 		return -EINVAL;
-	cxt->wipe_device = enable ? 1 : 0;
+
+	fdisk_set_wipe_area(cxt, 0, cxt->total_sectors * cxt->sector_size, enable);
 	return 0;
 }
 
@@ -363,7 +374,10 @@ int fdisk_enable_wipe(struct fdisk_context *cxt, int enable)
  */
 int fdisk_has_wipe(struct fdisk_context *cxt)
 {
-	return cxt && cxt->wipe_device;
+	if (!cxt)
+		return 0;
+
+	return fdisk_has_wipe_area(cxt, 0, cxt->total_sectors * cxt->sector_size);
 }
 
 
@@ -484,6 +498,8 @@ static void reset_context(struct fdisk_context *cxt)
 	cxt->script = NULL;
 
 	cxt->label = NULL;
+
+	fdisk_free_wipe_areas(cxt);
 }
 
 /*
@@ -533,37 +549,6 @@ static int check_collisions(struct fdisk_context *cxt)
 #else
 	return 0;
 #endif
-}
-
-int fdisk_wipe_collisions(struct fdisk_context *cxt)
-{
-#ifdef HAVE_LIBBLKID
-	blkid_probe pr;
-	int rc;
-
-	assert(cxt);
-	assert(cxt->dev_fd >= 0);
-
-	DBG(CXT, ul_debugobj(cxt, "wipe: initialize libblkid prober"));
-
-	pr = blkid_new_probe();
-	if (!pr)
-		return -ENOMEM;
-	rc = blkid_probe_set_device(pr, cxt->dev_fd, 0, 0);
-	if (rc)
-		return rc;
-
-	blkid_probe_enable_superblocks(pr, 1);
-	blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_MAGIC);
-	blkid_probe_enable_partitions(pr, 1);
-	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_MAGIC);
-
-	while (blkid_do_probe(pr) == 0)
-		blkid_do_wipe(pr, FALSE);
-
-	blkid_free_probe(pr);
-#endif
-	return 0;
 }
 
 /**
@@ -628,7 +613,7 @@ int fdisk_assign_device(struct fdisk_context *cxt,
 	if (fdisk_read_firstsector(cxt) < 0)
 		goto fail;
 
-	/* detect labels and apply labes specific stuff (e.g geomery)
+	/* detect labels and apply labels specific stuff (e.g geometry)
 	 * to the context */
 	fdisk_probe_labels(cxt);
 
@@ -747,7 +732,7 @@ void fdisk_unref_context(struct fdisk_context *cxt)
 /**
  * fdisk_enable_details:
  * @cxt: context
- * @enable: true/flase
+ * @enable: true/false
  *
  * Enables or disables "details" display mode. This function has effect to
  * fdisk_partition_to_string() function.
@@ -776,7 +761,7 @@ int fdisk_is_details(struct fdisk_context *cxt)
 /**
  * fdisk_enable_listonly:
  * @cxt: context
- * @enable: true/flase
+ * @enable: true/false
  *
  * Just list partition only, don't care about another details, mistakes, ...
  *
@@ -810,7 +795,7 @@ int fdisk_is_listonly(struct fdisk_context *cxt)
  * This is pure shit, unfortunately for example Sun addresses begin of the
  * partition by cylinders...
  *
- * Returns: 0 on succes, <0 on error.
+ * Returns: 0 on success, <0 on error.
  */
 int fdisk_set_unit(struct fdisk_context *cxt, const char *str)
 {
@@ -976,7 +961,7 @@ fdisk_sector_t fdisk_get_first_lba(struct fdisk_context *cxt)
  * @lba: first possible logical sector for data
  *
  * It's strongly recommended to use the default library setting. The first LBA
- * is always reseted by fdisk_assign_device(), fdisk_override_geometry()
+ * is always reset by fdisk_assign_device(), fdisk_override_geometry()
  * and fdisk_reset_alignment(). This is very low level function and library
  * does not check if your setting makes any sense.
  *
@@ -1014,7 +999,7 @@ fdisk_sector_t fdisk_get_last_lba(struct fdisk_context *cxt)
  * @lba: last possible logical sector
  *
  * It's strongly recommended to use the default library setting. The last LBA
- * is always reseted by fdisk_assign_device(), fdisk_override_geometry() and
+ * is always reset by fdisk_assign_device(), fdisk_override_geometry() and
  * fdisk_reset_alignment().
  *
  * The default is number of sectors on the device, but maybe modified by the
@@ -1091,7 +1076,7 @@ const char *fdisk_get_devname(struct fdisk_context *cxt)
  * fdisk_get_devfd:
  * @cxt: context
  *
- * Retruns: device file descriptor.
+ * Returns: device file descriptor.
  */
 int fdisk_get_devfd(struct fdisk_context *cxt)
 {

@@ -6,7 +6,7 @@
  */
 
 /*
- * 09.11.91  -  made the first rudimetary functions
+ * 09.11.91  -  made the first rudimentary functions
  *
  * 10.11.91  -  updated, does checking, no repairs yet.
  *		Sent out to the mailing-list for testing.
@@ -22,7 +22,7 @@
  *
  *
  * 19.04.92  -	Had to start over again from this old version, as a
- *		kernel bug ate my enhanced fsck in february.
+ *		kernel bug ate my enhanced fsck in February.
  *
  * 28.02.93  -	added support for different directory entry sizes..
  *
@@ -106,7 +106,7 @@
 #define ROOT_INO 1
 #define YESNO_LENGTH 64
 
-/* Global variables used in minix_programs.h inline fuctions */
+/* Global variables used in minix_programs.h inline functions */
 int fs_version = 1;
 char *super_block_buffer;
 
@@ -294,6 +294,16 @@ check_mount(void) {
 		exit(FSCK_EX_OK);
 	}
 	return;
+}
+
+
+static int is_valid_zone_nr(unsigned short nr)
+{
+	if (nr < get_first_zone())
+		return 0;
+	else if (nr >= get_nzones())
+		return 0;
+	return 1;
 }
 
 /* check_zone_nr checks to see that *nr is a valid zone nr.  If it isn't, it
@@ -573,8 +583,12 @@ read_superblock(void) {
 		die(_("bad magic number in super-block"));
 	if (get_zone_size() != 0 || MINIX_BLOCK_SIZE != 1024)
 		die(_("Only 1k blocks/zones supported"));
+	if (get_ninodes() == 0 || get_ninodes() == UINT32_MAX)
+		die(_("bad s_ninodes field in super-block"));
 	if (get_nimaps() * MINIX_BLOCK_SIZE * 8 < get_ninodes() + 1)
 		die(_("bad s_imap_blocks field in super-block"));
+	if (get_first_zone() > (off_t) get_nzones())
+		die(_("bad s_firstdatazone field in super-block"));
 	if (get_nzmaps() * MINIX_BLOCK_SIZE * 8 <
 	    get_nzones() - get_first_zone() + 1)
 		die(_("bad s_zmap_blocks field in super-block"));
@@ -1083,6 +1097,12 @@ recursive_check(unsigned int ino) {
 		printf(_("%s: bad directory: size < 32"), current_name);
 		errors_uncorrected = 1;
 	}
+
+	if ((!repair || automatic) && !is_valid_zone_nr(*dir->i_zone)) {
+		get_current_name();
+		printf(_("%s: bad directory: invalid i_zone, use --repair to fix\n"), current_name);
+		return;
+	}
 	for (offset = 0; offset < dir->i_size; offset += dirsize)
 		check_file(dir, offset);
 }
@@ -1313,10 +1333,9 @@ main(int argc, char **argv) {
 		usage(stderr);
 
 	check_mount();		/* trying to check a mounted filesystem? */
-	if (repair && !automatic) {
-		if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
-			die(_("need terminal for interactive repairs"));
-	}
+	if (repair && !automatic && (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)))
+		die(_("need terminal for interactive repairs"));
+
 	device_fd = open(device_name, repair ? O_RDWR : O_RDONLY);
 	if (device_fd < 0)
 		die(_("cannot open %s: %s"), device_name, strerror(errno));

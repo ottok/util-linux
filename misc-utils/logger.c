@@ -130,7 +130,7 @@ struct logger_ctl {
 	unsigned int
 			unix_socket_errors:1,	/* whether to report or not errors */
 			noact:1,		/* do not write to sockets */
-			prio_prefix:1,		/* read priority from intput */
+			prio_prefix:1,		/* read priority from input */
 			stderr_printout:1,	/* output message to stderr */
 			rfc5424_time:1,		/* include time stamp */
 			rfc5424_tq:1,		/* include time quality markup */
@@ -341,13 +341,10 @@ static int journald_entry(struct logger_ctl *ctl, FILE *fp)
 	for (lines = 0; /* nothing */ ; lines++) {
 		buf = NULL;
 		sz = getline(&buf, &dummy, fp);
-		if (sz == -1) {
+		if (sz == -1 ||
+		   (sz = rtrim_whitespace((unsigned char *) buf)) == 0) {
 			free(buf);
 			break;
-		}
-		if (0 < sz && buf[sz - 1] == '\n') {
-			sz--;
-			buf[sz] = '\0';
 		}
 		if (lines == vectors) {
 			vectors *= 2;
@@ -768,7 +765,7 @@ static void syslog_rfc5424_header(struct logger_ctl *const ctl)
 
 	sd = get_reserved_structured_data(ctl);
 
-	/* time quality structured data (maybe overwriten by --sd-id timeQuality) */
+	/* time quality structured data (maybe overwritten by --sd-id timeQuality) */
 	if (ctl->rfc5424_tq && !has_structured_data_id(sd, "timeQuality")) {
 
 		add_structured_data_id(sd, "timeQuality");
@@ -807,11 +804,11 @@ static void syslog_rfc5424_header(struct logger_ctl *const ctl)
 	free(structured);
 }
 
-static void parse_rfc5424_flags(struct logger_ctl *ctl, char *optarg)
+static void parse_rfc5424_flags(struct logger_ctl *ctl, char *s)
 {
 	char *in, *tok;
 
-	in = optarg;
+	in = s;
 	while ((tok = strtok(in, ","))) {
 		in = NULL;
 		if (!strcmp(tok, "notime")) {
@@ -826,15 +823,15 @@ static void parse_rfc5424_flags(struct logger_ctl *ctl, char *optarg)
 	}
 }
 
-static int parse_unix_socket_errors_flags(char *optarg)
+static int parse_unix_socket_errors_flags(char *s)
 {
-	if (!strcmp(optarg, "off"))
+	if (!strcmp(s, "off"))
 		return AF_UNIX_ERRORS_OFF;
-	if (!strcmp(optarg, "on"))
+	if (!strcmp(s, "on"))
 		return AF_UNIX_ERRORS_ON;
-	if (!strcmp(optarg, "auto"))
+	if (!strcmp(s, "auto"))
 		return AF_UNIX_ERRORS_AUTO;
-	warnx(_("invalid argument: %s: using automatic errors"), optarg);
+	warnx(_("invalid argument: %s: using automatic errors"), s);
 	return AF_UNIX_ERRORS_AUTO;
 }
 
@@ -927,32 +924,32 @@ static void logger_stdin(struct logger_ctl *ctl)
 	c = getchar();
 	while (c != EOF) {
 		i = 0;
-		if (ctl->prio_prefix) {
-			if (c == '<') {
-				pri = 0;
+		if (ctl->prio_prefix && c == '<') {
+			pri = 0;
+			buf[i++] = c;
+			while (isdigit(c = getchar()) && pri <= 191) {
 				buf[i++] = c;
-				while (isdigit(c = getchar()) && pri <= 191) {
-					buf[i++] = c;
-					pri = pri * 10 + c - '0';
-				}
-				if (c != EOF && c != '\n')
-					buf[i++] = c;
-				if (c == '>' && 0 <= pri && pri <= 191) { /* valid RFC PRI values */
-					i = 0;
-					if (pri < 8)
-						pri |= 8; /* kern facility is forbidden */
-					ctl->pri = pri;
-				} else
-					ctl->pri = default_priority;
-
-				if (ctl->pri != last_pri) {
-					has_header = 0;
-					max_usrmsg_size = ctl->max_message_size - strlen(ctl->hdr);
-					last_pri = ctl->pri;
-				}
-				if (c != EOF && c != '\n')
-					c = getchar();
+				pri = pri * 10 + c - '0';
 			}
+			if (c != EOF && c != '\n')
+				buf[i++] = c;
+			if (c == '>' && 0 <= pri && pri <= 191) {
+				/* valid RFC PRI values */
+				i = 0;
+				if (pri < 8)	/* kern facility is forbidden */
+					pri |= 8;
+				ctl->pri = pri;
+			} else
+				ctl->pri = default_priority;
+
+			if (ctl->pri != last_pri) {
+				has_header = 0;
+				max_usrmsg_size =
+				    ctl->max_message_size - strlen(ctl->hdr);
+				last_pri = ctl->pri;
+			}
+			if (c != EOF && c != '\n')
+				c = getchar();
 		}
 
 		while (c != EOF && c != '\n' && i < max_usrmsg_size) {

@@ -54,6 +54,7 @@
 #define GETOPT_EXIT_CODE	1
 #define PARAMETER_EXIT_CODE	2
 #define XALLOC_EXIT_CODE	3
+#define CLOSE_EXIT_CODE		XALLOC_EXIT_CODE
 #define TEST_EXIT_CODE		4
 
 #include <stdio.h>
@@ -82,6 +83,7 @@ typedef enum { BASH, TCSH } shell_t;
 struct getopt_control {
 	shell_t shell;			/* the shell we generate output for */
 	char *optstr;			/* getopt(3) optstring */
+	char *name;
 	struct option *long_options;	/* long options */
 	int long_options_length;	/* length of options array */
 	int long_options_nr;		/* number of used elements in array */
@@ -181,7 +183,7 @@ static void print_normalized(const struct getopt_control *ctl, const char *arg)
  * optstr must contain the short options, and longopts the long options.
  * Other settings are found in global variables.
  */
-static int generate_output(const struct getopt_control *ctl, char *argv[], int argc)
+static int generate_output(struct getopt_control *ctl, char *argv[], int argc)
 {
 	int exit_code = EXIT_SUCCESS;	/* Assume everything will be OK */
 	int opt;
@@ -195,8 +197,10 @@ static int generate_output(const struct getopt_control *ctl, char *argv[], int a
 	optind = 0;
 
 	while ((opt =
-		(getopt_long_fp(argc, argv, ctl->optstr, ctl->long_options, &longindex)))
-	       != EOF)
+		(getopt_long_fp
+		 (argc, argv, ctl->optstr,
+		  (const struct option *)ctl->long_options, &longindex)))
+	       != EOF) {
 		if (opt == '?' || opt == ':')
 			exit_code = GETOPT_EXIT_CODE;
 		else if (!ctl->quiet_output) {
@@ -216,13 +220,18 @@ static int generate_output(const struct getopt_control *ctl, char *argv[], int a
 					print_normalized(ctl, optarg ? optarg : "");
 			}
 		}
-
+	}
 	if (!ctl->quiet_output) {
 		printf(" --");
 		while (optind < argc)
 			print_normalized(ctl, argv[optind++]);
 		printf("\n");
 	}
+	for (longindex = 0; longindex < ctl->long_options_nr; longindex++)
+		free((char *)ctl->long_options[longindex].name);
+	free(ctl->long_options);
+	free(ctl->optstr);
+	free(ctl->name);
 	return exit_code;
 }
 
@@ -348,7 +357,6 @@ int main(int argc, char *argv[])
 		.shell = BASH,
 		.quote = 1
 	};
-	char *name = NULL;
 	int opt;
 
 	/* Stop scanning as soon as a non-option argument is found! */
@@ -373,9 +381,6 @@ int main(int argc, char *argv[])
 	textdomain(PACKAGE);
 	atexit(close_stdout);
 
-	add_longopt(&ctl, NULL, 0);	/* init */
-	getopt_long_fp = getopt_long;
-
 	if (getenv("GETOPT_COMPATIBLE"))
 		ctl.compatible = 1;
 
@@ -390,6 +395,9 @@ int main(int argc, char *argv[])
 		} else
 			parse_error(_("missing optstring argument"));
 	}
+
+	add_longopt(&ctl, NULL, 0);	/* init */
+	getopt_long_fp = getopt_long;
 
 	if (argv[1][0] != '-' || ctl.compatible) {
 		ctl.quote = 0;
@@ -415,8 +423,8 @@ int main(int argc, char *argv[])
 			add_long_options(&ctl, optarg);
 			break;
 		case 'n':
-			free(name);
-			name = xstrdup(optarg);
+			free(ctl.name);
+			ctl.name = xstrdup(optarg);
 			break;
 		case 'q':
 			ctl.quiet_errors = 1;
@@ -428,6 +436,7 @@ int main(int argc, char *argv[])
 			ctl.shell = shell_type(optarg);
 			break;
 		case 'T':
+			free(ctl.long_options);
 			return TEST_EXIT_CODE;
 		case 'u':
 			ctl.quote = 0;
@@ -451,10 +460,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (name) {
-		argv[optind - 1] = name;
+	if (ctl.name) {
+		argv[optind - 1] = ctl.name;
 #if defined (HAVE_SETPROGNAME) && !defined (__linux__)
-		setprogname(name);
+		setprogname(ctl.name);
 #endif
 	} else
 		argv[optind - 1] = argv[0];

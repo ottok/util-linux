@@ -113,7 +113,6 @@ local:
 	*;
 };
 
-
 SMARTCOLS_2.27 {
 global:
 	scols_column_is_hidden;
@@ -136,3 +135,25 @@ global:
 	scols_table_print_range_to_string;
 	scols_table_enable_nolinesep;
 } SMARTCOLS_2.27;
+
+SMARTCOLS_2.29 {
+global:
+	scols_column_get_safechars;
+	scols_column_get_table;
+	scols_column_get_width;
+	scols_column_is_customwrap;
+	scols_column_set_safechars;
+	scols_column_set_wrapfunc;
+	scols_symbols_set_cell_padding;
+	scols_table_get_name;
+	scols_table_get_symbols;
+	scols_table_get_termforce;
+	scols_table_get_termwidth;
+	scols_table_is_nolinesep;
+	scols_table_is_nowrap;
+	scols_table_set_default_symbols;
+	scols_table_set_termforce;
+	scols_table_set_termwidth;
+	scols_wrapnl_chunksize;
+	scols_wrapnl_nextchunk;
+} SMARTCOLS_2.28;

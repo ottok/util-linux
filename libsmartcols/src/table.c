@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010-2014 Karel Zak <kzak@redhat.com>
  * Copyright (C) 2014 Ondrej Oprala <ooprala@redhat.com>
- * Copytight (C) 2016 Igor Gnatenko <i.gnatenko.brain@gmail.com>
+ * Copyright (C) 2016 Igor Gnatenko <i.gnatenko.brain@gmail.com>
  *
  * This file may be redistributed under the terms of the
  * GNU Lesser General Public License.
@@ -25,7 +25,7 @@
 #include <ctype.h>
 
 #include "nls.h"
-#include "widechar.h"
+#include "ttyutils.h"
 #include "smartcolsP.h"
 
 #ifdef HAVE_WIDECHAR
@@ -38,6 +38,20 @@
 #define is_last_column(_tb, _cl) \
 		list_entry_is_last(&(_cl)->cl_columns, &(_tb)->tb_columns)
 
+
+static void check_padding_debug(struct libscols_table *tb)
+{
+	const char *str;
+
+	assert(libsmartcols_debug_mask);	/* debug has to be enabled! */
+
+	str = getenv("LIBSMARTCOLS_DEBUG_PADDING");
+	if (!str || (strcmp(str, "on") != 0 && strcmp(str, "1") != 0))
+		return;
+
+	DBG(INIT, ul_debugobj(tb, "padding debug: ENABLE"));
+	tb->padding_debug = 1;
+}
 
 /**
  * scols_new_table:
@@ -54,11 +68,14 @@ struct libscols_table *scols_new_table(void)
 
 	tb->refcount = 1;
 	tb->out = stdout;
+	tb->termwidth = get_terminal_width(80);
 
 	INIT_LIST_HEAD(&tb->tb_lines);
 	INIT_LIST_HEAD(&tb->tb_columns);
 
 	DBG(TAB, ul_debugobj(tb, "alloc"));
+	ON_DBG(INIT, check_padding_debug(tb));
+
 	return tb;
 }
 
@@ -96,7 +113,6 @@ void scols_unref_table(struct libscols_table *tb)
 	}
 }
 
-
 /**
  * scols_table_set_name:
  * @tb: a pointer to a struct libscols_table instance
@@ -110,24 +126,29 @@ void scols_unref_table(struct libscols_table *tb)
  */
 int scols_table_set_name(struct libscols_table *tb, const char *name)
 {
-	char *p = NULL;
+	return strdup_to_struct_member(tb, name, name);
+}
 
-	if (!tb)
-		return -EINVAL;
-
-	if (name) {
-		p = strdup(name);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(tb->name);
-	tb->name = p;
-	return 0;
+/**
+ * scols_table_get_name:
+ * @tb: a pointer to a struct libscols_table instance
+ *
+ * Returns: The current name setting of the table @tb
+ *
+ * Since: 2.29
+ */
+const char *scols_table_get_name(const struct libscols_table *tb)
+{
+	return tb->name;
 }
 
 /**
  * scols_table_get_title:
  * @tb: a pointer to a struct libscols_table instance
+ *
+ * The returned pointer is possible to modify by cell functions. Note that
+ * title output alignment on non-tty is hardcoded to 80 output chars. For the
+ * regular terminal it's based on terminal width.
  *
  * Returns: Title of the table, or %NULL in case of blank title.
  *
@@ -218,7 +239,6 @@ int scols_table_remove_columns(struct libscols_table *tb)
 	}
 	return 0;
 }
-
 
 /**
  * scols_table_new_column:
@@ -323,27 +343,26 @@ int scols_table_next_column(struct libscols_table *tb,
 	return rc;
 }
 
-
 /**
  * scols_table_get_ncols:
  * @tb: table
  *
- * Returns: the ncols table member, a negative number in case of an error.
+ * Returns: the ncols table member.
  */
-int scols_table_get_ncols(struct libscols_table *tb)
+size_t scols_table_get_ncols(const struct libscols_table *tb)
 {
-	return tb ? (int)tb->ncols : -EINVAL;
+	return tb->ncols;
 }
 
 /**
  * scols_table_get_nlines:
  * @tb: table
  *
- * Returns: the nlines table member, a negative number in case of an error.
+ * Returns: the nlines table member.
  */
-int scols_table_get_nlines(struct libscols_table *tb)
+size_t scols_table_get_nlines(const struct libscols_table *tb)
 {
-	return tb ? (int)tb->nlines : -EINVAL;
+	return tb->nlines;
 }
 
 /**
@@ -374,9 +393,9 @@ int scols_table_set_stream(struct libscols_table *tb, FILE *stream)
  *
  * Returns: stream pointer, NULL in case of an error or an unset stream.
  */
-FILE *scols_table_get_stream(struct libscols_table *tb)
+FILE *scols_table_get_stream(const struct libscols_table *tb)
 {
-	return tb ? tb->out: NULL;
+	return tb->out;
 }
 
 /**
@@ -387,7 +406,7 @@ FILE *scols_table_get_stream(struct libscols_table *tb)
  * If necessary then libsmartcols use all terminal width, the @reduce setting
  * provides extra space (for example for borders in ncurses applications).
  *
- * The @reduce must be smaller than terminal width, otherwise it's sillently
+ * The @reduce must be smaller than terminal width, otherwise it's silently
  * ignored. The reduction is not applied when STDOUT_FILENO is not terminal.
  *
  * Returns: 0, a negative value in case of an error.
@@ -440,7 +459,7 @@ struct libscols_column *scols_table_get_column(struct libscols_table *tb,
  */
 int scols_table_add_line(struct libscols_table *tb, struct libscols_line *ln)
 {
-	if (!tb || !ln)
+	if (!tb || !ln || tb->ncols == 0)
 		return -EINVAL;
 
 	if (tb->ncols > ln->ncells) {
@@ -487,7 +506,6 @@ int scols_table_remove_line(struct libscols_table *tb,
  */
 void scols_table_remove_lines(struct libscols_table *tb)
 {
-	assert(tb);
 	if (!tb)
 		return;
 
@@ -662,14 +680,64 @@ err:
 }
 
 /**
+ * scols_table_set_default_symbols:
+ * @tb: table
+ *
+ * The library check the current environment to select ASCII or UTF8 symbols.
+ * This default behavior could be controlled by scols_table_enable_ascii().
+ *
+ * Use scols_table_set_symbols() to unset symbols or use your own setting.
+ *
+ * Returns: 0, a negative value in case of an error.
+ *
+ * Since: 2.29
+ */
+int scols_table_set_default_symbols(struct libscols_table *tb)
+{
+	struct libscols_symbols *sy;
+	int rc;
+
+	if (!tb)
+		return -EINVAL;
+
+	DBG(TAB, ul_debugobj(tb, "setting default symbols"));
+
+	sy = scols_new_symbols();
+	if (!sy)
+		return -ENOMEM;
+
+#if defined(HAVE_WIDECHAR)
+	if (!scols_table_is_ascii(tb) &&
+	    !strcmp(nl_langinfo(CODESET), "UTF-8")) {
+		scols_symbols_set_branch(sy, UTF_VR UTF_H);
+		scols_symbols_set_vertical(sy, UTF_V " ");
+		scols_symbols_set_right(sy, UTF_UR UTF_H);
+	} else
+#endif
+	{
+		scols_symbols_set_branch(sy, "|-");
+		scols_symbols_set_vertical(sy, "| ");
+		scols_symbols_set_right(sy, "`-");
+	}
+	scols_symbols_set_title_padding(sy, " ");
+	scols_symbols_set_cell_padding(sy, " ");
+
+	rc = scols_table_set_symbols(tb, sy);
+	scols_unref_symbols(sy);
+	return rc;
+}
+
+
+/**
  * scols_table_set_symbols:
  * @tb: table
  * @sy: symbols or NULL
  *
  * Add a reference to @sy from the table. The symbols are used by library to
- * draw tree output. If no symbols are specified then library checks the
- * current environment to select ASCII or UTF8 symbols. This default behavior
- * could be controlled by scols_table_enable_ascii().
+ * draw tree output. If no symbols are used for the table then library creates
+ * default temporary symbols to draw output by scols_table_set_default_symbols().
+ *
+ * If @sy is NULL then remove reference from the currenly uses symbols.
  *
  * Returns: 0, a negative value in case of an error.
  */
@@ -679,42 +747,41 @@ int scols_table_set_symbols(struct libscols_table *tb,
 	if (!tb)
 		return -EINVAL;
 
-	DBG(TAB, ul_debugobj(tb, "setting alternative symbols %p", sy));
-
-	if (tb->symbols)				/* unref old */
+	/* remove old */
+	if (tb->symbols) {
+		DBG(TAB, ul_debugobj(tb, "remove symbols %p refrence", tb->symbols));
 		scols_unref_symbols(tb->symbols);
-	if (sy) {					/* ref user defined */
-		tb->symbols = sy;
-		scols_ref_symbols(sy);
-	} else {					/* default symbols */
-		tb->symbols = scols_new_symbols();
-		if (!tb->symbols)
-			return -ENOMEM;
-#if defined(HAVE_WIDECHAR)
-		if (!scols_table_is_ascii(tb) &&
-		    !strcmp(nl_langinfo(CODESET), "UTF-8")) {
-			scols_symbols_set_branch(tb->symbols, UTF_VR UTF_H);
-			scols_symbols_set_vertical(tb->symbols, UTF_V " ");
-			scols_symbols_set_right(tb->symbols, UTF_UR UTF_H);
-		} else
-#endif
-		{
-			scols_symbols_set_branch(tb->symbols, "|-");
-			scols_symbols_set_vertical(tb->symbols, "| ");
-			scols_symbols_set_right(tb->symbols, "`-");
-		}
-		scols_symbols_set_title_padding(tb->symbols, " ");
+		tb->symbols = NULL;
 	}
 
+	/* set new */
+	if (sy) {					/* ref user defined */
+		DBG(TAB, ul_debugobj(tb, "set symbols so %p", sy));
+		tb->symbols = sy;
+		scols_ref_symbols(sy);
+	}
 	return 0;
 }
 
 /**
- * scols_table_enable_nolinesep
+ * scols_table_get_symbols:
+ * @tb: table
+ *
+ * Returns: pointer to symbols table.
+ *
+ * Since: 2.29
+ */
+struct libscols_symbols *scols_table_get_symbols(const struct libscols_table *tb)
+{
+	return tb->symbols;
+}
+
+/**
+ * scols_table_enable_nolinesep:
  * @tb: table
  * @enable: 1 or 0
  *
- * Enable/disable line separator printing. This is usefull if you want to
+ * Enable/disable line separator printing. This is useful if you want to
  * re-printing the same line more than once (e.g. progress bar). Don't use it
  * if you're not sure.
  *
@@ -726,8 +793,21 @@ int scols_table_enable_nolinesep(struct libscols_table *tb, int enable)
 		return -EINVAL;
 
 	DBG(TAB, ul_debugobj(tb, "nolinesep: %s", enable ? "ENABLE" : "DISABLE"));
-	tb->no_linesep = enable;
+	tb->no_linesep = enable ? 1 : 0;
 	return 0;
+}
+
+/**
+ * scols_table_is_nolinesep:
+ * @tb: a pointer to a struct libscols_table instance
+ *
+ * Returns: 1 if line separator printing is disabled.
+ *
+ * Since: 2.29
+ */
+int scols_table_is_nolinesep(const struct libscols_table *tb)
+{
+	return tb->no_linesep;
 }
 
 /**
@@ -903,25 +983,38 @@ int scols_table_enable_nowrap(struct libscols_table *tb, int enable)
 }
 
 /**
+ * scols_table_is_nowrap:
+ * @tb: a pointer to a struct libscols_table instance
+ *
+ * Returns: 1 if nowrap is enabled.
+ *
+ * Since: 2.29
+ */
+int scols_table_is_nowrap(const struct libscols_table *tb)
+{
+	return tb->no_wrap;
+}
+
+/**
  * scols_table_colors_wanted:
  * @tb: table
  *
  * Returns: 1 if colors are enabled.
  */
-int scols_table_colors_wanted(struct libscols_table *tb)
+int scols_table_colors_wanted(const struct libscols_table *tb)
 {
-	return tb && tb->colors_wanted;
+	return tb->colors_wanted;
 }
 
 /**
  * scols_table_is_empty:
  * @tb: table
  *
- * Returns: 1  if the table is empty.
+ * Returns: 1 if the table is empty.
  */
-int scols_table_is_empty(struct libscols_table *tb)
+int scols_table_is_empty(const struct libscols_table *tb)
 {
-	return !tb || !tb->nlines;
+	return !tb->nlines;
 }
 
 /**
@@ -930,9 +1023,9 @@ int scols_table_is_empty(struct libscols_table *tb)
  *
  * Returns: 1 if ASCII tree is enabled.
  */
-int scols_table_is_ascii(struct libscols_table *tb)
+int scols_table_is_ascii(const struct libscols_table *tb)
 {
-	return tb && tb->ascii;
+	return tb->ascii;
 }
 
 /**
@@ -941,9 +1034,9 @@ int scols_table_is_ascii(struct libscols_table *tb)
  *
  * Returns: 1 if header output is disabled.
  */
-int scols_table_is_noheadings(struct libscols_table *tb)
+int scols_table_is_noheadings(const struct libscols_table *tb)
 {
-	return tb && tb->no_headings;
+	return tb->no_headings;
 }
 
 /**
@@ -952,9 +1045,9 @@ int scols_table_is_noheadings(struct libscols_table *tb)
  *
  * Returns: 1 if export output format is enabled.
  */
-int scols_table_is_export(struct libscols_table *tb)
+int scols_table_is_export(const struct libscols_table *tb)
 {
-	return tb && tb->format == SCOLS_FMT_EXPORT;
+	return tb->format == SCOLS_FMT_EXPORT;
 }
 
 /**
@@ -963,9 +1056,9 @@ int scols_table_is_export(struct libscols_table *tb)
  *
  * Returns: 1 if raw output format is enabled.
  */
-int scols_table_is_raw(struct libscols_table *tb)
+int scols_table_is_raw(const struct libscols_table *tb)
 {
-	return tb && tb->format == SCOLS_FMT_RAW;
+	return tb->format == SCOLS_FMT_RAW;
 }
 
 /**
@@ -976,21 +1069,20 @@ int scols_table_is_raw(struct libscols_table *tb)
  *
  * Since: 2.27
  */
-int scols_table_is_json(struct libscols_table *tb)
+int scols_table_is_json(const struct libscols_table *tb)
 {
-	return tb && tb->format == SCOLS_FMT_JSON;
+	return tb->format == SCOLS_FMT_JSON;
 }
-
 
 /**
  * scols_table_is_maxout
  * @tb: table
  *
- * Returns: 1 if output maximization is enabled, negative value in case of an error.
+ * Returns: 1 if output maximization is enabled or 0
  */
-int scols_table_is_maxout(struct libscols_table *tb)
+int scols_table_is_maxout(const struct libscols_table *tb)
 {
-	return tb && tb->maxout;
+	return tb->maxout;
 }
 
 /**
@@ -999,9 +1091,9 @@ int scols_table_is_maxout(struct libscols_table *tb)
  *
  * Returns: returns 1 tree-like output is expected.
  */
-int scols_table_is_tree(struct libscols_table *tb)
+int scols_table_is_tree(const struct libscols_table *tb)
 {
-	return tb && tb->ntreecols > 0;
+	return tb->ntreecols > 0;
 }
 
 /**
@@ -1016,20 +1108,7 @@ int scols_table_is_tree(struct libscols_table *tb)
  */
 int scols_table_set_column_separator(struct libscols_table *tb, const char *sep)
 {
-	char *p = NULL;
-
-	if (!tb)
-		return -EINVAL;
-	if (sep) {
-		p = strdup(sep);
-		if (!p)
-			return -ENOMEM;
-	}
-
-	DBG(TAB, ul_debugobj(tb, "new columns separator: %s", sep));
-	free(tb->colsep);
-	tb->colsep = p;
-	return 0;
+	return strdup_to_struct_member(tb, colsep, sep);
 }
 
 /**
@@ -1043,21 +1122,7 @@ int scols_table_set_column_separator(struct libscols_table *tb, const char *sep)
  */
 int scols_table_set_line_separator(struct libscols_table *tb, const char *sep)
 {
-	char *p = NULL;
-
-	if (!tb)
-		return -EINVAL;
-
-	if (sep) {
-		p = strdup(sep);
-		if (!p)
-			return -ENOMEM;
-	}
-
-	DBG(TAB, ul_debugobj(tb, "new lines separator: %s", sep));
-	free(tb->linesep);
-	tb->linesep = p;
-	return 0;
+	return strdup_to_struct_member(tb, linesep, sep);
 }
 
 /**
@@ -1066,10 +1131,8 @@ int scols_table_set_line_separator(struct libscols_table *tb, const char *sep)
  *
  * Returns: @tb column separator, NULL in case of an error
  */
-char *scols_table_get_column_separator(struct libscols_table *tb)
+const char *scols_table_get_column_separator(const struct libscols_table *tb)
 {
-	if (!tb)
-		return NULL;
 	return tb->colsep;
 }
 
@@ -1079,12 +1142,9 @@ char *scols_table_get_column_separator(struct libscols_table *tb)
  *
  * Returns: @tb line separator, NULL in case of an error
  */
-char *scols_table_get_line_separator(struct libscols_table *tb)
+const char *scols_table_get_line_separator(const struct libscols_table *tb)
 {
-	if (!tb)
-		return NULL;
 	return tb->linesep;
-
 }
 
 static int cells_cmp_wrapper(struct list_head *a, struct list_head *b, void *data)
@@ -1122,4 +1182,66 @@ int scols_sort_table(struct libscols_table *tb, struct libscols_column *cl)
 	DBG(TAB, ul_debugobj(tb, "sorting table"));
 	list_sort(&tb->tb_lines, cells_cmp_wrapper, cl);
 	return 0;
+}
+
+/**
+ * scols_table_set_termforce:
+ * @tb: table
+ * @force: SCOLS_TERMFORCE_{NEVER,ALWAYS,AUTO}
+ *
+ * Forces library to use stdout as terminal, non-terminal or use automatic
+ * detection (default).
+ *
+ * Returns: 0, a negative value in case of an error.
+ *
+ * Since: 2.29
+ */
+int scols_table_set_termforce(struct libscols_table *tb, int force)
+{
+	if (!tb)
+		return -EINVAL;
+	tb->termforce = force;
+	return 0;
+}
+
+/**
+ * scols_table_get_termforce:
+ * @tb: table
+ *
+ * Returns: SCOLS_TERMFORCE_{NEVER,ALWAYS,AUTO} or a negative value in case of an error.
+ *
+ * Since: 2.29
+ */
+int scols_table_get_termforce(const struct libscols_table *tb)
+{
+	return tb->termforce;
+}
+
+/**
+ * scols_table_set_termwidth
+ * @tb: table
+ * @width: terminal width
+ *
+ * The library automatically detects terminal width or defaults to 80 chars if
+ * detections is unsuccessful. This function override this behaviour.
+ *
+ * Returns: 0, a negative value in case of an error.
+ *
+ * Since: 2.29
+ */
+int scols_table_set_termwidth(struct libscols_table *tb, size_t width)
+{
+	tb->termwidth = width;
+	return 0;
+}
+
+/**
+ * scols_table_get_termwidth
+ * @tb: table
+ *
+ * Returns: terminal width or a negative value in case of an error.
+ */
+size_t scols_table_get_termwidth(const struct libscols_table *tb)
+{
+	return tb->termwidth;
 }
