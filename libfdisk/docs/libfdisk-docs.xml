@@ -35,11 +35,13 @@ available from ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
     <xi:include href="xml/script.xml"/>
   </part>
    <part>
-    <title>Partitining</title>
+    <title>Partitioning</title>
     <xi:include href="xml/label.xml"/>
     <xi:include href="xml/partition.xml"/>
     <xi:include href="xml/table.xml"/>
     <xi:include href="xml/parttype.xml"/>
+    <xi:include href="xml/item.xml"/>
+    <xi:include href="xml/field.xml"/>
   </part>
   <part>
     <title>Label specific functions</title>
@@ -60,5 +62,9 @@ available from ftp://ftp.kernel.org/pub/linux/utils/util-linux/.
   <index id="api-index">
     <title>API Index</title>
     <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
+  </index>
+  <index role="2.29">
+    <title>Index of new symbols in 2.29</title>
+    <xi:include href="xml/api-index-2.29.xml"><xi:fallback /></xi:include>
   </index>
 </book>

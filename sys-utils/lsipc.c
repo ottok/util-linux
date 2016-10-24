@@ -39,6 +39,7 @@
 #include "xalloc.h"
 #include "procutils.h"
 #include "ipcutils.h"
+#include "timeutils.h"
 
 /*
  * time modes
@@ -248,7 +249,7 @@ static char *get_groupname(struct group **gr, gid_t id)
 	return *gr ? xstrdup((*gr)->gr_name) : NULL;
 }
 
-static int parse_time_mode(const char *optarg)
+static int parse_time_mode(const char *s)
 {
 	struct lsipc_timefmt {
 		const char *name;
@@ -262,10 +263,10 @@ static int parse_time_mode(const char *optarg)
 	size_t i;
 
 	for (i = 0; i < ARRAY_SIZE(timefmts); i++) {
-		if (strcmp(timefmts[i].name, optarg) == 0)
+		if (strcmp(timefmts[i].name, s) == 0)
 			return timefmts[i].val;
 	}
-	errx(EXIT_FAILURE, _("unknown time format: %s"), optarg);
+	errx(EXIT_FAILURE, _("unknown time format: %s"), s);
 }
 
 static void __attribute__ ((__noreturn__)) usage(FILE * out)
@@ -429,44 +430,27 @@ static int print_table(struct lsipc_control *ctl, struct libscols_table *tb)
 }
 static struct timeval now;
 
-static int date_is_today(time_t t)
-{
-	if (now.tv_sec == 0)
-		gettimeofday(&now, NULL);
-	return t / (3600 * 24) == now.tv_sec / (3600 * 24);
-}
-
-static int date_is_thisyear(time_t t)
-{
-	if (now.tv_sec == 0)
-		gettimeofday(&now, NULL);
-	return t / (3600 * 24 * 365) == now.tv_sec / (3600 * 24 * 365);
-}
-
 static char *make_time(int mode, time_t time)
 {
-	char *s;
-	struct tm tm;
 	char buf[64] = {0};
-
-	localtime_r(&time, &tm);
 
 	switch(mode) {
 	case TIME_FULL:
+	{
+		struct tm tm;
+		char *s;
+
+		localtime_r(&time, &tm);
 		asctime_r(&tm, buf);
 		if (*(s = buf + strlen(buf) - 1) == '\n')
 			*s = '\0';
 		break;
+	}
 	case TIME_SHORT:
-		if (date_is_today(time))
-			strftime(buf, sizeof(buf), "%H:%M", &tm);
-		else if (date_is_thisyear(time))
-			strftime(buf, sizeof(buf), "%b%d", &tm);
-		else
-			strftime(buf, sizeof(buf), "%Y-%b%d", &tm);
+		strtime_short(&time, &now, 0, buf, sizeof(buf));
 		break;
 	case TIME_ISO:
-		strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S%z", &tm);
+		strtime_iso(&time, ISO_8601_DATE|ISO_8601_TIME|ISO_8601_TIMEZONE, buf, sizeof(buf));
 		break;
 	default:
 		errx(EXIT_FAILURE, _("unsupported time type"));

@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
 		OPT_LIST
 	};
 
-	/* Options --3gb and --4gb are for compatibitity with an old
+	/* Options --3gb and --4gb are for compatibility with an old
 	 * Debian setarch implementation.  */
 	static const struct option longopts[] = {
 		{"help",		no_argument,	NULL,	'h'},
@@ -377,6 +377,7 @@ int main(int argc, char *argv[])
 				return EXIT_SUCCESS;
 			} else
 				warnx(_("unrecognized option '--list'"));
+			/* fallthrough */
 		default:
 			show_usage(NULL);
 		}

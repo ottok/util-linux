@@ -91,12 +91,12 @@ function ts_check_losetup {
 	ts_skip "no loop-device support"
 }
 
-function ts_skip_subtest {
+function ts_report_skip {
 	ts_report " SKIPPED ($1)"
 }
 
 function ts_skip {
-	ts_skip_subtest "$1"
+	ts_report_skip "$1"
 
 	ts_cleanup_on_exit
 	exit 0
@@ -130,7 +130,7 @@ function ts_failed {
 	exit $?
 }
 
-function ts_ok_subtest {
+function ts_report_ok {
 	if [ x"$1" == x"" ]; then
 		ts_report " OK"
 	else
@@ -139,7 +139,7 @@ function ts_ok_subtest {
 }
 
 function ts_ok {
-	ts_ok_subtest "$1"
+	ts_report_ok "$1"
 	exit 0
 }
 
@@ -413,7 +413,7 @@ function ts_finalize_subtest {
 		ts_failed_subtest "$1"
 		res=1
 	else
-		ts_ok_subtest "$(tt_gen_mem_report "$1")"
+		ts_report_ok "$(tt_gen_mem_report "$1")"
 	fi
 
 	[ $res -ne 0 ] && TS_NSUBFAILED=$(( $TS_NSUBFAILED + 1 ))
@@ -422,6 +422,13 @@ function ts_finalize_subtest {
 	ts_init_core_env
 
 	return $res
+}
+
+function ts_skip_subtest {
+	ts_report_skip "$1"
+	# reset environment back to parental test
+	ts_init_core_env
+
 }
 
 function ts_finalize {
@@ -460,7 +467,7 @@ function ts_cleanup_on_exit {
 
 function ts_image_md5sum {
 	local img=${1:-"$TS_OUTDIR/${TS_TESTNAME}.img"}
-	echo $(md5sum "$img" | awk '{printf $1}') $(basename "$img")
+	echo $("$TS_HELPER_MD5" < "$img") $(basename "$img")
 }
 
 function ts_image_init {
@@ -719,3 +726,22 @@ function ts_init_socket_to_file {
 		ts_skip "socat socket stopped listening"
 	fi
 }
+
+function ts_has_mtab_support {
+	grep -q '#define USE_LIBMOUNT_SUPPORT_MTAB' ${top_builddir}/config.h
+	if [ $? == 0 ]; then
+		echo "yes"
+	else
+		echo "no"
+	fi
+}
+
+function ts_has_ncurses_support {
+	grep -q '#define HAVE_LIBNCURSES' ${top_builddir}/config.h
+	if [ $? == 0 ]; then
+		echo "yes"
+	else
+		echo "no"
+	fi
+}
+

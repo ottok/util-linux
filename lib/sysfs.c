@@ -623,7 +623,7 @@ static char *get_subsystem(char *chain, char *buf, size_t bufsz)
 }
 
 /*
- * Returns complete path to the device, the patch contains all all sybsystems
+ * Returns complete path to the device, the patch contains all all subsystems
  * used for the device.
  */
 char *sysfs_get_devchain(struct sysfs_cxt *cxt, char *buf, size_t bufsz)
@@ -741,7 +741,7 @@ static int get_dm_wholedisk(struct sysfs_cxt *cxt, char *diskname,
 }
 
 /*
- * Returns by @diskdevno whole disk device devno and (optionaly) by
+ * Returns by @diskdevno whole disk device devno and (optionally) by
  * @diskname the whole disk device name.
  */
 int sysfs_devno_to_wholedisk(dev_t dev, char *diskname,
@@ -758,7 +758,7 @@ int sysfs_devno_to_wholedisk(dev_t dev, char *diskname,
         /*
          * Extra case for partitions mapped by device-mapper.
          *
-         * All regualar partitions (added by BLKPG ioctl or kernel PT
+         * All regular partitions (added by BLKPG ioctl or kernel PT
          * parser) have the /sys/.../partition file. The partitions
          * mapped by DM don't have such file, but they have "part"
          * prefix in DM UUID.
@@ -785,10 +785,8 @@ int sysfs_devno_to_wholedisk(dev_t dev, char *diskname,
         /*
          * unpartitioned device
          */
-        if (diskname && len) {
-            if (!sysfs_get_devname(&cxt, diskname, len))
-                goto err;
-        }
+        if (diskname && len && !sysfs_get_devname(&cxt, diskname, len))
+            goto err;
         if (diskdevno)
             *diskdevno = dev;
 
@@ -882,11 +880,12 @@ int sysfs_scsi_get_hctl(struct sysfs_cxt *cxt, int *h, int *c, int *t, int *l)
 	char buf[PATH_MAX], *hctl;
 	ssize_t len;
 
-	if (!cxt)
+	if (!cxt || cxt->hctl_error)
 		return -EINVAL;
 	if (cxt->has_hctl)
 		goto done;
 
+	cxt->hctl_error = 1;
 	len = sysfs_readlink(cxt, "device", buf, sizeof(buf) - 1);
 	if (len < 0)
 		return len;
@@ -911,6 +910,8 @@ done:
 		*t = cxt->scsi_target;
 	if (l)
 		*l = cxt->scsi_lun;
+
+	cxt->hctl_error = 0;
 	return 0;
 }
 

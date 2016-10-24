@@ -300,7 +300,7 @@ static int sgi_get_disklabel_item(struct fdisk_context *cxt, struct fdisk_labeli
 		break;
 	default:
 		if (item->id < __FDISK_NLABELITEMS)
-			rc = 1;	/* unssupported generic item */
+			rc = 1;	/* unsupported generic item */
 		else
 			rc = 2;	/* out of range */
 		break;
@@ -592,9 +592,8 @@ static int verify_disklabel(struct fdisk_context *cxt, int verbose)
 		if (sgi_get_num_sectors(cxt, i) != 0) {
 			Index[sortcount++] = i;
 			if (sgi_get_sysid(cxt, i) == SGI_TYPE_ENTIRE_DISK
-			    && entire++ == 1) {
-				if (verbose)
-					fdisk_info(cxt, _("More than one entire "
+			    && entire++ == 1 && verbose) {
+				fdisk_info(cxt, _("More than one entire "
 						"disk entry present."));
 			}
 		}

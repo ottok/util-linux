@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 typedef uint64_t usec_t;
 typedef uint64_t nsec_t;
@@ -52,5 +53,29 @@ typedef uint64_t nsec_t;
 #define FORMAT_TIMESPAN_MAX 64
 
 int parse_timestamp(const char *t, usec_t *usec);
+
+/* flags for strxxx_iso() functions */
+enum {
+	ISO_8601_DATE		= (1 << 1),
+	ISO_8601_TIME		= (1 << 2),
+	ISO_8601_DOTUSEC	= (1 << 3),
+	ISO_8601_COMMAUSEC	= (1 << 4),
+	ISO_8601_TIMEZONE	= (1 << 5),
+	ISO_8601_SPACE		= (1 << 6),
+	ISO_8601_GMTIME		= (1 << 7)
+};
+
+#define ISO_8601_BUFSIZ	32
+
+int strtimeval_iso(struct timeval *tv, int flags, char *buf, size_t bufsz);
+int strtm_iso(struct tm *tm, int flags, char *buf, size_t bufsz);
+int strtime_iso(const time_t *t, int flags, char *buf, size_t bufsz);
+
+#define UL_SHORTTIME_THISYEAR_HHMM (1 << 1)
+
+int time_is_today(const time_t *t, struct timeval *now);
+int time_is_thisyear(const time_t *t, struct timeval *now);
+
+int strtime_short(const time_t *t, struct timeval *now, int flags, char *buf, size_t bufsz);
 
 #endif /* UTIL_LINUX_TIME_UTIL_H */

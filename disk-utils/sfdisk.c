@@ -89,7 +89,8 @@ enum {
 struct sfdisk {
 	int		act;		/* ACT_* */
 	int		partno;		/* -N <partno>, default -1 */
-	int		wipemode;	/* remove foreign signatures */
+	int		wipemode;	/* remove foreign signatures from disk */
+	int		pwipemode;	/* remove foreign signatures from partitions */
 	const char	*label;		/* --label <label> */
 	const char	*label_nested;	/* --label-nested <label> */
 	const char	*backup_file;	/* -O <path> */
@@ -100,7 +101,7 @@ struct sfdisk {
 	struct fdisk_partition  *orig_pa;	/* -N <partno> before the change */
 
 	unsigned int verify : 1,	/* call fdisk_verify_disklabel() */
-		     quiet  : 1,	/* suppres extra messages */
+		     quiet  : 1,	/* suppress extra messages */
 		     interactive : 1,	/* running on tty */
 		     noreread : 1,	/* don't check device is in use */
 		     force  : 1,	/* do also stupid things */
@@ -109,6 +110,7 @@ struct sfdisk {
 		     append : 1,	/* don't create new PT, append partitions only */
 		     json : 1,		/* JSON dump */
 		     movedata: 1,	/* move data after resize */
+		     notell : 1,	/* don't tell kernel aout new PT */
 		     noact  : 1;	/* do not write to device */
 };
 
@@ -293,10 +295,12 @@ static void backup_sectors(struct sfdisk *sf,
 
 		if (read_all(devfd, (char *) buf, size) != (ssize_t) size) {
 			fdisk_warn(sf->cxt, _("cannot read %s"), devname);
+			free(buf);
 			goto fail;
 		}
 		if (write_all(fd, buf, size) != 0) {
 			fdisk_warn(sf->cxt, _("cannot write %s"), fname);
+			free(buf);
 			goto fail;
 		}
 		free(buf);
@@ -361,13 +365,13 @@ static void backup_partition_table(struct sfdisk *sf, const char *devname)
 static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_partition *orig_pa)
 {
 	struct fdisk_partition *pa = get_partition(sf->cxt, partno);
-	char *devname, *typescript;
-	FILE *f;
+	char *devname = NULL, *typescript = NULL, *buf = NULL;
+	FILE *f = NULL;
 	int ok = 0, fd, backward = 0;
 	fdisk_sector_t nsectors, from, to, step, i;
 	size_t ss, step_bytes, cc;
 	uintmax_t src, dst;
-	char *buf;
+	int errsv;
 
 	assert(sf->movedata);
 
@@ -515,11 +519,18 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 	free(buf);
 	free(devname);
 	free(typescript);
+
 	return 0;
 fail:
+	errsv = -errno;
 	warn(_("%s: failed to move data"), devname);
-	fclose(f);
-	return -errno;
+	if (f)
+		fclose(f);
+	free(buf);
+	free(devname);
+	free(typescript);
+
+	return errsv;
 }
 
 static int write_changes(struct sfdisk *sf)
@@ -534,11 +545,13 @@ static int write_changes(struct sfdisk *sf)
 			rc = move_partition_data(sf, sf->partno, sf->orig_pa);
 		if (!rc) {
 			fdisk_info(sf->cxt, _("\nThe partition table has been altered."));
-			fdisk_reread_partition_table(sf->cxt);
+			if (!sf->notell)
+				fdisk_reread_partition_table(sf->cxt);
 		}
 	}
 	if (!rc)
-		rc = fdisk_deassign_device(sf->cxt, sf->noact);	/* no-sync when no-act */
+		rc = fdisk_deassign_device(sf->cxt,
+				sf->noact || sf->notell);	/* no-sync */
 	return rc;
 }
 
@@ -865,7 +878,7 @@ static int command_delete(struct sfdisk *sf, int argc, char **argv)
 	if (sf->backup)
 		backup_partition_table(sf, devname);
 
-	/* delate all */
+	/* delete all */
 	if (argc == 1) {
 		size_t nparts = fdisk_get_npartitions(sf->cxt);
 		for (i = 0; i < nparts; i++) {
@@ -906,7 +919,7 @@ static int command_reorder(struct sfdisk *sf, int argc, char **argv)
 	if (sf->backup)
 		backup_partition_table(sf, devname);
 
-	if (fdisk_reorder_partitions(sf->cxt) == 1)	/* unchnaged */
+	if (fdisk_reorder_partitions(sf->cxt) == 1)	/* unchanged */
 		rc = fdisk_deassign_device(sf->cxt, 1);
 	else
 		rc = write_changes(sf);
@@ -1437,7 +1450,58 @@ static int ignore_partition(struct fdisk_partition *pa)
 	return 0;
 }
 
+static int wipe_partition(struct sfdisk *sf, size_t partno)
+{
+	int rc, yes = 0;
+	char *fstype = NULL;;
+	struct fdisk_partition *tmp = NULL;
 
+	DBG(MISC, ul_debug("checking for signature"));
+
+	rc = fdisk_get_partition(sf->cxt, partno, &tmp);
+	if (rc)
+		goto done;
+
+	rc = fdisk_partition_to_string(tmp, sf->cxt, FDISK_FIELD_FSTYPE, &fstype);
+	if (rc || fstype == NULL)
+		goto done;
+
+	fdisk_warnx(sf->cxt, _("Partition #%zu contains a %s signature."), partno + 1, fstype);
+
+	if (sf->pwipemode == WIPEMODE_AUTO && isatty(STDIN_FILENO))
+		fdisk_ask_yesno(sf->cxt, _("Do you want to remove the signature?"), &yes);
+	else if (sf->pwipemode == WIPEMODE_ALWAYS)
+		yes = 1;
+
+	if (yes) {
+		fdisk_info(sf->cxt, _("The signature will be removed by a write command."));
+		rc = fdisk_wipe_partition(sf->cxt, partno, TRUE);
+	}
+done:
+	fdisk_unref_partition(tmp);
+	free(fstype);
+	DBG(MISC, ul_debug("partition wipe check end [rc=%d]", rc));
+	return rc;
+}
+
+static void refresh_prompt_buffer(struct sfdisk *sf, const char *devname,
+		                  size_t next_partno, int created)
+{
+	if (created) {
+		char *partname = fdisk_partname(devname, next_partno + 1);
+		if (!partname)
+			err(EXIT_FAILURE, _("failed to allocate partition name"));
+
+		if (!sf->prompt || !startswith(sf->prompt, partname)) {
+			free(sf->prompt);
+			xasprintf(&sf->prompt,"%s: ", partname);
+		}
+		free(partname);
+	} else if (!sf->prompt || !startswith(sf->prompt, SFDISK_PROMPT)) {
+		free(sf->prompt);
+		sf->prompt = xstrdup(SFDISK_PROMPT);
+	}
+}
 
 /*
  * sfdisk <device> [[-N] <partno>]
@@ -1446,7 +1510,7 @@ static int ignore_partition(struct fdisk_partition *pa)
  */
 static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 {
-	int rc = 0, partno = sf->partno, created = 0;
+	int rc = 0, partno = sf->partno, created = 0, unused = 0;
 	struct fdisk_script *dp;
 	struct fdisk_table *tb = NULL;
 	const char *devname = NULL, *label;
@@ -1493,9 +1557,11 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 					     "partitions"),
 					devname, partno + 1, n);
 
-		if (!fdisk_is_partition_used(sf->cxt, partno))
+		if (!fdisk_is_partition_used(sf->cxt, partno)) {
 			fdisk_warnx(sf->cxt, _("warning: %s: partition %d is not defined yet"),
 					devname, partno + 1);
+			unused = 1;
+		}
 		created = 1;
 		next_partno = partno;
 
@@ -1604,20 +1670,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 			break;
 		}
 
-		if (created) {
-			char *partname = fdisk_partname(devname, next_partno + 1);
-			if (!partname)
-				err(EXIT_FAILURE, _("failed to allocate partition name"));
-			if (!sf->prompt || !startswith(sf->prompt, partname)) {
-				free(sf->prompt);
-				xasprintf(&sf->prompt,"%s: ", partname);
-			}
-			free(partname);
-		} else if (!sf->prompt || !startswith(sf->prompt, SFDISK_PROMPT)) {
-			free(sf->prompt);
-			sf->prompt = xstrdup(SFDISK_PROMPT);
-		}
-
+		refresh_prompt_buffer(sf, devname, next_partno, created);
 		if (sf->prompt && (sf->interactive || !sf->quiet)) {
 #ifndef HAVE_LIBREADLINE
 			fputs(sf->prompt, stdout);
@@ -1637,6 +1690,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 			continue;
 		} else if (rc == 1) {
 			rc = SFDISK_DONE_EOF;
+			fputs(_("Done.\n"), stdout);
 			break;
 		}
 
@@ -1665,14 +1719,32 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 				rc = rc == 0 ? SFDISK_DONE_ASK : SFDISK_DONE_ABORT;
 				break;
 			} else if (!rc) {		/* add partition */
+				if (!sf->interactive &&
+				    (!sf->prompt || startswith(sf->prompt, SFDISK_PROMPT))) {
+					refresh_prompt_buffer(sf, devname, next_partno, created);
+					fputs(sf->prompt, stdout);
+				}
 				rc = fdisk_add_partition(sf->cxt, pa, &cur_partno);
 				if (rc) {
 					errno = -rc;
 					fdisk_warn(sf->cxt, _("Failed to add partition"));
+
 				}
 			}
 
-			if (!rc) {		/* success, print reult */
+			/* wipe partition on success
+			 *
+			 * Note that unused=1 means -N <partno> for unused,
+			 * otherwise we wipe only newly created partitions.
+			 */
+			if (rc == 0 && (unused || partno < 0)) {
+				rc = wipe_partition(sf, unused ? (size_t) partno : cur_partno);
+				if (rc)
+					errno = -rc;
+			}
+
+			if (!rc) {
+				/* success print result */
 				if (sf->interactive)
 					sfdisk_print_partition(sf, cur_partno);
 				next_partno = cur_partno + 1;
@@ -1734,7 +1806,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(_(" -J, --json <dev>                  dump partition table in JSON format\n"), out);
 	fputs(_(" -g, --show-geometry [<dev> ...]   list geometry of all or specified devices\n"), out);
 	fputs(_(" -l, --list [<dev> ...]            list partitions of each device\n"), out);
-	fputs(_(" -F, --list-free [<dev> ...]       list unpartitions free areas of each device\n"), out);
+	fputs(_(" -F, --list-free [<dev> ...]       list unpartitioned free areas of each device\n"), out);
 	fputs(_(" -r, --reorder <dev>               fix partitions order (by start offset)\n"), out);
 	fputs(_(" -s, --show-size [<dev> ...]       list sizes of all or specified devices\n"), out);
 	fputs(_(" -T, --list-types                  print the recognized types (see -X)\n"), out);
@@ -1764,10 +1836,12 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(_(" -N, --partno <num>        specify partition number\n"), out);
 	fputs(_(" -n, --no-act              do everything except write to device\n"), out);
 	fputs(_("     --no-reread           do not check whether the device is in use\n"), out);
+	fputs(_("     --no-tell-kernel      do not tell kernel about changes\n"), out);
 	fputs(_(" -O, --backup-file <path>  override default backup file name\n"), out);
 	fputs(_(" -o, --output <list>       output columns\n"), out);
 	fputs(_(" -q, --quiet               suppress extra info messages\n"), out);
 	fputs(_(" -w, --wipe <mode>         wipe signatures (auto, always or never)\n"), out);
+	fputs(_(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (auto, always or never)\n"), out);
 	fputs(_(" -X, --label <name>        specify label type (dos, gpt, ...)\n"), out);
 	fputs(_(" -Y, --label-nested <name> specify nested label type (dos, bsd)\n"), out);
 	fputs(USAGE_SEPARATOR, out);
@@ -1794,6 +1868,7 @@ int main(int argc, char *argv[])
 	struct sfdisk _sf = {
 		.partno = -1,
 		.wipemode = WIPEMODE_AUTO,
+		.pwipemode = WIPEMODE_AUTO,
 		.interactive = isatty(STDIN_FILENO) ? 1 : 0,
 	}, *sf = &_sf;
 
@@ -1809,7 +1884,8 @@ int main(int argc, char *argv[])
 		OPT_BYTES,
 		OPT_COLOR,
 		OPT_MOVEDATA,
-		OPT_DELETE
+		OPT_DELETE,
+		OPT_NOTELL
 	};
 
 	static const struct option longopts[] = {
@@ -1831,6 +1907,7 @@ int main(int argc, char *argv[])
 		{ "list-types", no_argument,	NULL, 'T' },
 		{ "no-act",  no_argument,       NULL, 'n' },
 		{ "no-reread", no_argument,     NULL, OPT_NOREREAD },
+		{ "no-tell-kernel", no_argument, NULL, OPT_NOTELL },
 		{ "move-data", optional_argument, NULL, OPT_MOVEDATA },
 		{ "output",  required_argument, NULL, 'o' },
 		{ "partno",  required_argument, NULL, 'N' },
@@ -1841,6 +1918,7 @@ int main(int argc, char *argv[])
 		{ "verify",  no_argument,       NULL, 'V' },
 		{ "version", no_argument,       NULL, 'v' },
 		{ "wipe",    required_argument, NULL, 'w' },
+		{ "wipe-partitions",    required_argument, NULL, 'W' },
 
 		{ "part-uuid",  no_argument,    NULL, OPT_PARTUUID },
 		{ "part-label", no_argument,    NULL, OPT_PARTLABEL },
@@ -1863,7 +1941,7 @@ int main(int argc, char *argv[])
 	textdomain(PACKAGE);
 	atexit(close_stdout);
 
-	while ((c = getopt_long(argc, argv, "aAbcdfFgGhJlLo:O:nN:qrsTu:vVX:Y:w:",
+	while ((c = getopt_long(argc, argv, "aAbcdfFgGhJlLo:O:nN:qrsTu:vVX:Y:w:W:",
 					longopts, &longidx)) != -1) {
 		switch(c) {
 		case 'A':
@@ -1953,6 +2031,11 @@ int main(int argc, char *argv[])
 			if (sf->wipemode < 0)
 				errx(EXIT_FAILURE, _("unsupported wipe mode"));
 			break;
+		case 'W':
+			sf->pwipemode = wipemode_from_string(optarg);
+			if (sf->pwipemode < 0)
+				errx(EXIT_FAILURE, _("unsupported wipe mode"));
+			break;
 		case 'X':
 			sf->label = optarg;
 			break;
@@ -1990,6 +2073,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_DELETE:
 			sf->act = ACT_DELETE;
+			break;
+		case OPT_NOTELL:
+			sf->notell = 1;
 			break;
 		default:
 			usage(stderr);

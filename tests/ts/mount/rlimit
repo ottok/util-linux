@@ -31,17 +31,21 @@ ts_init "$*"
 
 ts_check_test_command "$TS_CMD_MOUNT"
 ts_check_test_command "$TS_CMD_UMOUNT"
+ts_check_test_command "$TS_HELPER_MD5"
 
 ts_skip_nonroot
 ts_check_losetup
 ts_check_prog "mkfs.ext3"
+
+has_mtab=$( ts_has_mtab_support )
+[ "$has_mtab" == "yes" ] || ts_skip "mtab unsupported"
 
 [ -L /etc/mtab ] && ts_skip "mtab is symlink"
 [ "$(stat --format '%s' /etc/mtab)" -gt "1024" ] || ts_skip "mtab is too small"
 
 function mtab_checksum()
 {
-	md5sum /etc/mtab | awk '{printf $1}'
+	"$TS_HELPER_MD5" < /etc/mtab
 }
 
 ts_device_init

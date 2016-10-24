@@ -165,6 +165,7 @@ struct menu menu_gpt = {
 		MENU_XENT('i', N_("change disk GUID")),
 		MENU_XENT('n', N_("change partition name")),
 		MENU_XENT('u', N_("change partition UUID")),
+		MENU_XENT('l', N_("change table length")),
 		MENU_XENT('M', N_("enter protective/hybrid MBR")),
 
 		MENU_XSEP(""),
@@ -516,6 +517,37 @@ done:
 	return rc;
 }
 
+static int ask_for_wipe(struct fdisk_context *cxt, size_t partno)
+{
+	struct fdisk_partition *tmp = NULL;
+	char *fstype = NULL;
+	int rc, yes = 0;
+
+	rc = fdisk_get_partition(cxt, partno, &tmp);
+	if (rc)
+		goto done;
+
+	rc = fdisk_partition_to_string(tmp, cxt, FDISK_FIELD_FSTYPE, &fstype);
+	if (rc || fstype == NULL)
+		goto done;
+
+	fdisk_warnx(cxt, _("Partition #%zu contains a %s signature."), partno + 1, fstype);
+
+	if (pwipemode == WIPEMODE_AUTO && isatty(STDIN_FILENO))
+		fdisk_ask_yesno(cxt, _("Do you want to remove the signature?"), &yes);
+	else if (pwipemode == WIPEMODE_ALWAYS)
+		yes = 1;
+
+	if (yes) {
+		fdisk_info(cxt, _("The signature will be removed by a write command."));
+		rc = fdisk_wipe_partition(cxt, partno, TRUE);
+	}
+done:
+	fdisk_unref_partition(tmp);
+	free(fstype);
+	return rc;
+}
+
 /*
  * Basic fdisk actions
  */
@@ -610,8 +642,13 @@ static int generic_menu_cb(struct fdisk_context **cxt0,
 		list_partition_types(cxt);
 		break;
 	case 'n':
-		rc = fdisk_add_partition(cxt, NULL, NULL);
+	{
+		size_t partno;
+		rc = fdisk_add_partition(cxt, NULL, &partno);
+		if (!rc)
+			rc = ask_for_wipe(cxt, partno);
 		break;
+	}
 	case 't':
 		change_partition_type(cxt);
 		break;
@@ -644,7 +681,7 @@ static int generic_menu_cb(struct fdisk_context **cxt0,
 
 /*
  * This is fdisk frontend for GPT specific libfdisk functions that
- * are not expported by generic libfdisk API.
+ * are not exported by generic libfdisk API.
  */
 static int gpt_menu_cb(struct fdisk_context **cxt0,
 		       const struct menu *menu __attribute__((__unused__)),
@@ -655,6 +692,7 @@ static int gpt_menu_cb(struct fdisk_context **cxt0,
 	struct fdisk_partition *pa = NULL;
 	size_t n;
 	int rc = 0;
+	unsigned long length;
 
 	assert(cxt);
 	assert(ent);
@@ -666,6 +704,12 @@ static int gpt_menu_cb(struct fdisk_context **cxt0,
 		switch (ent->key) {
 		case 'i':
 			return fdisk_set_disklabel_id(cxt);
+		case 'l':
+	                rc =  fdisk_ask_number(cxt, 1, fdisk_get_npartitions(cxt),
+	                                ~(uint32_t)0, _("New maximum entries"), &length);
+			if (rc)
+				return rc;
+			return fdisk_gpt_set_npartitions(cxt, length);
 		case 'M':
 			mbr = fdisk_new_nested_context(cxt, "dos");
 			if (!mbr)
@@ -733,7 +777,7 @@ static int gpt_menu_cb(struct fdisk_context **cxt0,
 
 /*
  * This is fdisk frontend for MBR specific libfdisk functions that
- * are not expported by generic libfdisk API.
+ * are not exported by generic libfdisk API.
  */
 static int dos_menu_cb(struct fdisk_context **cxt0,
 		       const struct menu *menu __attribute__((__unused__)),
@@ -898,7 +942,7 @@ static int sgi_menu_cb(struct fdisk_context **cxt0,
 
 /*
  * This is fdisk frontend for BSD specific libfdisk functions that
- * are not expported by generic libfdisk API.
+ * are not exported by generic libfdisk API.
  */
 static int bsd_menu_cb(struct fdisk_context **cxt0,
 		       const struct menu *menu __attribute__((__unused__)),

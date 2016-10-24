@@ -80,7 +80,6 @@ more:  libtinfo
 namei:  
 nologin:  
 nsenter:  libselinux 
-pg:  libncursesw libtinfo 
 pivot_root:  
 raw:  
 readprofile:  
@@ -101,7 +100,6 @@ sulogin:  libselinux rypt
 switch_root:  
 tailf:  
 taskset:  
-colcrt:  
 ul:  libtinfo 
 unshare:  
 utmpdump:  

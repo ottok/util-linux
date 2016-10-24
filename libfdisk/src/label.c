@@ -15,7 +15,7 @@
  * fdisk_unref_context() only.
  *
  * Anyway, all label drives share in-memory first sector. The function
- * fdisk_create_disklabel() overwrites thi in-memory sector. But it's possible that
+ * fdisk_create_disklabel() overwrites this in-memory sector. But it's possible that
  * label driver also uses another buffers, for example GPT reads more sectors
  * from the device.
  *
@@ -243,52 +243,6 @@ const struct fdisk_field *fdisk_label_get_field_by_name(
 	return NULL;
 }
 
-
-/**
- * fdisk_field_get_id:
- * @field: field instance
- *
- * Returns: field Id (FDISK_FIELD_*)
- */
-int fdisk_field_get_id(const struct fdisk_field *field)
-{
-	return field ? field->id : -EINVAL;
-}
-
-/**
- * fdisk_field_get_name:
- * @field: field instance
- *
- * Returns: field name
- */
-const char *fdisk_field_get_name(const struct fdisk_field *field)
-{
-	return field ? field->name : NULL;
-}
-
-/**
- * fdisk_field_get_width:
- * @field: field instance
- *
- * Returns: libsmartcols compatible width.
- */
-double fdisk_field_get_width(const struct fdisk_field *field)
-{
-	return field ? field->width : -EINVAL;
-}
-
-/**
- * fdisk_field_is_number:
- * @field: field instance
- *
- * Returns: 1 if field represent number
- */
-int fdisk_field_is_number(const struct fdisk_field *field)
-{
-	return field->flags ? field->flags & FDISK_FIELDFL_NUMBER : 0;
-}
-
-
 /**
  * fdisk_write_disklabel:
  * @cxt: fdisk context
@@ -304,11 +258,7 @@ int fdisk_write_disklabel(struct fdisk_context *cxt)
 	if (!cxt->label->op->write)
 		return -ENOSYS;
 
-	if (cxt->collision && cxt->wipe_device) {
-		int rc = fdisk_wipe_collisions(cxt);
-		if (rc)
-			return rc;
-	}
+	fdisk_do_wipe(cxt);
 	return cxt->label->op->write(cxt);
 }
 
@@ -343,7 +293,7 @@ int fdisk_verify_disklabel(struct fdisk_context *cxt)
  * The function requires enabled "details" by fdisk_enable_details().
  *
  * It's recommended to use fdisk_get_disklabel_item() if you need better
- * control on output and formmatting.
+ * control on output and formatting.
  *
  * Returns: 0 on success, otherwise, a corresponding error.
  */
@@ -371,10 +321,9 @@ int fdisk_list_disklabel(struct fdisk_context *cxt)
 		case 's':
 			if (item.data.str && item.name)
 				fdisk_info(cxt, "%s: %s", item.name, item.data.str);
-			free(item.data.str);
-			item.data.str = NULL;
 			break;
 		}
+		fdisk_reset_labelitem(&item);
 	} while (rc == 0 || rc == 1);
 
 	return rc < 0 ? rc : 0;
@@ -387,7 +336,7 @@ int fdisk_list_disklabel(struct fdisk_context *cxt)
  *
  * Creates a new disk label of type @name. If @name is NULL, then it will
  * create a default system label type, either SUN or DOS. The function
- * automaticaly switches the current label driver to @name. The function
+ * automatically switches the current label driver to @name. The function
  * fdisk_get_label() returns the current label driver.
  *
  * The function modifies in-memory data only.
@@ -443,7 +392,7 @@ int fdisk_create_disklabel(struct fdisk_context *cxt, const char *name)
  * GPT is composed from two items, PMBR and GPT, n=0 return offset to PMBR and n=1
  * return offset to GPT. For more details see 'D' expert fdisk command.
  *
- * Returns: 0 on succes, <0 on error, 1 no more items.
+ * Returns: 0 on success, <0 on error, 1 no more items.
  */
 int fdisk_locate_disklabel(struct fdisk_context *cxt, int n, const char **name,
 			   uint64_t *offset, size_t *size)
@@ -476,8 +425,11 @@ int fdisk_get_disklabel_id(struct fdisk_context *cxt, char **id)
 	DBG(CXT, ul_debugobj(cxt, "asking for disk %s ID", cxt->label->name));
 
 	rc = fdisk_get_disklabel_item(cxt, FDISK_LABELITEM_ID, &item);
-	if (rc == 0)
+	if (rc == 0) {
 		*id = item.data.str;
+		item.data.str = NULL;
+	}
+	fdisk_reset_labelitem(&item);
 	if (rc > 0)
 		rc = 0;
 	return rc;
@@ -491,15 +443,16 @@ int fdisk_get_disklabel_id(struct fdisk_context *cxt, char **id)
  *
  * Note that @id is always in range 0..N. It's fine to use the function in loop
  * until it returns error or 2, the result in @item should be ignored when
- * function returns 1.
+ * function returns 1. Don't forget to use fdisk_reset_labelitem() or fdisk_unref_labelitem().
  *
- * Returns: 0 on success, < 0 on error, 1 on unssupported item, 2 @id out of range
+ * Returns: 0 on success, < 0 on error, 1 on unsupported item, 2 @id out of range
  */
 int fdisk_get_disklabel_item(struct fdisk_context *cxt, int id, struct fdisk_labelitem *item)
 {
 	if (!cxt || !cxt->label || !item)
 		return -EINVAL;
 
+	fdisk_reset_labelitem(item);
 	item->id = id;
 	DBG(CXT, ul_debugobj(cxt, "asking for disk %s item %d", cxt->label->name, item->id));
 
@@ -621,7 +574,7 @@ void fdisk_deinit_label(struct fdisk_label *lb)
  * @changed: 0/1
  *
  * Marks in-memory data as changed, to force fdisk_write_disklabel() to write
- * to device. This should be unnecessar by default, the library keeps track
+ * to device. This should be unnecessary by default, the library keeps track
  * about changes.
  */
 void fdisk_label_set_changed(struct fdisk_label *lb, int changed)

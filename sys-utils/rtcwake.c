@@ -34,6 +34,7 @@
 
 #include "c.h"
 #include "closestream.h"
+#include "env.h"
 #include "nls.h"
 #include "optutils.h"
 #include "pathnames.h"
@@ -157,7 +158,7 @@ static int get_basetimes(struct rtcwake_control *ctl, int fd)
 	 * with the system clock (which always uses UTC).
 	 */
 	if (ctl->clock_mode == CM_UTC)
-		setenv("TZ", "UTC", 1);
+		xsetenv("TZ", "UTC", 1);
 	tzset();
 	/* Read rtc and system clocks "at the same time", or as
 	 * precisely (+/- a second) as we can read them.
@@ -249,7 +250,7 @@ static char **get_sys_power_states(struct rtcwake_control *ctl)
 		fd = open(SYS_POWER_STATE_PATH, O_RDONLY);
 		if (fd < 0)
 			goto nothing;
-		if (read(fd, &buf, sizeof buf) <= 0)
+		if (read(fd, &buf, sizeof(buf) - 1) <= 0)
 			goto nothing;
 		ctl->possible_modes = strv_split(buf, " \n");
 		close(fd);
@@ -344,18 +345,18 @@ static int print_alarm(struct rtcwake_control *ctl, int fd)
 	return 0;
 }
 
-static int get_rtc_mode(struct rtcwake_control *ctl, const char *optarg)
+static int get_rtc_mode(struct rtcwake_control *ctl, const char *s)
 {
 	size_t i;
 	char **modes = get_sys_power_states(ctl), **m;
 
 	STRV_FOREACH(m, modes) {
-		if (strcmp(optarg, *m) == 0)
+		if (strcmp(s, *m) == 0)
 			return SYSFS_MODE;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(rtcwake_mode_string); i++)
-		if (!strcmp(optarg, rtcwake_mode_string[i]))
+		if (!strcmp(s, rtcwake_mode_string[i]))
 			return i;
 
 	return -EINVAL;
@@ -474,7 +475,7 @@ int main(int argc, char **argv)
 			seconds = strtou32_or_err(optarg, _("invalid seconds argument"));
 			break;
 		case 't':
-			/* alarm time, time_t (absolute, seconds since epoc) */
+			/* alarm time, time_t (absolute, seconds since epoch) */
 			alarm = strtou32_or_err(optarg, _("invalid time argument"));
 			break;
 		case OPT_DATE:
@@ -501,12 +502,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (ctl.clock_mode == CM_AUTO) {
-		if (read_clock_mode(&ctl) < 0) {
-			printf(_("%s: assuming RTC uses UTC ...\n"),
-					program_invocation_short_name);
-			ctl.clock_mode = CM_UTC;
-		}
+	if (ctl.clock_mode == CM_AUTO && read_clock_mode(&ctl) < 0) {
+		printf(_("%s: assuming RTC uses UTC ...\n"),  program_invocation_short_name);
+		ctl.clock_mode = CM_UTC;
 	}
 
 	if (ctl.verbose)

@@ -85,7 +85,6 @@ namei:
 nologin:  
 nsenter:  
 nsenter.static: STATIC
-pg:  libncursesw libtinfo 
 pivot_root:  
 raw:  
 readprofile:  
@@ -107,7 +106,6 @@ sulogin:  rypt
 switch_root:  
 tailf:  
 taskset:  
-colcrt:  
 ul:  libtinfo 
 umount.static: STATIC
 unshare:  

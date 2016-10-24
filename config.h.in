@@ -172,10 +172,10 @@
 /* Define if libmount available. */
 #undef HAVE_LIBMOUNT
 
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
+/* Define if ncurses library available */
 #undef HAVE_LIBNCURSES
 
-/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
+/* Define if ncursesw library available */
 #undef HAVE_LIBNCURSESW
 
 /* Define to 1 if you have the `readline' library (-lreadline). */
@@ -673,8 +673,11 @@
 /* Enables colorized output from utils by default */
 #undef USE_COLORS_BY_DEFAULT
 
-/* Define to 1 if want to ignore mtab in all situations. */
-#undef USE_LIBMOUNT_FORCE_MOUNTINFO
+/* Define to 1 if want to support mtab. */
+#undef USE_LIBMOUNT_SUPPORT_MTAB
+
+/* Enable plymouth support feature for sulogin and aggety */
+#undef USE_PLYMOUTH_SUPPORT
 
 /* Should sulogin use a emergency mount of /dev and /proc? */
 #undef USE_SULOGIN_EMERGENCY_MOUNT

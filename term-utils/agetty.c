@@ -45,6 +45,11 @@
 #include "widechar.h"
 #include "ttyutils.h"
 #include "color-names.h"
+#include "env.h"
+
+#ifdef USE_PLYMOUTH_SUPPORT
+# include "plymouth-ctrl.h"
+#endif
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -137,9 +142,6 @@
 static int inotify_fd = AGETTY_RELOAD_FDNONE;
 static int netlink_fd = AGETTY_RELOAD_FDNONE;
 #endif
-
-#define AGETTY_PLYMOUTH		"/usr/bin/plymouth"
-#define AGETTY_PLYMOUTH_FDFILE	"/dev/null"
 
 /*
  * When multiple baud rates are specified on the command line, the first one
@@ -309,7 +311,6 @@ static void log_warn (const char *, ...)
 static ssize_t append(char *dest, size_t len, const char  *sep, const char *src);
 static void check_username (const char* nm);
 static void login_options_to_argv(char *argv[], int *argc, char *str, char *username);
-static int plymouth_command(const char* arg);
 static void reload_agettys(void);
 
 /* Fake hostname for ut_host specified on command line. */
@@ -389,7 +390,7 @@ int main(int argc, char **argv)
 
 	tcsetpgrp(STDIN_FILENO, getpid());
 
-	/* Default is to follow the current line speend and then default to 9600 */
+	/* Default is to follow the current line speed and then default to 9600 */
 	if ((options.flags & F_VCONSOLE) == 0 && options.numspeed == 0) {
 		options.speeds[options.numspeed++] = bcode("9600");
 		options.flags |= F_KEEPSPEED;
@@ -502,21 +503,16 @@ int main(int argc, char **argv)
 
 	login_argv[login_argc] = NULL;	/* last login argv */
 
-	if (options.chroot) {
-		if (chroot(options.chroot) < 0)
-			log_err(_("%s: can't change root directory %s: %m"),
-				options.tty, options.chroot);
-	}
-	if (options.chdir) {
-		if (chdir(options.chdir) < 0)
-			log_err(_("%s: can't change working directory %s: %m"),
-				options.tty, options.chdir);
-	}
-	if (options.nice) {
-		if (nice(options.nice) < 0)
-			log_warn(_("%s: can't change process priority: %m"),
-				options.tty);
-	}
+	if (options.chroot && chroot(options.chroot) < 0)
+		log_err(_("%s: can't change root directory %s: %m"),
+			options.tty, options.chroot);
+	if (options.chdir && chdir(options.chdir) < 0)
+		log_err(_("%s: can't change working directory %s: %m"),
+			options.tty, options.chdir);
+	if (options.nice && nice(options.nice) < 0)
+		log_warn(_("%s: can't change process priority: %m"),
+			 options.tty);
+
 	free(options.osrelease);
 #ifdef DEBUGGING
 	if (close_stream(dbf) != 0)
@@ -559,7 +555,7 @@ static char *replace_u(char *str, char *username)
 			log_err(_("failed to allocate memory: %m"));
 
 		if (p != str) {
-			/* copy chars befor \u */
+			/* copy chars before \u */
 			memcpy(tp, str, p - str);
 			tp += p - str;
 		}
@@ -1048,7 +1044,7 @@ static void open_tty(char *tty, struct termios *tp, struct options *op)
 				debug("TIOCNOTTY ioctl failed\n");
 
 			/*
-			 * Let's close all file decriptors before vhangup
+			 * Let's close all file descriptors before vhangup
 			 * https://lkml.org/lkml/2012/6/5/145
 			 */
 			close(fd);
@@ -1160,7 +1156,8 @@ static void open_tty(char *tty, struct termios *tp, struct options *op)
 			op->term = DEFAULT_STERM;
 	}
 
-	setenv("TERM", op->term, 1);
+	if (setenv("TERM", op->term, 1) != 0)
+		log_err(_("failed to set the %s environment variable"), "TERM");
 }
 
 /* Initialize termios settings. */
@@ -1183,10 +1180,11 @@ static void termio_init(struct options *op, struct termios *tp)
 {
 	speed_t ispeed, ospeed;
 	struct winsize ws;
+#ifdef USE_PLYMOUTH_SUPPORT
 	struct termios lock;
-#ifdef TIOCGLCKTRMIOS
-	int i =  (plymouth_command("--ping") == 0) ? 30 : 0;
-
+	int i =  (plymouth_command(MAGIC_PING) == 0) ? PLYMOUTH_TERMIOS_FLAGS_DELAY : 0;
+	if (i)
+		plymouth_command(MAGIC_QUIT);
 	while (i-- > 0) {
 		/*
 		 * Even with TTYReset=no it seems with systemd or plymouth
@@ -1199,8 +1197,6 @@ static void termio_init(struct options *op, struct termios *tp)
 		if (!lock.c_iflag && !lock.c_oflag && !lock.c_cflag && !lock.c_lflag)
 			break;
 		debug("termios locked\n");
-		if (i == 15 && plymouth_command("quit") != 0)
-			break;
 		sleep(1);
 	}
 	memset(&lock, 0, sizeof(struct termios));
@@ -1274,7 +1270,7 @@ static void termio_init(struct options *op, struct termios *tp)
 
 	/*
 	 * Note that the speed is stored in the c_cflag termios field, so we have
-	 * set the speed always when the cflag se reseted.
+	 * set the speed always when the cflag is reset.
 	 */
 	cfsetispeed(tp, ispeed);
 	cfsetospeed(tp, ospeed);
@@ -1430,7 +1426,7 @@ static char *xgetdomainname(void)
 {
 #ifdef HAVE_GETDOMAINNAME
 	char *name;
-	size_t sz = get_hostname_max() + 1;
+	const size_t sz = get_hostname_max() + 1;
 
 	name = malloc(sizeof(char) * sz);
 	if (!name)
@@ -1442,8 +1438,9 @@ static char *xgetdomainname(void)
 	}
 	name[sz - 1] = '\0';
 	return name;
-#endif
+#else
 	return NULL;
+#endif
 }
 
 static char *read_os_release(struct options *op, const char *varname)
@@ -1730,7 +1727,9 @@ static void print_issue_file(struct options *op, struct termios *tp)
 /* Show login prompt, optionally preceded by /etc/issue contents. */
 static void do_prompt(struct options *op, struct termios *tp)
 {
+#ifdef AGETTY_RELOAD
 again:
+#endif
 	print_issue_file(op, tp);
 
 	if (op->flags & F_LOGINPAUSE) {
@@ -2608,40 +2607,6 @@ static void check_username(const char* nm)
 err:
 	errno = EPERM;
 	log_err(_("checkname failed: %m"));
-}
-
-/*
- * For the case plymouth is found on this system
- */
-static int plymouth_command(const char* arg)
-{
-	static int has_plymouth = 1;
-	pid_t pid;
-
-	if (!has_plymouth)
-		return 127;
-
-	pid = fork();
-	if (!pid) {
-		int fd = open(AGETTY_PLYMOUTH_FDFILE, O_RDWR);
-
-		if (fd < 0)
-			err(EXIT_FAILURE,_("cannot open %s"),
-					AGETTY_PLYMOUTH_FDFILE);
-		dup2(fd, 0);
-		dup2(fd, 1);
-		dup2(fd, 2);
-		close(fd);
-		execl(AGETTY_PLYMOUTH, AGETTY_PLYMOUTH, arg, (char *) NULL);
-		exit(127);
-	} else if (pid > 0) {
-		int status;
-		waitpid(pid, &status, 0);
-		if (status == 127)
-			has_plymouth = 0;
-		return status;
-	}
-	return 1;
 }
 
 static void reload_agettys(void)

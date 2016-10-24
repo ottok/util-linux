@@ -422,8 +422,9 @@ int mnt_fs_set_source(struct libmnt_fs *fs, const char *source)
  * @fs: fs
  * @path: source path
  *
- * Compares @fs source path with @path. The trailing slash is ignored.
- * See also mnt_fs_match_source().
+ * Compares @fs source path with @path. The redundant slashs are ignored.
+ * This function compares strings and does not cannonicalize the paths.
+ * See also more heavy and generic mnt_fs_match_source().
  *
  * Returns: 1 if @fs source path equal to @path, otherwise 0.
  */
@@ -437,7 +438,7 @@ int mnt_fs_streq_srcpath(struct libmnt_fs *fs, const char *path)
 	p = mnt_fs_get_srcpath(fs);
 
 	if (!mnt_fs_is_pseudofs(fs))
-		return streq_except_trailing_slash(p, path);
+		return streq_paths(p, path);
 
 	if (!p && !path)
 		return 1;
@@ -450,14 +451,15 @@ int mnt_fs_streq_srcpath(struct libmnt_fs *fs, const char *path)
  * @fs: fs
  * @path: mount point
  *
- * Compares @fs target path with @path. The trailing slash is ignored.
- * See also mnt_fs_match_target().
+ * Compares @fs target path with @path. The redundant slashs are ignored.
+ * This function compares strings and does not cannonicalize the paths.
+ * See also more generic mnt_fs_match_target().
  *
  * Returns: 1 if @fs target path equal to @path, otherwise 0.
  */
 int mnt_fs_streq_target(struct libmnt_fs *fs, const char *path)
 {
-	return fs && streq_except_trailing_slash(mnt_fs_get_target(fs), path);
+	return fs && streq_paths(mnt_fs_get_target(fs), path);
 }
 
 /**
@@ -518,27 +520,15 @@ const char *mnt_fs_get_target(struct libmnt_fs *fs)
 /**
  * mnt_fs_set_target:
  * @fs: fstab/mtab/mountinfo entry
- * @target: mountpoint
+ * @tgt: mountpoint
  *
- * This function creates a private copy (strdup()) of @target.
+ * This function creates a private copy (strdup()) of @tgt.
  *
  * Returns: 0 on success or negative number in case of error.
  */
-int mnt_fs_set_target(struct libmnt_fs *fs, const char *target)
+int mnt_fs_set_target(struct libmnt_fs *fs, const char *tgt)
 {
-	char *p = NULL;
-
-	if (!fs)
-		return -EINVAL;
-	if (target) {
-		p = strdup(target);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(fs->target);
-	fs->target = p;
-
-	return 0;
+	return strdup_to_struct_member(fs, target, tgt);
 }
 
 static int mnt_fs_get_flags(struct libmnt_fs *fs)
@@ -743,7 +733,7 @@ static char *merge_optstr(const char *vfs, const char *fs)
  * @fs: fstab/mtab/mountinfo entry pointer
  *
  * Merges all mount options (VFS, FS and userspace) to one options string
- * and returns the result. This function does not modigy @fs.
+ * and returns the result. This function does not modify @fs.
  *
  * Returns: pointer to string (can be freed by free(3)) or NULL in case of error.
  */
@@ -761,11 +751,10 @@ char *mnt_fs_strdup_options(struct libmnt_fs *fs)
 	res = merge_optstr(fs->vfs_optstr, fs->fs_optstr);
 	if (!res && errno)
 		return NULL;
-	if (fs->user_optstr) {
-		if (mnt_optstr_append_option(&res, fs->user_optstr, NULL)) {
-			free(res);
-			res = NULL;
-		}
+	if (fs->user_optstr &&
+	    mnt_optstr_append_option(&res, fs->user_optstr, NULL)) {
+		free(res);
+		res = NULL;
 	}
 	return res;
 }
@@ -980,19 +969,7 @@ const char *mnt_fs_get_attributes(struct libmnt_fs *fs)
  */
 int mnt_fs_set_attributes(struct libmnt_fs *fs, const char *optstr)
 {
-	char *p = NULL;
-
-	if (!fs)
-		return -EINVAL;
-	if (optstr) {
-		p = strdup(optstr);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(fs->attrs);
-	fs->attrs = p;
-
-	return 0;
+	return strdup_to_struct_member(fs, attrs, optstr);
 }
 
 /**
@@ -1098,24 +1075,13 @@ const char *mnt_fs_get_root(struct libmnt_fs *fs)
 /**
  * mnt_fs_set_root:
  * @fs: mountinfo entry
- * @root: path
+ * @path: root path
  *
  * Returns: 0 on success or negative number in case of error.
  */
-int mnt_fs_set_root(struct libmnt_fs *fs, const char *root)
+int mnt_fs_set_root(struct libmnt_fs *fs, const char *path)
 {
-	char *p = NULL;
-
-	if (!fs)
-		return -EINVAL;
-	if (root) {
-		p = strdup(root);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(fs->root);
-	fs->root = p;
-	return 0;
+	return strdup_to_struct_member(fs, root, path);
 }
 
 /**
@@ -1165,6 +1131,7 @@ int mnt_fs_get_priority(struct libmnt_fs *fs)
 /**
  * mnt_fs_set_priority:
  * @fs: /proc/swaps entry
+ * @prio: priority
  *
  * Returns: 0 or -1 in case of error
  */
@@ -1196,18 +1163,7 @@ const char *mnt_fs_get_bindsrc(struct libmnt_fs *fs)
  */
 int mnt_fs_set_bindsrc(struct libmnt_fs *fs, const char *src)
 {
-	char *p = NULL;
-
-	if (!fs)
-		return -EINVAL;
-	if (src) {
-		p = strdup(src);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(fs->bindsrc);
-	fs->bindsrc = p;
-	return 0;
+	return strdup_to_struct_member(fs, bindsrc, src);
 }
 
 /**
@@ -1326,19 +1282,7 @@ const char *mnt_fs_get_comment(struct libmnt_fs *fs)
  */
 int mnt_fs_set_comment(struct libmnt_fs *fs, const char *comm)
 {
-	char *p = NULL;
-
-	if (!fs)
-		return -EINVAL;
-	if (comm) {
-		p = strdup(comm);
-		if (!p)
-			return -ENOMEM;
-	}
-
-	free(fs->comment);
-	fs->comment = p;
-	return 0;
+	return strdup_to_struct_member(fs, comment, comm);
 }
 
 /**

@@ -180,7 +180,7 @@ AC_DEFUN([UL_REQUIRES_LINUX], [
 ])
 
 
-dnl UL_EXCLUDE_ARCH(NAME, ARCH, VARSUFFIX = $1])
+dnl UL_EXCLUDE_ARCH(NAME, ARCH, [VARSUFFIX = $1])
 dnl
 dnl Modifies $build_<name>  variable according to $enable_<name> and $host. The
 dnl $enable_<name> could be "yes", "no" and "check". If build_<name> is "no" then
@@ -208,17 +208,17 @@ AC_DEFUN([UL_EXCLUDE_ARCH], [
   fi
 ])
 
-dnl UL_REQUIRES_HAVE(NAME, HAVENAME, HAVEDESC [VARSUFFIX=$1])
+dnl UL_REQUIRES_HAVE(NAME, HAVENAME, HAVEDESC, [VARSUFFIX=$1])
 dnl
 dnl Modifies $build_<name> variable according to $enable_<name> and
-dnl $have_<havename>.  The <havedesc> is description used ifor warning/error
+dnl $have_<havename>.  The <havedesc> is description used for warning/error
 dnl message (e.g. "function").
 dnl
 dnl The <havename> maybe a list, then at least one of the items in the list
 dnl have to exist, for example: [ncurses, tinfo] means that have_ncurser=yes
 dnl *or* have_tinfo=yes must be defined.
 dnl
-dnl The default <name> for $build_ and $enable_ could be overwrited by option $3.
+dnl The default <name> for $build_ and $enable_ could be overwrited by option $4.
 dnl
 AC_DEFUN([UL_REQUIRES_HAVE], [
   m4_define([suffix], m4_default([$4],$1))
@@ -248,9 +248,45 @@ AC_DEFUN([UL_REQUIRES_HAVE], [
   fi
 ])
 
+dnl UL_REQUIRES_HAVE(NAME, PROGRAM_PROLOGUE, PROGRAM_BODY, DESC, [VARSUFFIX=$1])
+dnl
+dnl Modifies $build_<name> variable according to $enable_<name> and
+dnl ability compile AC_LANG_PROGRAM(<program_prologue>, <program_body>).  
+dnl
+dnl The <desc> is description used for warning/error dnl message (e.g. "foo support").
+dnl
+dnl The default <name> for $build_ and $enable_ could be overwrited by option $5.
+
+AC_DEFUN([UL_REQUIRES_COMPILE], [
+  m4_define([suffix], m4_default([$5],$1))
+
+  if test "x$[build_]suffix" != xno; then
+
+    AC_MSG_CHECKING([$4])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$2], [$3])],
+	[AC_MSG_RESULT([yes])
+	 [ul_haveprogram_]suffix=yes],
+	[AC_MSG_RESULT([no])
+	 [ul_haveprogram_]suffix=no])
+
+    case $[enable_]suffix:$[ul_haveprogram_]suffix in #(
+    no:*)
+      [build_]suffix=no ;;
+    yes:yes)
+      [build_]suffix=yes ;;
+    yes:*)
+      AC_MSG_ERROR([$1 selected, but required $4 not available]);;
+    check:yes)
+      [build_]suffix=yes ;;
+    check:*)
+      AC_MSG_WARN([$4 not found; not building $1])
+      [build_]suffix=no ;;
+    esac
+  fi
+])
 
 dnl
-dnl UL_CONFLICTS_BUILD(NAME, ANOTHER, ANOTHERDESC [VARSUFFIX=$1])
+dnl UL_CONFLICTS_BUILD(NAME, ANOTHER, ANOTHERDESC, [VARSUFFIX=$1])
 dnl
 dnl - ends with error if $enable_<name> and $build_<another>
 dnl   are both set to 'yes'
@@ -260,7 +296,7 @@ dnl
 dnl The <havedesc> is description used for warning/error
 dnl message (e.g. "function").
 dnl
-dnl The default <name> for $build_ and $enable_ could be overwrited by option $3.
+dnl The default <name> for $build_ and $enable_ could be overwrited by option $4.
 dnl
 AC_DEFUN([UL_CONFLICTS_BUILD], [
   m4_define([suffix], m4_default([$4],$1))
@@ -349,7 +385,7 @@ dnl Initializes $build_<name>  variable according to $enable_<name>. If
 dnl $enable_<name> is undefined then ENABLE_STATE is used and $enable_<name> is
 dnl set to ENABLE_STATE.
 dnl
-dnl The default <name> for $build_ and $enable_ could be overwrited by option $2.
+dnl The default <name> for $build_ and $enable_ could be overwrited by option $3.
 dnl
 AC_DEFUN([UL_BUILD_INIT], [
   m4_define([suffix], m4_default([$3],$1))

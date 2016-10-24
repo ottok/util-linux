@@ -63,145 +63,111 @@ void scols_unref_symbols(struct libscols_symbols *sy)
 		free(sy->vert);
 		free(sy->right);
 		free(sy->title_padding);
+		free(sy->cell_padding);
 		free(sy);
 	}
 }
 
 /**
  * scols_symbols_set_branch:
- * @sb: a pointer to a struct libscols_symbols instance
+ * @sy: a pointer to a struct libscols_symbols instance
  * @str: a string which will represent the branch part of a tree output
  *
  * Returns: 0, a negative value in case of an error.
  */
-int scols_symbols_set_branch(struct libscols_symbols *sb, const char *str)
+int scols_symbols_set_branch(struct libscols_symbols *sy, const char *str)
 {
-	char *p = NULL;
-
-	assert(sb);
-
-	if (!sb)
-		return -EINVAL;
-	if (str) {
-		p = strdup(str);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(sb->branch);
-	sb->branch = p;
-	return 0;
+	return strdup_to_struct_member(sy, branch, str);
 }
 
 /**
  * scols_symbols_set_vertical:
- * @sb: a pointer to a struct libscols_symbols instance
+ * @sy: a pointer to a struct libscols_symbols instance
  * @str: a string which will represent the vertical part of a tree output
  *
  * Returns: 0, a negative value in case of an error.
  */
-int scols_symbols_set_vertical(struct libscols_symbols *sb, const char *str)
+int scols_symbols_set_vertical(struct libscols_symbols *sy, const char *str)
 {
-	char *p = NULL;
-
-	assert(sb);
-
-	if (!sb)
-		return -EINVAL;
-	if (str) {
-		p = strdup(str);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(sb->vert);
-	sb->vert = p;
-	return 0;
+	return strdup_to_struct_member(sy, vert, str);
 }
 
 /**
  * scols_symbols_set_right:
- * @sb: a pointer to a struct libscols_symbols instance
+ * @sy: a pointer to a struct libscols_symbols instance
  * @str: a string which will represent the right part of a tree output
  *
  * Returns: 0, a negative value in case of an error.
  */
-int scols_symbols_set_right(struct libscols_symbols *sb, const char *str)
+int scols_symbols_set_right(struct libscols_symbols *sy, const char *str)
 {
-	char *p = NULL;
-
-	assert(sb);
-
-	if (!sb)
-		return -EINVAL;
-	if (str) {
-		p = strdup(str);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(sb->right);
-	sb->right = p;
-	return 0;
+	return strdup_to_struct_member(sy, right, str);
 }
 
 /**
  * scols_symbols_set_title_padding:
- * @sb: a pointer to a struct libscols_symbols instance
- * @str: a string which will represent the symbols which wraps title output
+ * @sy: a pointer to a struct libscols_symbols instance
+ * @str: a string which will represent the symbols which fill title output
  *
- * The current implemetation uses only the first byte from the padding string.
+ * The current implementation uses only the first byte from the padding string.
  * A multibyte chars are not supported yet.
  *
  * Returns: 0, a negative value in case of an error.
  *
  * Since: 2.28
  */
-int scols_symbols_set_title_padding(struct libscols_symbols *sb, const char *str)
+int scols_symbols_set_title_padding(struct libscols_symbols *sy, const char *str)
 {
-	char *p = NULL;
+	return strdup_to_struct_member(sy, title_padding, str);
+}
 
-	assert(sb);
-
-	if (!sb)
-		return -EINVAL;
-	if (str) {
-		p = strdup(str);
-		if (!p)
-			return -ENOMEM;
-	}
-	free(sb->title_padding);
-	sb->title_padding = p;
-	return 0;
+/**
+ * scols_symbols_set_cell_padding:
+ * @sy: a pointer to a struct libscols_symbols instance
+ * @str: a string which will represent the symbols which fill cells
+ *
+ * The padding char has to take up just one cell on the terminal.
+ *
+ * Returns: 0, a negative value in case of an error.
+ *
+ * Since: 2.29
+ */
+int scols_symbols_set_cell_padding(struct libscols_symbols *sy, const char *str)
+{
+	return strdup_to_struct_member(sy, cell_padding, str);
 }
 
 /**
  * scols_copy_symbols:
- * @sb: a pointer to a struct libscols_symbols instance
+ * @sy: a pointer to a struct libscols_symbols instance
  *
- * Returns: a newly allocated copy of the @sb symbol group or NULL in caes of an error.
+ * Returns: a newly allocated copy of the @sy symbol group or NULL in case of an error.
  */
-struct libscols_symbols *scols_copy_symbols(const struct libscols_symbols *sb)
+struct libscols_symbols *scols_copy_symbols(const struct libscols_symbols *sy)
 {
 	struct libscols_symbols *ret;
 	int rc;
 
-	assert(sb);
-	if (!sb)
+	assert(sy);
+	if (!sy)
 		return NULL;
 
 	ret = scols_new_symbols();
 	if (!ret)
 		return NULL;
 
-	rc = scols_symbols_set_branch(ret, sb->branch);
+	rc = scols_symbols_set_branch(ret, sy->branch);
 	if (!rc)
-		rc = scols_symbols_set_vertical(ret, sb->vert);
+		rc = scols_symbols_set_vertical(ret, sy->vert);
 	if (!rc)
-		rc = scols_symbols_set_right(ret, sb->right);
+		rc = scols_symbols_set_right(ret, sy->right);
 	if (!rc)
-		rc = scols_symbols_set_title_padding(ret, sb->title_padding);
+		rc = scols_symbols_set_title_padding(ret, sy->title_padding);
+	if (!rc)
+		rc = scols_symbols_set_cell_padding(ret, sy->cell_padding);
 	if (!rc)
 		return ret;
 
 	scols_unref_symbols(ret);
 	return NULL;
-
 }

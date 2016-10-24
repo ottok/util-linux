@@ -52,7 +52,6 @@
 #include "pathnames.h"
 #include "exitcodes.h"
 #include "c.h"
-#include "closestream.h"
 #include "fileutils.h"
 #include "monotonic.h"
 
@@ -61,6 +60,9 @@
 
 #define XALLOC_EXIT_CODE	FSCK_EX_ERROR
 #include "xalloc.h"
+
+#define CLOSE_EXIT_CODE		FSCK_EX_ERROR
+#include "closestream.h"
 
 #ifndef DEFAULT_FSTYPE
 # define DEFAULT_FSTYPE	"ext2"
@@ -89,7 +91,7 @@ static const char *really_wanted[] = {
 };
 
 /*
- * Internal structure for mount tabel entries.
+ * Internal structure for mount table entries.
  */
 struct fsck_fs_data
 {
@@ -490,7 +492,7 @@ static void load_fs_info(void)
 	errno = 0;
 
 	/*
-	 * Let's follow libmount defauls if $FSTAB_FILE is not specified
+	 * Let's follow libmount defaults if $FSTAB_FILE is not specified
 	 */
 	path = getenv("FSTAB_FILE");
 
@@ -632,22 +634,21 @@ static int execute(const char *progname, const char *progpath,
 	for (i=0; i <num_args; i++)
 		argv[argc++] = xstrdup(args[i]);
 
-	if (progress) {
-		if ((strcmp(type, "ext2") == 0) ||
-		    (strcmp(type, "ext3") == 0) ||
-		    (strcmp(type, "ext4") == 0) ||
-		    (strcmp(type, "ext4dev") == 0)) {
-			char tmp[80];
+	if (progress &&
+	       ((strcmp(type, "ext2") == 0) ||
+		(strcmp(type, "ext3") == 0) ||
+		(strcmp(type, "ext4") == 0) ||
+		(strcmp(type, "ext4dev") == 0))) {
 
-			tmp[0] = 0;
-			if (!progress_active()) {
-				snprintf(tmp, 80, "-C%d", progress_fd);
-				inst->flags |= FLAG_PROGRESS;
-			} else if (progress_fd)
-				snprintf(tmp, 80, "-C%d", progress_fd * -1);
-			if (tmp[0])
-				argv[argc++] = xstrdup(tmp);
-		}
+		char tmp[80];
+		tmp[0] = 0;
+		if (!progress_active()) {
+			snprintf(tmp, 80, "-C%d", progress_fd);
+			inst->flags |= FLAG_PROGRESS;
+		} else if (progress_fd)
+			snprintf(tmp, 80, "-C%d", progress_fd * -1);
+		if (tmp[0])
+			argv[argc++] = xstrdup(tmp);
 	}
 
 	argv[argc++] = xstrdup(fs_get_device(fs));
@@ -1279,7 +1280,7 @@ static int check_all(void)
 
 	/*
 	 * This is for the bone-headed user who enters the root
-	 * filesystem twice.  Skip root will skep all root entries.
+	 * filesystem twice.  Skip root will skip all root entries.
 	 */
 	if (skip_root) {
 		mnt_reset_iter(itr, MNT_ITER_FORWARD);

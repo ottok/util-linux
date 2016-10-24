@@ -1,3 +1,4 @@
+
 /*
  * No copyright is claimed.  This code is in the public domain; do with
  * it what you wish.
@@ -352,10 +353,8 @@ int loopcxt_deinit_iterator(struct loopdev_cxt *lc)
 		fclose(iter->proc);
 	if (iter->sysblock)
 		closedir(iter->sysblock);
-	iter->minors = NULL;
-	iter->proc = NULL;
-	iter->sysblock = NULL;
-	iter->done = 1;
+
+	memset(iter, 0, sizeof(*iter));
 	return 0;
 }
 
@@ -858,7 +857,7 @@ int loopcxt_get_backing_inode(struct loopdev_cxt *lc, ino_t *ino)
  *
  * Notes:
  *   - kernels < 3.2 support partitioned loop devices and PT scanning
- *     only if max_part= module paremeter is non-zero
+ *     only if max_part= module parameter is non-zero
  *
  *   - kernels >= 3.2 always support partitioned loop devices
  *
@@ -890,7 +889,7 @@ int loopmod_supports_partscan(void)
  * @lc: context
  *
  * Returns: 1 if the partscan flags is set *or* (for old kernels) partitions
- * scannig is enabled for all loop devices.
+ * scanning is enabled for all loop devices.
  */
 int loopcxt_is_partscan(struct loopdev_cxt *lc)
 {
@@ -979,13 +978,16 @@ int loopcxt_is_dio(struct loopdev_cxt *lc)
  * @lc: context
  * @st: backing file stat or NULL
  * @backing_file: filename
- * @offset: offset
- * @flags: LOOPDEV_FL_OFFSET if @offset should not be ignored
+ * @offset: offset (use LOOPDEV_FL_OFFSET if specified)
+ * @sizelimit: size limit (use LOOPDEV_FL_SIZELIMIT if specified)
+ * @flags: LOOPDEV_FL_{OFFSET,SIZELIMIT}
  *
  * Returns 1 if the current @lc loopdev is associated with the given backing
  * file. Note that the preferred way is to use devno and inode number rather
  * than filename. The @backing_file filename is poor solution usable in case
  * that you don't have rights to call stat().
+ *
+ * LOOPDEV_FL_SIZELIMIT requires LOOPDEV_FL_OFFSET being set as well.
  *
  * Don't forget that old kernels provide very restricted (in size) backing
  * filename by LOOP_GET_STAT64 ioctl only.
@@ -994,6 +996,7 @@ int loopcxt_is_used(struct loopdev_cxt *lc,
 		    struct stat *st,
 		    const char *backing_file,
 		    uint64_t offset,
+		    uint64_t sizelimit,
 		    int flags)
 {
 	ino_t ino;
@@ -1031,7 +1034,14 @@ found:
 	if (flags & LOOPDEV_FL_OFFSET) {
 		uint64_t off;
 
-		return loopcxt_get_offset(lc, &off) == 0 && off == offset;
+		int rc = loopcxt_get_offset(lc, &off) == 0 && off == offset;
+
+		if (rc && flags & LOOPDEV_FL_SIZELIMIT) {
+			uint64_t sz;
+
+			return loopcxt_get_sizelimit(lc, &sz) == 0 && sz == sizelimit;
+		} else
+			return rc;
 	}
 	return 1;
 }
@@ -1169,7 +1179,7 @@ static int loopcxt_check_size(struct loopdev_cxt *lc, int file_fd)
 
 	if (expected_size != size) {
 		DBG(CXT, ul_debugobj(lc, "warning: loopdev and expected "
-				      "size dismatch (%ju/%ju)",
+				      "size mismatch (%ju/%ju)",
 				      size, expected_size));
 
 		if (loopcxt_set_capacity(lc)) {
@@ -1195,7 +1205,7 @@ static int loopcxt_check_size(struct loopdev_cxt *lc, int file_fd)
 }
 
 /*
- * @cl: context
+ * @lc: context
  *
  * Associate the current device (see loopcxt_{set,get}_device()) with
  * a file (see loopcxt_set_backing_file()).
@@ -1319,6 +1329,40 @@ err:
 	return rc;
 }
 
+/*
+ * @lc: context
+ *
+ * Update status of the current device (see loopcxt_{set,get}_device()).
+ *
+ * Note that once initialized, kernel accepts only selected changes:
+ * LO_FLAGS_AUTOCLEAR and LO_FLAGS_PARTSCAN
+ * For more see linux/drivers/block/loop.c:loop_set_status()
+ *
+ * Returns: <0 on error, 0 on success.
+ */
+int loopcxt_set_status(struct loopdev_cxt *lc)
+{
+	int dev_fd, rc = -1;
+
+	errno = 0;
+	dev_fd = loopcxt_get_fd(lc);
+
+	if (dev_fd < 0) {
+		rc = -errno;
+		return rc;
+	}
+	DBG(SETUP, ul_debugobj(lc, "device open: OK"));
+
+	if (ioctl(dev_fd, LOOP_SET_STATUS64, &lc->info)) {
+		rc = -errno;
+		DBG(SETUP, ul_debugobj(lc, "LOOP_SET_STATUS64 failed: %m"));
+		return rc;
+	}
+
+	DBG(SETUP, ul_debugobj(lc, "LOOP_SET_STATUS64: OK"));
+	return 0;
+}
+
 int loopcxt_set_capacity(struct loopdev_cxt *lc)
 {
 	int fd = loopcxt_get_fd(lc);
@@ -1415,8 +1459,11 @@ int loopcxt_find_unused(struct loopdev_cxt *lc)
 	DBG(CXT, ul_debugobj(lc, "find_unused requested"));
 
 	if (lc->flags & LOOPDEV_FL_CONTROL) {
-		int ctl = open(_PATH_DEV_LOOPCTL, O_RDWR|O_CLOEXEC);
+		int ctl;
 
+		DBG(CXT, ul_debugobj(lc, "using loop-control"));
+
+		ctl = open(_PATH_DEV_LOOPCTL, O_RDWR|O_CLOEXEC);
 		if (ctl >= 0)
 			rc = ioctl(ctl, LOOP_CTL_GET_FREE);
 		if (rc >= 0) {
@@ -1432,6 +1479,7 @@ int loopcxt_find_unused(struct loopdev_cxt *lc)
 	}
 
 	if (rc < 0) {
+		DBG(CXT, ul_debugobj(lc, "using loop scan"));
 		rc = loopcxt_init_iterator(lc, LOOPITER_FL_FREE);
 		if (rc)
 			return rc;
@@ -1486,7 +1534,7 @@ char *loopdev_get_backing_file(const char *device)
  * Returns: TRUE/FALSE
  */
 int loopdev_is_used(const char *device, const char *filename,
-		    uint64_t offset, int flags)
+		    uint64_t offset, uint64_t sizelimit, int flags)
 {
 	struct loopdev_cxt lc;
 	struct stat st;
@@ -1502,7 +1550,7 @@ int loopdev_is_used(const char *device, const char *filename,
 		return rc;
 
 	rc = !stat(filename, &st);
-	rc = loopcxt_is_used(&lc, rc ? &st : NULL, filename, offset, flags);
+	rc = loopcxt_is_used(&lc, rc ? &st : NULL, filename, offset, sizelimit, flags);
 
 	loopcxt_deinit(&lc);
 	return rc;
@@ -1529,7 +1577,7 @@ int loopdev_delete(const char *device)
  * Returns: 0 = success, < 0 error, 1 not found
  */
 int loopcxt_find_by_backing_file(struct loopdev_cxt *lc, const char *filename,
-				 uint64_t offset, int flags)
+				 uint64_t offset, uint64_t sizelimit, int flags)
 {
 	int rc, hasst;
 	struct stat st;
@@ -1546,7 +1594,7 @@ int loopcxt_find_by_backing_file(struct loopdev_cxt *lc, const char *filename,
 	while ((rc = loopcxt_next(lc)) == 0) {
 
 		if (loopcxt_is_used(lc, hasst ? &st : NULL,
-					filename, offset, flags))
+				    filename, offset, sizelimit, flags))
 			break;
 	}
 
@@ -1555,9 +1603,82 @@ int loopcxt_find_by_backing_file(struct loopdev_cxt *lc, const char *filename,
 }
 
 /*
+ * Returns: 0 = not found, < 0 error, 1 found, 2 found full size and offset match
+ */
+int loopcxt_find_overlap(struct loopdev_cxt *lc, const char *filename,
+			   uint64_t offset, uint64_t sizelimit)
+{
+	int rc, hasst;
+	struct stat st;
+
+	if (!filename)
+		return -EINVAL;
+
+	DBG(CXT, ul_debugobj(lc, "find_overlap requested"));
+	hasst = !stat(filename, &st);
+
+	rc = loopcxt_init_iterator(lc, LOOPITER_FL_USED);
+	if (rc)
+		return rc;
+
+	while ((rc = loopcxt_next(lc)) == 0) {
+		uint64_t lc_sizelimit, lc_offset;
+
+		rc = loopcxt_is_used(lc, hasst ? &st : NULL,
+				     filename, offset, sizelimit, 0);
+		if (!rc)
+			continue;	/* unused */
+		if (rc < 0)
+			break;		/* error */
+
+		DBG(CXT, ul_debugobj(lc, "found %s backed by %s",
+			loopcxt_get_device(lc), filename));
+
+		rc = loopcxt_get_offset(lc, &lc_offset);
+		if (rc) {
+			DBG(CXT, ul_debugobj(lc, "failed to get offset for device %s",
+				loopcxt_get_device(lc)));
+			break;
+		}
+		rc = loopcxt_get_sizelimit(lc, &lc_sizelimit);
+		if (rc) {
+			DBG(CXT, ul_debugobj(lc, "failed to get sizelimit for device %s",
+				loopcxt_get_device(lc)));
+			break;
+		}
+
+		/* full match */
+		if (lc_sizelimit == sizelimit && lc_offset == offset) {
+			DBG(CXT, ul_debugobj(lc, "overlapping loop device %s (full match)",
+						loopcxt_get_device(lc)));
+			rc = 2;
+			goto found;
+		}
+
+		/* overlap */
+		if (lc_sizelimit != 0 && offset >= lc_offset + lc_sizelimit)
+			continue;
+		if (sizelimit != 0 && offset + sizelimit <= lc_offset)
+			continue;
+
+		DBG(CXT, ul_debugobj(lc, "overlapping loop device %s",
+			loopcxt_get_device(lc)));
+			rc = 1;
+			goto found;
+	}
+
+	if (rc == 1)
+		rc = 0;	/* not found */
+found:
+	loopcxt_deinit_iterator(lc);
+	DBG(CXT, ul_debugobj(lc, "find_overlap done [rc=%d]", rc));
+	return rc;
+}
+
+/*
  * Returns allocated string with device name
  */
-char *loopdev_find_by_backing_file(const char *filename, uint64_t offset, int flags)
+char *loopdev_find_by_backing_file(const char *filename, uint64_t offset, uint64_t sizelimit, int flags)
 {
 	struct loopdev_cxt lc;
 	char *res = NULL;
@@ -1567,7 +1688,7 @@ char *loopdev_find_by_backing_file(const char *filename, uint64_t offset, int fl
 
 	if (loopcxt_init(&lc, 0))
 		return NULL;
-	if (loopcxt_find_by_backing_file(&lc, filename, offset, flags) == 0)
+	if (loopcxt_find_by_backing_file(&lc, filename, offset, sizelimit, flags) == 0)
 		res = loopcxt_strdup_device(&lc);
 	loopcxt_deinit(&lc);
 

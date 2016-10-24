@@ -66,7 +66,7 @@
  *
  * pr = blkid_new_probe_from_filename(devname);
  * if (!pr)
- *	err("%s: faild to open device", devname);
+ *	err("%s: failed to open device", devname);
  *
  * blkid_probe_enable_partitions(pr, TRUE);
  * blkid_do_fullprobe(pr);
@@ -90,7 +90,7 @@
  *
  * pr = blkid_new_probe_from_filename(devname);
  * if (!pr)
- *	err("%s: faild to open device", devname);
+ *	err("%s: failed to open device", devname);
  *
  * ls = blkid_probe_get_partitions(pr);
  * nparts = blkid_partlist_numof_partitions(ls);
@@ -183,7 +183,7 @@ struct blkid_struct_partition {
 
 	int		partno;		/* partition number */
 	char		uuid[37];	/* UUID (when supported by PT), e.g GPT */
-	unsigned char	name[128];	/* Partition in UTF8 name (when supporte by PT), e.g. Mac */
+	unsigned char	name[128];	/* Partition in UTF8 name (when supported by PT), e.g. Mac */
 
 	blkid_parttable	tab;		/* partition table */
 };
@@ -213,8 +213,6 @@ static int blkid_partitions_probe_partition(blkid_probe pr);
  */
 int blkid_probe_enable_partitions(blkid_probe pr, int enable)
 {
-	if (!pr)
-		return -1;
 	pr->chains[BLKID_CHAIN_PARTS].enabled = enable;
 	return 0;
 }
@@ -230,8 +228,6 @@ int blkid_probe_enable_partitions(blkid_probe pr, int enable)
  */
 int blkid_probe_set_partitions_flags(blkid_probe pr, int flags)
 {
-	if (!pr)
-		return -1;
 	pr->chains[BLKID_CHAIN_PARTS].flags = flags;
 	return 0;
 }
@@ -429,7 +425,7 @@ static blkid_partition new_partition(blkid_partlist ls, blkid_parttable tab)
 
 	if (ls->nparts + 1 > ls->nparts_max) {
 		/* Linux kernel has DISK_MAX_PARTS=256, but it's too much for
-		 * generic Linux machine -- let start with 32 partititions.
+		 * generic Linux machine -- let start with 32 partitions.
 		 */
 		void *tmp = realloc(ls->parts, (ls->nparts_max + 32) *
 					sizeof(struct blkid_struct_partition));
@@ -871,7 +867,7 @@ done:
 
 /**
  * blkid_known_pttype:
- * @pttype: partiton name
+ * @pttype: partition name
  *
  * Returns: 1 for known or 0 for unknown partition type.
  */
@@ -898,7 +894,7 @@ int blkid_known_pttype(const char *pttype)
  */
 int blkid_partlist_numof_partitions(blkid_partlist ls)
 {
-	return ls ? ls->nparts : -1;
+	return ls->nparts;
 }
 
 /**
@@ -910,7 +906,7 @@ int blkid_partlist_numof_partitions(blkid_partlist ls)
  */
 blkid_parttable blkid_partlist_get_table(blkid_partlist ls)
 {
-	if (!ls || list_empty(&ls->l_tabs))
+	if (list_empty(&ls->l_tabs))
 		return NULL;
 
 	return list_entry(ls->l_tabs.next,
@@ -933,7 +929,7 @@ blkid_parttable blkid_partlist_get_table(blkid_partlist ls)
  */
 blkid_partition blkid_partlist_get_partition(blkid_partlist ls, int n)
 {
-	if (!ls || n < 0 || n >= ls->nparts)
+	if (n < 0 || n >= ls->nparts)
 		return NULL;
 
 	return &ls->parts[n];
@@ -969,9 +965,6 @@ blkid_partition blkid_partlist_get_partition_by_partno(blkid_partlist ls, int n)
 	int i, nparts;
 	blkid_partition par;
 
-	if (!ls)
-		return NULL;
-
 	nparts = blkid_partlist_numof_partitions(ls);
 	for (i = 0; i < nparts; i++) {
 		par = blkid_partlist_get_partition(ls, i);
@@ -1001,10 +994,7 @@ blkid_partition blkid_partlist_devno_to_partition(blkid_partlist ls, dev_t devno
 	uint64_t start, size;
 	int i, rc, partno = 0;
 
-	if (!ls)
-		return NULL;
-
-	DBG(LOWPROBE, ul_debug("triyng to convert devno 0x%llx to partition",
+	DBG(LOWPROBE, ul_debug("trying to convert devno 0x%llx to partition",
 			(long long) devno));
 
 	if (sysfs_init(&sysfs, devno, NULL)) {
@@ -1045,7 +1035,7 @@ blkid_partition blkid_partlist_devno_to_partition(blkid_partlist ls, dev_t devno
 		/*
 		 * Partition mapped by kpartx does not provide "start" offset
 		 * in /sys, but if we know partno and size of the partition
-		 * that we can probably make the releation bettween the device
+		 * that we can probably make the relation between the device
 		 * and an entry in partition table.
 		 */
 		 for (i = 0; i < ls->nparts; i++) {
@@ -1150,14 +1140,12 @@ int blkid_partitions_strcpy_ptuuid(blkid_probe pr, char *str)
  */
 const char *blkid_parttable_get_id(blkid_parttable tab)
 {
-	return tab && *tab->id ? tab->id : NULL;
+	return *tab->id ? tab->id : NULL;
 }
 
 
 int blkid_partition_set_type(blkid_partition par, int type)
 {
-	if (!par)
-		return -1;
 	par->type = type;
 	return 0;
 }
@@ -1170,18 +1158,18 @@ int blkid_partition_set_type(blkid_partition par, int type)
  */
 const char *blkid_parttable_get_type(blkid_parttable tab)
 {
-	return tab ? tab->type : NULL;
+	return tab->type;
 }
 
 /**
  * blkid_parttable_get_parent:
  * @tab: partition table
  *
- * Returns: parent for nexted partitition tables or NULL.
+ * Returns: parent for nested partition tables or NULL.
  */
 blkid_partition blkid_parttable_get_parent(blkid_parttable tab)
 {
-	return tab ? tab->parent : NULL;
+	return tab->parent;
 }
 
 /**
@@ -1190,7 +1178,7 @@ blkid_partition blkid_parttable_get_parent(blkid_parttable tab)
  *
  * Note the position is relative to begin of the device as defined by
  * blkid_probe_set_device() for primary partition table, and relative
- * to parental partition for nested patition tables.
+ * to parental partition for nested partition tables.
  *
  * <informalexample>
  *   <programlisting>
@@ -1210,7 +1198,7 @@ blkid_partition blkid_parttable_get_parent(blkid_parttable tab)
  */
 blkid_loff_t blkid_parttable_get_offset(blkid_parttable tab)
 {
-	return tab ? (blkid_loff_t)tab->offset : -1;
+	return (blkid_loff_t)tab->offset;
 }
 
 /**
@@ -1246,7 +1234,7 @@ blkid_loff_t blkid_parttable_get_offset(blkid_parttable tab)
  */
 blkid_parttable blkid_partition_get_table(blkid_partition par)
 {
-	return par ? par->tab : NULL;
+	return par->tab;
 }
 
 static int partition_get_logical_type(blkid_partition par)
@@ -1375,7 +1363,7 @@ int blkid_partition_gen_uuid(blkid_partition par)
  */
 const char *blkid_partition_get_name(blkid_partition par)
 {
-	return par && *par->name ? (char *) par->name : NULL;
+	return *par->name ? (char *) par->name : NULL;
 }
 
 /**
@@ -1386,19 +1374,19 @@ const char *blkid_partition_get_name(blkid_partition par)
  */
 const char *blkid_partition_get_uuid(blkid_partition par)
 {
-	return par && *par->uuid ? par->uuid : NULL;
+	return *par->uuid ? par->uuid : NULL;
 }
 
 /**
  * blkid_partition_get_partno:
  * @par: partition
  *
- * Returns: proposed partitin number (e.g. 'N' from sda'N') or -1 in case of
- * error. Note that the number is generate by library independenly on your OS.
+ * Returns: proposed partition number (e.g. 'N' from sda'N') or -1 in case of
+ * error. Note that the number is generate by library independently on your OS.
  */
 int blkid_partition_get_partno(blkid_partition par)
 {
-	return par ? par->partno : -1;
+	return par->partno;
 }
 
 /**
@@ -1407,21 +1395,21 @@ int blkid_partition_get_partno(blkid_partition par)
  *
  * Be careful if you _not_ probe whole disk:
  *
- * 1) the offset is usully relative to begin of the disk -- but if you probe a
+ * 1) the offset is usually relative to begin of the disk -- but if you probe a
  *    fragment of the disk only -- then the offset could be still relative to
  *    the begin of the disk rather that relative to the fragment.
  *
- * 2) the offset for nested partitions could be releative to parent (e.g. Solaris)
+ * 2) the offset for nested partitions could be relative to parent (e.g. Solaris)
  *    _or_ relative to the begin of the whole disk (e.g. bsd).
  *
- * You don't have to care about such details if you proble whole disk. In such
+ * You don't have to care about such details if you probe whole disk. In such
  * a case libblkid always returns the offset relative to the begin of the disk.
  *
  * Returns: start of the partition (in 512-sectors).
  */
 blkid_loff_t blkid_partition_get_start(blkid_partition par)
 {
-	return par ? (blkid_loff_t)par->start : -1;
+	return (blkid_loff_t)par->start;
 }
 
 /**
@@ -1432,7 +1420,7 @@ blkid_loff_t blkid_partition_get_start(blkid_partition par)
  *          library always returns full size of the partition. If you want add
  *          the partition to the Linux system (BLKPG_ADD_PARTITION ioctl) you
  *          need to reduce the size of the partition to 1 or 2 blocks. The
- *          rest of the partition has to be unaccessible for mkfs or mkswap
+ *          rest of the partition has to be inaccessible for mkfs or mkswap
  *          programs, we need a small space for boot loaders only.
  *
  *          For some unknown reason this (safe) practice is not to used for
@@ -1442,7 +1430,7 @@ blkid_loff_t blkid_partition_get_start(blkid_partition par)
  */
 blkid_loff_t blkid_partition_get_size(blkid_partition par)
 {
-	return par ? (blkid_loff_t)par->size : -1;
+	return (blkid_loff_t)par->size;
 }
 
 /**
@@ -1462,9 +1450,6 @@ int blkid_partition_get_type(blkid_partition par)
 int blkid_partition_set_type_string(blkid_partition par,
 		const unsigned char *type, size_t len)
 {
-	if (!par)
-		return -1;
-
 	set_string((unsigned char *) par->typestr,
 			sizeof(par->typestr), type, len);
 	return 0;
@@ -1475,9 +1460,6 @@ int blkid_partition_set_type_string(blkid_partition par,
  */
 int blkid_partition_set_type_uuid(blkid_partition par, const unsigned char *uuid)
 {
-	if (!par)
-		return -1;
-
 	blkid_unparse_uuid(uuid, par->typestr, sizeof(par->typestr));
 	return 0;
 }
@@ -1494,14 +1476,12 @@ int blkid_partition_set_type_uuid(blkid_partition par, const unsigned char *uuid
  */
 const char *blkid_partition_get_type_string(blkid_partition par)
 {
-	return par && *par->typestr ? par->typestr : NULL;
+	return *par->typestr ? par->typestr : NULL;
 }
 
 
 int blkid_partition_set_flags(blkid_partition par, unsigned long long flags)
 {
-	if (!par)
-		return -1;
 	par->flags = flags;
 	return 0;
 }

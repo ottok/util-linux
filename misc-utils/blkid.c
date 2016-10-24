@@ -40,8 +40,9 @@
 #include "strutils.h"
 #define OPTUTILS_EXIT_CODE	BLKID_EXIT_OTHER	/* exclusive_option() */
 #include "optutils.h"
-
+#define CLOSE_EXIT_CODE		BLKID_EXIT_OTHER	/* close_stdout() */
 #include "closestream.h"
+
 #include "ttyutils.h"
 #include "xalloc.h"
 
@@ -449,7 +450,7 @@ static int lowprobe_superblocks(blkid_probe pr)
 
 		rc = blkid_do_fullprobe(pr);
 		if (rc < 0)
-			return rc;	/* -1 = error, 1 = nothing, 0 = succes */
+			return rc;	/* -1 = error, 1 = nothing, 0 = success */
 
 		if (blkid_probe_lookup_value(pr, "PTTYPE", NULL, NULL) == 0)
 			return 0;	/* partition table detected */

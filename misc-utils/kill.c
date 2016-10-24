@@ -38,7 +38,7 @@
  *  1999-02-22 Arkadiusz Miśkiewicz <misiek@pld.ORG.PL>
  *  - added Native Language Support
  *
- *  1999-11-13 aeb Accept signal numers 128+s.
+ *  1999-11-13 aeb Accept signal numbers 128+s.
  *
  * Copyright (C) 2014 Sami Kerola <kerolasa@iki.fi>
  * Copyright (C) 2014 Karel Zak <kzak@redhat.com>
@@ -272,7 +272,7 @@ static int signame_to_signum(char *sig)
 	if (!strncasecmp(sig, "rt", 2))
 		return rtsig_to_signum(sig + 2);
 #endif
-	/* Normal sugnals */
+	/* Normal signals */
 	for (n = 0; n < ARRAY_SIZE(sys_signame); n++) {
 		if (!strcasecmp(sys_signame[n].name, sig))
 			return sys_signame[n].val;
@@ -471,10 +471,6 @@ int main(int argc, char **argv)
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	atexit(close_stdout);
-
-	ctl.do_pid = (!strcmp(program_invocation_short_name, "pid"));	/* Yecch */
-	if (ctl.do_pid)	/* FIXME: remove in March 2016.  */
-		warnx(_("use of 'kill --pid' option as command name is deprecated"));
 
 	argv = parse_arguments(argc, argv, &ctl);
 

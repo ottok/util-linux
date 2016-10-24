@@ -98,9 +98,9 @@ List the free unpartitioned areas on all or the specified devices.
 Change the GPT partition attribute bits.  If \fIattributes\fR is not specified,
 then print the current partition settings.  The \fIattributes\fR argument is a
 comma- or space-delimited list of bits.  The currently supported attribute
-bits are: RequiredPartiton, NoBlockIOProtocol, LegacyBIOSBootable
+bits are: RequiredPartition, NoBlockIOProtocol, LegacyBIOSBootable
 and GUID-specific bits in the range from 48 to 63.  For example, the string
-"RequiredPartiton,50,51" sets three bits.
+"RequiredPartition,50,51" sets three bits.
 .TP
 .BR "\-\-part\-label \fIdevice partition-number " [ \fIlabel ]
 Change the GPT partition name (label).  If \fIlabel\fR is not specified,
@@ -157,6 +157,11 @@ Do everything except writing to the device.
 .TP
 .B \-\-no\-reread
 Do not check through the re-read-partition-table ioctl whether the device is in use.
+.TP
+.B \-\-no\-tell\-kernel
+Don't tell the kernel about partition changes. This option is recommended together
+with \fB\-\-no\-reread\fR to modify a partition on used disk. The modified partition
+should not be used (e.g. mounted).
 .TP
 .BR \-O , " \-\-backup\-file " \fIpath
 Override the default backup file name.  Note that the device name and offset
@@ -221,6 +226,18 @@ to avoid possible collisions.  The argument \fIwhen\fR can be \fBauto\fR,
 \fBauto\fR, in which case signatures are wiped only when in interactive mode.
 In all cases detected signatures are reported by warning messages
 before a new partition table is created.  See also
+.BR wipefs (8)
+command.
+
+.TP
+.BR -W , " \-\-wipe-partitions "\fIwhen
+Wipe filesystem, RAID and partition-table signatures from a newly created
+partitions, in order to avoid possible collisions.  The argument \fIwhen\fR can
+be \fBauto\fR, \fBnever\fR or \fBalways\fR.  When this option is not given, the
+default is \fBauto\fR, in which case signatures are wiped only when in
+interactive mode and after confirmation by user.  In all cases detected
+signatures are reported by warning messages after a new partition is created.
+See also
 .BR wipefs (8)
 command.
 
@@ -336,7 +353,7 @@ loaders and for other operating systems.
 
 .B Named-fields format
 .RS
-This format is more readable, robust, extendible and allows to specify additional
+This format is more readable, robust, extensible and allows to specify additional
 information (e.g. a UUID).  It is recommended to use this format to keep your scripts
 more readable.
 .RS

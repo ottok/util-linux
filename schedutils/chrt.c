@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "c.h"
 #include "nls.h"
@@ -58,9 +60,17 @@
 # define SCHED_FLAG_RESET_ON_FORK 0x01
 #endif
 
-
 #if defined (__linux__) && !defined(HAVE_SCHED_SETATTR)
 # include <sys/syscall.h>
+#endif
+
+/* usable kernel-headers, but old glibc-headers */
+#if defined (__linux__) && !defined(SYS_sched_setattr) && defined(__NR_sched_setattr)
+# define SYS_sched_setattr __NR_sched_setattr
+#endif
+
+#if defined (__linux__) && !defined(SYS_sched_getattr) && defined(__NR_sched_getattr)
+# define SYS_sched_getattr __NR_sched_getattr
 #endif
 
 #if defined (__linux__) && !defined(HAVE_SCHED_SETATTR) && defined(SYS_sched_setattr)
@@ -207,12 +217,20 @@ static void show_sched_pid_info(struct chrt_ctl *ctl, pid_t pid)
 	if (!pid)
 		pid = getpid();
 
+	errno = 0;
+
+	/*
+	 * New way
+	 */
 #ifdef HAVE_SCHED_SETATTR
 	{
 		struct sched_attr sa;
 
-		if (sched_getattr(pid, &sa, sizeof(sa), 0) != 0)
+		if (sched_getattr(pid, &sa, sizeof(sa), 0) != 0) {
+			if (errno == ENOSYS)
+				goto fallback;
 			err(EXIT_FAILURE, _("failed to get pid %d's policy"), pid);
+		}
 
 		policy = sa.sched_policy;
 		prio = sa.sched_priority;
@@ -221,8 +239,13 @@ static void show_sched_pid_info(struct chrt_ctl *ctl, pid_t pid)
 		runtime = sa.sched_runtime;
 		period = sa.sched_period;
 	}
-#else /* !HAVE_SCHED_SETATTR */
-	{
+#endif
+
+	/*
+	 * Old way
+	 */
+fallback:
+	if (errno == ENOSYS) {
 		struct sched_param sp;
 
 		policy = sched_getscheduler(pid);
@@ -238,7 +261,6 @@ static void show_sched_pid_info(struct chrt_ctl *ctl, pid_t pid)
 			reset_on_fork = 1;
 # endif
 	}
-#endif /* !HAVE_SCHED_SETATTR */
 
 	if (ctl->altered)
 		printf(_("pid %d's new scheduling policy: %s"), pid, get_policy_name(policy));
@@ -308,19 +330,19 @@ static void show_min_max(void)
 		int min = sched_get_priority_min(plc);
 
 		if (max >= 0 && min >= 0)
-			printf(_("SCHED_%s min/max priority\t: %d/%d\n"),
+			printf(_("%s min/max priority\t: %d/%d\n"),
 					get_policy_name(plc), min, max);
 		else
-			printf(_("SCHED_%s not supported?\n"), get_policy_name(plc));
+			printf(_("%s not supported?\n"), get_policy_name(plc));
 	}
 }
 
-#ifndef HAVE_SCHED_SETATTR
-static int set_sched_one(struct chrt_ctl *ctl, pid_t pid)
+static int set_sched_one_by_setscheduler(struct chrt_ctl *ctl, pid_t pid)
 {
 	struct sched_param sp = { .sched_priority = ctl->priority };
 	int policy = ctl->policy;
 
+	errno = 0;
 # ifdef SCHED_RESET_ON_FORK
 	if (ctl->reset_on_fork)
 		policy |= SCHED_RESET_ON_FORK;
@@ -328,22 +350,37 @@ static int set_sched_one(struct chrt_ctl *ctl, pid_t pid)
 	return sched_setscheduler(pid, policy, &sp);
 }
 
+
+#ifndef HAVE_SCHED_SETATTR
+static int set_sched_one(struct chrt_ctl *ctl, pid_t pid)
+{
+	return set_sched_one_by_setscheduler(ctl, pid);
+}
+
 #else /* !HAVE_SCHED_SETATTR */
 static int set_sched_one(struct chrt_ctl *ctl, pid_t pid)
 {
+	struct sched_attr sa = { .size = sizeof(struct sched_attr) };
+
+	/* old API is good enough for non-deadline */
+	if (ctl->policy != SCHED_DEADLINE)
+		return set_sched_one_by_setscheduler(ctl, pid);
+
+	/* no changeed by chrt, follow the current setting */
+	sa.sched_nice = getpriority(PRIO_PROCESS, pid);
+
 	/* use main() to check if the setting makes sense */
-	struct sched_attr sa = {
-		.size		= sizeof(struct sched_attr),
-		.sched_policy	= ctl->policy,
-		.sched_priority	= ctl->priority,
-		.sched_runtime  = ctl->runtime,
-		.sched_period   = ctl->period,
-		.sched_deadline = ctl->deadline
-	};
+	sa.sched_policy	  = ctl->policy;
+	sa.sched_priority = ctl->priority;
+	sa.sched_runtime  = ctl->runtime;
+	sa.sched_period   = ctl->period;
+	sa.sched_deadline = ctl->deadline;
+
 # ifdef SCHED_RESET_ON_FORK
 	if (ctl->reset_on_fork)
 		sa.sched_flags |= SCHED_RESET_ON_FORK;
 # endif
+	errno = 0;
 	return sched_setattr(pid, &sa, 0);
 }
 #endif /* HAVE_SCHED_SETATTR */
@@ -504,7 +541,11 @@ int main(int argc, char **argv)
 #endif
 	if (ctl->pid == -1)
 		ctl->pid = 0;
-
+	if (ctl->priority < sched_get_priority_min(ctl->policy) ||
+	    sched_get_priority_max(ctl->policy) < ctl->priority)
+		errx(EXIT_FAILURE,
+		     _("unsupported priority value for the policy: %d: see --max for valid range"),
+		     ctl->priority);
 	set_sched(ctl);
 
 	if (ctl->verbose)

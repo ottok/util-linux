@@ -21,12 +21,14 @@ UL_DEBUG_DEFINE_MASKNAMES(libfdisk) =
 	{ "parttype",	LIBFDISK_DEBUG_PARTTYPE,"partition type utils" },
 	{ "script",	LIBFDISK_DEBUG_SCRIPT,	"sfdisk-like scripts" },
 	{ "tab",	LIBFDISK_DEBUG_TAB,	"table utils"},
+	{ "wipe",       LIBFDISK_DEBUG_WIPE,    "wipe area utils" },
+	{ "item",       LIBFDISK_DEBUG_WIPE,    "disklabel items" },
 	{ NULL, 0 }
 };
 
 /**
  * fdisk_init_debug:
- * @mask: debug mask (0xffff to enable full debuging)
+ * @mask: debug mask (0xffff to enable full debugging)
  *
  * If the @mask is not specified then this function reads
  * LIBFDISK_DEBUG environment variable to get the mask.

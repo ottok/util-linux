@@ -44,6 +44,12 @@
 #include <getopt.h>
 #include <utime.h>
 #include <fcntl.h>
+
+/* We don't use our include/crc32.h, but crc32 from zlib!
+ *
+ * The zlib implemenation performs pre/post-conditioning. The util-linux
+ * imlemenation requires post-conditioning (xor) in the applications.
+ */
 #include <zlib.h>
 
 #include <sys/types.h>
@@ -225,7 +231,7 @@ static void test_crc(int start)
 		if (buf != MAP_FAILED) {
 			if (lseek(fd, 0, SEEK_SET) == (off_t) -1)
 				err(FSCK_EX_ERROR, _("seek on %s failed"), filename);
-			if (read(fd, buf, super.size) < 0)
+			if (read(fd, buf, super.size) != (ssize_t) super.size)
 				err(FSCK_EX_ERROR, _("cannot read %s"), filename);
 		}
 	}
@@ -403,10 +409,8 @@ static void do_uncompress(char *path, int outfd, unsigned long offset,
 				     size);
 		}
 		size -= out;
-		if (*extract_dir != '\0')
-			if (write(outfd, outbuffer, out) < 0)
-				err(FSCK_EX_ERROR, _("write failed: %s"),
-				    path);
+		if (*extract_dir != '\0' && write(outfd, outbuffer, out) < 0)
+			err(FSCK_EX_ERROR, _("write failed: %s"), path);
 		curr = next;
 	} while (size);
 }
@@ -629,9 +633,8 @@ static void test_fs(int start)
 			     _("directory data end (%lu) != file data start (%lu)"),
 			     end_dir, start_data);
 	}
-	if (super.flags & CRAMFS_FLAG_FSID_VERSION_2)
-		if (end_data > super.size)
-			errx(FSCK_EX_UNCORRECTED, _("invalid file data offset"));
+	if (super.flags & CRAMFS_FLAG_FSID_VERSION_2 && end_data > super.size)
+		errx(FSCK_EX_UNCORRECTED, _("invalid file data offset"));
 
 	iput(root);		/* free(root) */
 }

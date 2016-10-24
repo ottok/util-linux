@@ -34,11 +34,11 @@ extern "C" {
  *
  * Library version string
  */
-#define LIBFDISK_VERSION   "2.28.2"
+#define LIBFDISK_VERSION   "2.29."
 
 #define LIBFDISK_MAJOR_VERSION   2
-#define LIBFDISK_MINOR_VERSION   28
-#define LIBFDISK_PATCH_VERSION   2
+#define LIBFDISK_MINOR_VERSION   29
+#define LIBFDISK_PATCH_VERSION   
 
 /**
  * fdisk_context:
@@ -148,7 +148,6 @@ enum fdisk_asktype {
 	FDISK_ASKTYPE_MENU			/* ask for menu item */
 };
 
-
 /* init.c */
 extern void fdisk_init_debug(int mask);
 
@@ -254,6 +253,14 @@ unsigned int fdisk_parttype_get_code(const struct fdisk_parttype *t);
 const char *fdisk_parttype_get_name(const struct fdisk_parttype *t);
 int fdisk_parttype_is_unknown(const struct fdisk_parttype *t);
 
+
+/* field.c */
+extern int fdisk_field_get_id(const struct fdisk_field *field);
+extern const char *fdisk_field_get_name(const struct fdisk_field *field);
+extern double fdisk_field_get_width(const struct fdisk_field *field);
+extern int fdisk_field_is_number(const struct fdisk_field *field);
+
+
 /* label.c */
 
 /**
@@ -285,6 +292,10 @@ enum fdisk_fieldtype {
 	FDISK_FIELD_SADDR,		/* Start-C/H/S (MBR) */
 	FDISK_FIELD_UUID,		/* partition UUID (GPT) */
 
+	FDISK_FIELD_FSUUID,
+	FDISK_FIELD_FSLABEL,
+	FDISK_FIELD_FSTYPE,
+
 	FDISK_NFIELDS		/* must be last */
 };
 
@@ -313,7 +324,20 @@ enum fdisk_labelitem_gen {
 	__FDISK_NLABELITEMS = 8		/* Specifies reserved range for generic items (0..7) */
 };
 
+/* item.c */
+extern struct fdisk_labelitem *fdisk_new_labelitem(void);
+extern void fdisk_ref_labelitem(struct fdisk_labelitem *li);
+extern int fdisk_reset_labelitem(struct fdisk_labelitem *li);
+extern void fdisk_unref_labelitem(struct fdisk_labelitem *li);
+extern const char *fdisk_labelitem_get_name(struct fdisk_labelitem *li);
+extern int fdisk_labelitem_get_id(struct fdisk_labelitem *li);
+extern int fdisk_labelitem_get_data_u64(struct fdisk_labelitem *li, uint64_t *data);
+extern int fdisk_labelitem_get_data_string(struct fdisk_labelitem *li, const char **data);
+extern int fdisk_labelitem_is_string(struct fdisk_labelitem *li);
+extern int fdisk_labelitem_is_number(struct fdisk_labelitem *li);
+
 extern int fdisk_get_disklabel_item(struct fdisk_context *cxt, int id, struct fdisk_labelitem *item);
+
 extern int fdisk_get_disklabel_id(struct fdisk_context *cxt, char **id);
 extern int fdisk_set_disklabel_id(struct fdisk_context *cxt);
 
@@ -321,8 +345,9 @@ extern int fdisk_get_partition(struct fdisk_context *cxt, size_t partno, struct 
 extern int fdisk_set_partition(struct fdisk_context *cxt, size_t partno, struct fdisk_partition *pa);
 extern int fdisk_add_partition(struct fdisk_context *cxt, struct fdisk_partition *pa, size_t *partno);
 extern int fdisk_delete_partition(struct fdisk_context *cxt, size_t partno);
-
 extern int fdisk_delete_all_partitions(struct fdisk_context *cxt);
+
+extern int fdisk_wipe_partition(struct fdisk_context *cxt, size_t partno, int enable);
 
 extern int fdisk_set_partition_type(struct fdisk_context *cxt, size_t partnum,
 			     struct fdisk_parttype *t);
@@ -342,12 +367,6 @@ extern const struct fdisk_field *fdisk_label_get_field(const struct fdisk_label 
 extern const struct fdisk_field *fdisk_label_get_field_by_name(
 			const struct fdisk_label *lb,
 			const char *name);
-
-extern int fdisk_field_get_id(const struct fdisk_field *field);
-extern const char *fdisk_field_get_name(const struct fdisk_field *field);
-extern double fdisk_field_get_width(const struct fdisk_field *field);
-extern int fdisk_field_is_number(const struct fdisk_field *field);
-
 
 extern void fdisk_label_set_changed(struct fdisk_label *lb, int changed);
 extern int fdisk_label_is_changed(const struct fdisk_label *lb);
@@ -389,6 +408,7 @@ size_t fdisk_partition_get_partno(struct fdisk_partition *pa);
 int fdisk_partition_has_partno(struct fdisk_partition *pa);
 int fdisk_partition_cmp_partno(struct fdisk_partition *a,
 	                               struct fdisk_partition *b);
+
 int fdisk_partition_partno_follow_default(struct fdisk_partition *pa, int enable);
 
 extern int fdisk_partition_set_type(struct fdisk_partition *pa, struct fdisk_parttype *type);
@@ -596,6 +616,7 @@ enum fdisk_labelitem_sgi {
 #define GPT_FLAG_GUIDSPECIFIC	4
 
 extern int fdisk_gpt_is_hybrid(struct fdisk_context *cxt);
+extern int fdisk_gpt_set_npartitions(struct fdisk_context *cxt, uint32_t entries);
 extern int fdisk_gpt_get_partition_attrs(struct fdisk_context *cxt, size_t partnum, uint64_t *attrs);
 extern int fdisk_gpt_set_partition_attrs(struct fdisk_context *cxt, size_t partnum, uint64_t attrs);
 

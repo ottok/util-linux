@@ -37,6 +37,7 @@
 #include "canonicalize.h"
 #include "strutils.h"
 #include "closestream.h"
+#include "pager.h"
 
 #include "fdisk.h"
 
@@ -48,6 +49,8 @@
 #ifdef HAVE_LINUX_BLKPG_H
 # include <linux/blkpg.h>
 #endif
+
+int pwipemode = WIPEMODE_AUTO;
 
 /*
  * fdisk debug stuff (see fdisk.h and include/debug.h)
@@ -445,6 +448,7 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt)
 	return NULL;
 }
 
+
 void list_partition_types(struct fdisk_context *cxt)
 {
 	size_t ntypes = 0;
@@ -505,12 +509,16 @@ void list_partition_types(struct fdisk_context *cxt)
 		 */
 		size_t i;
 
+		pager_open();
+
 		for (i = 0; i < ntypes; i++) {
 			const struct fdisk_parttype *t = fdisk_label_get_parttype(lb, i);
 			printf("%3zu %-30s %s\n", i + 1,
 					fdisk_parttype_get_name(t),
 					fdisk_parttype_get_string(t));
 		}
+
+		pager_close();
 	}
 	putchar('\n');
 }
@@ -734,13 +742,14 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(_(" -L, --color[=<when>]          colorize output (auto, always or never)\n"), out);
 	fprintf(out,
 	        "                                 %s\n", USAGE_COLORS_DEFAULT);
-	fputs(_(" -l, --list                    display partitions end exit\n"), out);
+	fputs(_(" -l, --list                    display partitions and exit\n"), out);
 	fputs(_(" -o, --output <list>           output columns\n"), out);
 	fputs(_(" -t, --type <type>             recognize specified partition table type only\n"), out);
 	fputs(_(" -u, --units[=<unit>]          display units: 'cylinders' or 'sectors' (default)\n"), out);
 	fputs(_(" -s, --getsz                   display device size in 512-byte sectors [DEPRECATED]\n"), out);
 	fputs(_("     --bytes                   print SIZE in bytes rather than in human readable format\n"), out);
 	fputs(_(" -w, --wipe <mode>             wipe signatures (auto, always or never)\n"), out);
+	fputs(_(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (auto, always or never)\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -C, --cylinders <number>      specify the number of cylinders\n"), out);
@@ -791,6 +800,7 @@ int main(int argc, char **argv)
 		{ "output",         no_argument,       NULL, 'o' },
 		{ "protect-boot",   no_argument,       NULL, 'B' },
 		{ "wipe",           required_argument, NULL, 'w' },
+		{ "wipe-partitions",required_argument, NULL, 'W' },
 		{ NULL, 0, NULL, 0 }
 	};
 
@@ -809,7 +819,7 @@ int main(int argc, char **argv)
 
 	fdisk_set_ask(cxt, ask_callback, NULL);
 
-	while ((c = getopt_long(argc, argv, "b:Bc::C:hH:lL::o:sS:t:u::vVw:",
+	while ((c = getopt_long(argc, argv, "b:Bc::C:hH:lL::o:sS:t:u::vVw:W:",
 				longopts, NULL)) != -1) {
 		switch (c) {
 		case 'b':
@@ -903,6 +913,11 @@ int main(int argc, char **argv)
 		case 'w':
 			wipemode = wipemode_from_string(optarg);
 			if (wipemode < 0)
+				errx(EXIT_FAILURE, _("unsupported wipe mode"));
+			break;
+		case 'W':
+			pwipemode = wipemode_from_string(optarg);
+			if (pwipemode < 0)
 				errx(EXIT_FAILURE, _("unsupported wipe mode"));
 			break;
 		case 'h':

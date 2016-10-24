@@ -272,14 +272,15 @@ Thus, given a line
 any user can mount the iso9660 filesystem found on an inserted CDROM
 using the command:
 .RS
-.sp
-.B "mount /dev/cdrom"
-.RE
-or
-.RS
 .B "mount /cd"
 .sp
 .RE
+Note that \fBmount\fR is very strict about non-root users and all paths
+specified on command line are verified before fstab is parsed or a helper
+program is executed. It's strogly recommended to use a valid mountpoint to
+specify filesystem, otherwise \fBmount\fR may fail. For example it's bad idea
+to use NFS or CIFS source on command line.
+.PP
 For more details, see
 .BR fstab (5).
 Only the user that mounted a filesystem can unmount it again.
@@ -367,7 +368,7 @@ operation, for example:
 .B mount \-\-bind
 .I olddir newdir
 .br
-.B mount \-o remount,ro,bind
+.B mount \-o remount,bind,ro
 .I olddir newdir
 .RE
 
@@ -378,8 +379,9 @@ will be writable, but the
 .I newdir
 will be read-only.
 
-It's impossible to change mount options recursively
-(for example with \fB-o rbind,ro\fR).
+It's also possible to change nosuid, nodev, noexec, noatime, nodiratime and
+relatime VFS entry flags by "remount,bind" operation. It's impossible to change
+mount options recursively (for example with \fB-o rbind,ro\fR).
 .RE
 
 .SS The move operation
@@ -513,6 +515,10 @@ Mount all filesystems (of the given types) mentioned in
 .B noauto
 keyword).  The filesystems are mounted following their order in
 .IR fstab .
+.sp
+Note that it is a bad manner to use \fBmount \-a\fR for
+.IR fstab
+checking. The recommended solution is \fBfindmnt \-\-verify\fR.
 .TP
 .BR \-B , " \-\-bind"
 Remount a subtree somewhere else (so that its contents are available
@@ -1372,7 +1378,7 @@ has gone wrong.
 .BR ssd | nossd | ssd_spread
 Options to control ssd allocation schemes.  By default, BTRFS will
 enable or disable ssd allocation heuristics depending on whether a
-rotational or nonrotational disk is in use.  The \fBssd\fR and
+rotational or non-rotational disk is in use.  The \fBssd\fR and
 \fBnossd\fR options can override this autodetection.
 
 The \fBssd_spread\fR mount option attempts to allocate into big chunks
@@ -1923,7 +1929,7 @@ normal check is too inflexible.  With this option you can relax it.
 .RE
 .TP
 .BI check= value
-Three different levels of pickiness can be chosen:
+Three different levels of pickyness can be chosen:
 .RS
 .TP
 .BR r [ elaxed ]
@@ -2029,13 +2035,13 @@ spurious
 errors.
 
 .BR nostale_ro :
-This option bases the inode number and filehandle
+This option bases the inode number and file handle
 on the on-disk location of a file in the FAT directory entry.
 This ensures that
 .B ESTALE
 will not be returned after a file is
 evicted from the inode cache.  However, it means that operations
-such as rename, create and unlink could cause filehandles that
+such as rename, create and unlink could cause file handles that
 previously pointed at one file to point at a different file,
 potentially causing data corruption.  For this reason, this
 option also mounts the filesystem readonly.
@@ -2930,6 +2936,11 @@ independently of
 
 You can also free a loop device by hand, using
 .BR "losetup \-d " or " umount \-d" .
+
+Since util-linux v2.29 mount command re-uses the loop device rather than
+initialize a new device if the same backing file is already used for some loop
+device with the same offset and sizelimit. This is necessary to avoid
+a filesystem corruption.
 
 .SH RETURN CODES
 .B mount

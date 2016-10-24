@@ -119,7 +119,7 @@ static const struct dmesg_name level_names[] =
 
 /*
  * sys/syslog.h uses (f << 3) for all facility codes.
- * We want to use the codes as array idexes, so shift back...
+ * We want to use the codes as array indexes, so shift back...
  *
  * Note that libc LOG_FAC() macro returns the base codes, not the
  * shifted code :-)
@@ -244,7 +244,7 @@ static int set_level_color(int log_level, const char *mesg, size_t mesgsz)
 		break;
 	}
 
-	/* well, sometimes the messges contains important keywords, but in
+	/* well, sometimes the messages contains important keywords, but in
 	 * non-warning/error messages
 	 */
 	if (id < 0 && memmem(mesg, mesgsz, "segfault at", 11))
@@ -320,7 +320,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
  *  <name>   ::= case-insensitive text
  *
  *  Note that @len argument is not set when parsing "-n <level>" command line
- *  option. The console_level is intepreted as "log level less than the value".
+ *  option. The console_level is interpreted as "log level less than the value".
  *
  *  For example "dmesg -n 8" or "dmesg -n debug" enables debug console log
  *  level by klogctl(SYSLOG_ACTION_CONSOLE_LEVEL, NULL, 8). The @str argument
@@ -591,6 +591,8 @@ static ssize_t read_buffer(struct dmesg_control *ctl, char **buf)
 		if (n == 0 && ctl->action == SYSLOG_ACTION_READ_CLEAR)
 			n = klogctl(SYSLOG_ACTION_CLEAR, NULL, 0);
 		break;
+	default:
+		abort();	/* impossible method -> drop core */
 	}
 
 	return n;
@@ -825,19 +827,18 @@ static char *short_ctime(struct tm *tm, char *buf, size_t bufsiz)
 }
 
 static char *iso_8601_time(struct dmesg_control *ctl, struct dmesg_record *rec,
-			   char *buf, size_t bufsiz)
+			   char *buf, size_t bufsz)
 {
-	struct tm tm;
-	size_t len;
-	record_localtime(ctl, rec, &tm);
-	if (strftime(buf, bufsiz, "%Y-%m-%dT%H:%M:%S", &tm) == 0) {
-		*buf = '\0';
-		return buf;
-	}
-	len = strlen(buf);
-	snprintf(buf + len, bufsiz - len, ",%06ld", (long)rec->tv.tv_usec);
-	len = strlen(buf);
-	strftime(buf + len, bufsiz - len, "%z", &tm);
+	struct timeval tv = {
+		.tv_sec = ctl->boot_time.tv_sec + rec->tv.tv_sec,
+		.tv_usec = rec->tv.tv_usec
+	};
+
+	if (strtimeval_iso(&tv,	ISO_8601_DATE|ISO_8601_TIME|ISO_8601_COMMAUSEC|
+				ISO_8601_TIMEZONE,
+				buf, bufsz) != 0)
+		return NULL;
+
 	return buf;
 }
 
@@ -1067,7 +1068,7 @@ static int init_kmsg(struct dmesg_control *ctl)
 /*
  * /dev/kmsg record format:
  *
- *     faclev,seqnum,timestamp[optional, ...];messgage\n
+ *     faclev,seqnum,timestamp[optional, ...];message\n
  *      TAGNAME=value
  *      ...
  *
@@ -1117,8 +1118,6 @@ static int parse_kmsg_record(struct dmesg_control *ctl,
 
 	/* D) optional fields (ignore) */
 	p = skip_item(p, end, ";");
-	if (LAST_KMSG_FIELD(p))
-		goto mesg;
 
 mesg:
 	/* E) message text */
@@ -1131,7 +1130,7 @@ mesg:
 	rec->mesg_size = p - rec->mesg;
 
 	/*
-	 * Kernel escapes non-printable characters, unfortuately kernel
+	 * Kernel escapes non-printable characters, unfortunately kernel
 	 * definition of "non-printable" is too strict. On UTF8 console we can
 	 * print many chars, so let's decode from kernel.
 	 */
@@ -1179,19 +1178,19 @@ static int read_kmsg(struct dmesg_control *ctl)
 	return 0;
 }
 
-static int which_time_format(const char *optarg)
+static int which_time_format(const char *s)
 {
-	if (!strcmp(optarg, "notime"))
+	if (!strcmp(s, "notime"))
 		return DMESG_TIMEFTM_NONE;
-	if (!strcmp(optarg, "ctime"))
+	if (!strcmp(s, "ctime"))
 		return DMESG_TIMEFTM_CTIME;
-	if (!strcmp(optarg, "delta"))
+	if (!strcmp(s, "delta"))
 		return DMESG_TIMEFTM_DELTA;
-	if (!strcmp(optarg, "reltime"))
+	if (!strcmp(s, "reltime"))
 		return DMESG_TIMEFTM_RELTIME;
-	if (!strcmp(optarg, "iso"))
+	if (!strcmp(s, "iso"))
 		return DMESG_TIMEFTM_ISO8601;
-	errx(EXIT_FAILURE, _("unknown time format: %s"), optarg);
+	errx(EXIT_FAILURE, _("unknown time format: %s"), s);
 }
 
 #ifdef TEST_DMESG
@@ -1392,12 +1391,11 @@ int main(int argc, char *argv[])
 	if (argc > 1)
 		usage(stderr);
 
-	if (is_timefmt(&ctl, RELTIME) ||
-	    is_timefmt(&ctl, CTIME) ||
-	    is_timefmt(&ctl, ISO8601)) {
-		if (dmesg_get_boot_time(&ctl.boot_time) != 0)
-			ctl.time_fmt = DMESG_TIMEFTM_NONE;
-	}
+	if ((is_timefmt(&ctl, RELTIME) ||
+	     is_timefmt(&ctl, CTIME)   ||
+	     is_timefmt(&ctl, ISO8601))
+	    && dmesg_get_boot_time(&ctl.boot_time) != 0)
+		ctl.time_fmt = DMESG_TIMEFTM_NONE;
 
 	if (delta)
 		switch (ctl.time_fmt) {
@@ -1420,7 +1418,7 @@ int main(int argc, char *argv[])
 		nopager = 1;
 	ctl.pager = nopager ? 0 : ctl.pager;
 	if (ctl.pager)
-		setup_pager();
+		pager_redirect();
 
 	switch (ctl.action) {
 	case SYSLOG_ACTION_READ_ALL:
@@ -1434,7 +1432,7 @@ int main(int argc, char *argv[])
 			    errx(EXIT_FAILURE, _("--raw can be used together with --level or "
 				 "--facility only when reading messages from /dev/kmsg"));
 		if (ctl.pager)
-			setup_pager();
+			pager_redirect();
 		n = read_buffer(&ctl, &buf);
 		if (n > 0)
 			print_buffer(&ctl, buf, n);
