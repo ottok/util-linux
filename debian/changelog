@@ -3,6 +3,10 @@ util-linux (2.29~rc2-1) experimental; urgency=medium
   * New upstream release candidate.
     - ionice: clarify documentation of -n,--classdata option (Closes: #826208)
     - tail'ing a file in a script session hangs (Closes: #820843)
+  * Explicitly (re)enable deprecated pg utility
+  * Extend symbols files with new symbols
+  * Make testsuite run without parallel jobs
+  * Bump to debhelper compat 10
 
  -- Andreas Henriksson <andreas@fatal.se>  Mon, 24 Oct 2016 14:35:04 +0200
 
