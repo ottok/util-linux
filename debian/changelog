@@ -1,3 +1,11 @@
+util-linux (2.29~rc2-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+    - ionice: clarify documentation of -n,--classdata option (Closes: #826208)
+    - tail'ing a file in a script session hangs (Closes: #820843)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 24 Oct 2016 14:35:04 +0200
+
 util-linux (2.28.2-1) unstable; urgency=medium
 
   * debian/gbp.conf: set upstream-vcs-tag for import-orig
