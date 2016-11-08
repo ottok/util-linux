@@ -736,7 +736,7 @@ static char *next_token(char **str)
 	     *tk_end = NULL,
 	     *end = NULL,
 	     *p;
-	int open_quote = 0;
+	int open_quote = 0, terminated = 0;
 
 	for (p = *str; p && *p; p++) {
 		if (!tk_begin) {
@@ -758,9 +758,35 @@ static char *next_token(char **str)
 
 	if (!tk_end)
 		return NULL;
-	end = isblank(*tk_end) ? (char *) skip_blank(tk_end) : tk_end;
-	if (*end == ',' || *end == ';')
+
+	end = tk_end;
+
+	/* skip closing quotes */
+	if (*end == '"')
 		end++;
+
+	/* token is terminated by blank (or blank is before "," or ";") */
+	if (isblank(*end)) {
+		end = (char *) skip_blank(end);
+		terminated++;
+	}
+
+	/* token is terminated by "," or ";" */
+	if (*end == ',' || *end == ';') {
+		end++;
+		terminated++;
+
+	/* token is terminated by \0 */
+	} else if (!*end)
+		terminated++;
+
+	if (!terminated) {
+		DBG(SCRIPT, ul_debug("unterminated token '%s'", end));
+		return NULL;
+	}
+
+	/* skip extra space after terminator */
+	end = (char *) skip_blank(end);
 
 	*tk_end = '\0';
 	*str = end;
@@ -885,8 +911,9 @@ static int parse_line_nameval(struct fdisk_script *dp, char *s)
 			}
 
 		} else if (!strncasecmp(p, "bootable", 8)) {
+			/* we use next_token() to skip possible extra space */
 			char *tk = next_token(&p);
-			if (strcmp(tk, "bootable") == 0)
+			if (tk && strcasecmp(tk, "bootable") == 0)
 				pa->boot = 1;
 			else
 				rc = -EINVAL;
@@ -904,11 +931,10 @@ static int parse_line_nameval(struct fdisk_script *dp, char *s)
 			rc = next_string(&p, &pa->name);
 
 		} else if (!strncasecmp(p, "type=", 5) ||
-
 			   !strncasecmp(p, "Id=", 3)) {		/* backward compatibility */
 			char *type;
 
-			p += (*p == 'I' ? 3 : 5);		/* "Id=" or "type=" */
+			p += ((*p == 'I' || *p == 'i') ? 3 : 5); /* "Id=", "type=" */
 
 			rc = next_string(&p, &type);
 			if (rc)
@@ -1521,6 +1547,24 @@ done:
 	return 0;
 }
 
+static int test_tokens(struct fdisk_test *ts, int argc, char *argv[])
+{
+	char *p, *str = argc == 2 ? strdup(argv[1]) : NULL;
+	int i;
+
+	for (i = 1, p = str; p && *p; i++) {
+		char *tk = next_token(&p);
+
+		if (!tk)
+			break;
+
+		printf("#%d: '%s'\n", i, tk);
+	}
+
+	free(str);
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	struct fdisk_test tss[] = {
@@ -1528,6 +1572,7 @@ int main(int argc, char *argv[])
 	{ "--read",    test_read,    "<file>              read PT script from file" },
 	{ "--apply",   test_apply,   "<device> <file>     try apply script from file to device" },
 	{ "--stdin",   test_stdin,   "                    read input like sfdisk" },
+	{ "--tokens",  test_tokens,  "<string>            parse string" },
 	{ NULL }
 	};
 

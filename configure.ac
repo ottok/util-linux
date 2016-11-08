@@ -30,7 +30,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{print $3}' \
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="19-Oct-2016"
+LIBBLKID_DATE="08-Nov-2016"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -778,14 +778,12 @@ AC_ARG_WITH([ncursesw],
 )
 have_ncursesw=no
 AS_IF([test "x$with_ncursesw" != xno], [
-  PKG_CHECK_MODULES(NCURSESW, [ncursesw], [
-    have_ncursesw=yes
-    NCURSES_LIBS=${NCURSESW_LIBS}
-    NCURSES_CFLAGS=${NCURSESW_CFLAGS}
+  UL_NCURSES_CHECK([ncursesw])
+  AS_IF([test "x$have_ncursesw" = xyes], [
     AC_DEFINE([HAVE_LIBNCURSESW], [1], [Define if ncursesw library available])
     CURSES_LIB_NAME="ncursesw"
     AC_CHECK_HEADERS([ncursesw/ncurses.h ncurses.h])
-  ], [have_ncursesw=no])
+  ])
 ])
 AS_CASE([$with_ncursesw:$have_ncursesw],
   [yes:no], [AC_MSG_ERROR([ncursesw selected, but library not found])])
@@ -802,12 +800,12 @@ AS_CASE([$with_ncurses:$build_widechar],
   [yes:yes], [AC_MSG_ERROR([wide-char support enabled, but non-wide ncurses selects])])
 
 AS_IF([test "x$have_ncursesw" = xno -a "x$with_ncurses" != xno ], [
-  PKG_CHECK_MODULES(NCURSES, [ncurses], [
-    have_ncurses=yes
+  UL_NCURSES_CHECK([ncurses])
+  AS_IF([test "x$have_ncurses" = xyes], [
     AC_DEFINE([HAVE_LIBNCURSES], [1], [Define if ncurses library available])
     CURSES_LIB_NAME="ncurses"
     AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h])
-  ],[have_ncurses=no])
+  ])
 ])
 AS_CASE([$with_ncurses:$have_ncurses],
   [yes:no], [AC_MSG_ERROR([ncurses selected, but library not found])])
@@ -1809,7 +1807,7 @@ AC_ARG_ENABLE([pg],
   [], [UL_DEFAULT_ENABLE([pg], [no])]
 )
 UL_BUILD_INIT([pg])
-UL_REQUIRES_HAVE([pg], [ncursesw, ncurses], [ncurses or ncursesw library])
+UL_REQUIRES_HAVE([pg], [ncursesw, ncurses], [ncursesw or ncurses library])
 AM_CONDITIONAL([BUILD_PG], [test "x$build_pg" = xyes])
 
 
@@ -1819,7 +1817,7 @@ AC_ARG_ENABLE([setterm],
 )
 UL_BUILD_INIT([setterm])
 UL_REQUIRES_LINUX([setterm])
-UL_REQUIRES_HAVE([setterm], [ncursesw, ncurses], [ncurses or ncurses library])
+UL_REQUIRES_HAVE([setterm], [ncursesw, ncurses], [ncursesw or ncurses library])
 AM_CONDITIONAL([BUILD_SETTERM], [test "x$build_setterm" = xyes])
 
 # build_schedutils= is just configure-only variable to control
