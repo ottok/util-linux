@@ -1,3 +1,9 @@
+util-linux (2.29-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 08 Nov 2016 13:11:48 +0100
+
 util-linux (2.29~rc2-1) experimental; urgency=medium
 
   * New upstream release candidate.
