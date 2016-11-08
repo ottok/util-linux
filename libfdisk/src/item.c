@@ -1,4 +1,6 @@
 
+#include <inttypes.h>
+
 #include "fdiskP.h"
 
 /**
@@ -52,8 +54,11 @@ struct fdisk_labelitem *fdisk_new_labelitem(void)
  */
 void fdisk_ref_labelitem(struct fdisk_labelitem *li)
 {
-	if (li)
+	if (li) {
+		/* me sure we do not use refcouting for static items */
+		assert(li->refcount > 0);
 		li->refcount++;
+	}
 }
 
 /**
@@ -93,6 +98,9 @@ void fdisk_unref_labelitem(struct fdisk_labelitem *li)
 {
 	if (!li)
 		return;
+
+	/* me sure we do not use refcouting for static items */
+	assert(li->refcount > 0);
 
 	li->refcount--;
 	if (li->refcount <= 0) {
@@ -213,7 +221,7 @@ static int test_listitems(struct fdisk_test *ts, int argc, char *argv[])
 			    && fdisk_labelitem_get_data_string(item, &str) == 0)
 				printf("%s: %s\n", name, str);
 			else if (fdisk_labelitem_get_data_u64(item, &num) == 0)
-				printf("%s: %ju\n", name, num);
+				printf("%s: %"PRIu64"\n", name, num);
 			break;
 		}
 		case 1: /* item unsuported by label -- ignore */
