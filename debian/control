@@ -199,7 +199,7 @@ Description: device mounting library
  This device mounting library is used by mount and umount helpers.
 
 Package: libmount1-udeb
-XC-Package-Type: udeb
+Package-Type: udeb
 Section: debian-installer
 Priority: optional
 Depends: ${misc:Depends}, ${shlibs:Depends}
