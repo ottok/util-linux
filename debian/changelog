@@ -1,8 +1,11 @@
-util-linux (2.29-1) UNRELEASED; urgency=medium
+util-linux (2.29-1) unstable; urgency=medium
 
   * New upstream release.
+  * Revert "Drop unused and uninstallable libmount1-udeb" (Closes: #835504)
+  * Bump libselinux1 build-dep to >= 2.6-3~
+    - to guarantee that we're building against the version that has the udeb.
 
- -- Andreas Henriksson <andreas@fatal.se>  Tue, 08 Nov 2016 13:11:48 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 08 Nov 2016 13:29:50 +0100
 
 util-linux (2.29~rc2-1) experimental; urgency=medium
 
