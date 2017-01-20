@@ -23,14 +23,12 @@ dnl version details from <major>.<minor>[-<suffix>]
 PACKAGE_VERSION_MAJOR=$(echo $PACKAGE_VERSION | awk -F. '{print $1}')
 PACKAGE_VERSION_MINOR=$(echo $PACKAGE_VERSION | awk -F. '{print $2}' \
 					      | awk -F- '{print $1}')
-
-PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{print $3}' \
-						| sed 's/.*@<:@^@<:@:digit:@:>@@:>@.*/0/')
-
+PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
+                     sub("-.*","",$3); print $3 ~ /^@<:@[0-9]@:>@+$/ ? $3 : 0}')
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="08-Nov-2016"
+LIBBLKID_DATE="20-Jan-2017"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -428,6 +426,12 @@ AC_CHECK_FUNCS([open_memstream], [have_open_memstream=yes],[have_open_memstream=
 AC_CHECK_FUNCS([reboot], [have_reboot=yes],[have_reboot=no])
 
 AM_CONDITIONAL([HAVE_OPENAT], [test "x$have_openat" = xyes])
+
+AC_CHECK_FUNCS([isnan], [],
+       [AC_CHECK_LIB([m], [isnan], [MATH_LIBS="-lm"])]
+)
+AC_SUBST([MATH_LIBS])
+
 
 dnl lib/mononotic.c may require -lrt
 AC_CHECK_FUNCS([clock_gettime], [],
