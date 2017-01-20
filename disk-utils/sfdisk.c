@@ -560,6 +560,7 @@ static int write_changes(struct sfdisk *sf)
  */
 static int command_list_partitions(struct sfdisk *sf, int argc, char **argv)
 {
+	int fail = 0;
 	fdisk_enable_listonly(sf->cxt, 1);
 
 	if (argc) {
@@ -568,13 +569,14 @@ static int command_list_partitions(struct sfdisk *sf, int argc, char **argv)
 		for (i = 0; i < argc; i++) {
 			if (ct)
 				fputs("\n\n", stdout);
-			if (print_device_pt(sf->cxt, argv[i], 0, sf->verify) == 0)
-				ct++;
+			if (print_device_pt(sf->cxt, argv[i], 1, sf->verify) != 0)
+				fail++;
+			ct++;
 		}
 	} else
 		print_all_devices_pt(sf->cxt, sf->verify);
 
-	return 0;
+	return fail;
 }
 
 /*
@@ -582,6 +584,7 @@ static int command_list_partitions(struct sfdisk *sf, int argc, char **argv)
  */
 static int command_list_freespace(struct sfdisk *sf, int argc, char **argv)
 {
+	int fail = 0;
 	fdisk_enable_listonly(sf->cxt, 1);
 
 	if (argc) {
@@ -590,13 +593,14 @@ static int command_list_freespace(struct sfdisk *sf, int argc, char **argv)
 		for (i = 0; i < argc; i++) {
 			if (ct)
 				fputs("\n\n", stdout);
-			if (print_device_freespace(sf->cxt, argv[i], 0) == 0)
-				ct++;
+			if (print_device_freespace(sf->cxt, argv[i], 1) != 0)
+				fail++;
+			ct++;
 		}
 	} else
 		print_all_devices_freespace(sf->cxt);
 
-	return 0;
+	return fail;
 }
 
 /*
@@ -946,13 +950,16 @@ static int command_dump(struct sfdisk *sf, int argc, char **argv)
 	if (rc)
 		err(EXIT_FAILURE, _("cannot open %s"), devname);
 
+	if (!fdisk_has_label(sf->cxt))
+		errx(EXIT_FAILURE, _("%s: does not contain a recognized partition table"), devname);
+
 	dp = fdisk_new_script(sf->cxt);
 	if (!dp)
 		err(EXIT_FAILURE, _("failed to allocate dump struct"));
 
 	rc = fdisk_script_read_context(dp, NULL);
 	if (rc)
-		err(EXIT_FAILURE, _("failed to dump partition table"));
+		errx(EXIT_FAILURE, _("%s: failed to dump partition table"), devname);
 
 	if (sf->json)
 		fdisk_script_enable_json(dp, 1);

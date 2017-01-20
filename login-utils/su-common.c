@@ -79,8 +79,8 @@ enum
 #define PAM_SRVNAME_RUNUSER "runuser"
 #define PAM_SRVNAME_RUNUSER_L "runuser-l"
 
-#define _PATH_LOGINDEFS_SU	"/etc/defaults/su"
-#define _PATH_LOGINDEFS_RUNUSER "/etc/defaults/runuser"
+#define _PATH_LOGINDEFS_SU	"/etc/default/su"
+#define _PATH_LOGINDEFS_RUNUSER "/etc/default/runuser"
 
 #define is_pam_failure(_rc)	((_rc) != PAM_SUCCESS)
 
@@ -679,7 +679,7 @@ usage (int status)
 {
   if (su_mode == RUNUSER_MODE) {
     fputs(USAGE_HEADER, stdout);
-    printf (_(" %s [options] -u <user> <command>\n"), program_invocation_short_name);
+    printf (_(" %s [options] -u <user> [[--] <command>]\n"), program_invocation_short_name);
     printf (_(" %s [options] [-] [<user> [<argument>...]]\n"), program_invocation_short_name);
     fputs (_("\n"
     "Run <command> with the effective user ID and group ID of <user>.  If -u is\n"

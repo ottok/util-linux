@@ -23,7 +23,7 @@ extern "C" {
  *
  * Library version string
  */
-#define LIBSMARTCOLS_VERSION   "2.29."
+#define LIBSMARTCOLS_VERSION   "2.29.1"
 
 /**
  * libscols_iter:
@@ -91,9 +91,10 @@ enum {
  * Cell flags, see scols_cell_set_flags() before use
  */
 enum {
-	SCOLS_CELL_FL_LEFT = 0,
-	SCOLS_CELL_FL_CENTER,
-	SCOLS_CELL_FL_RIGHT
+	/* alignment evaluated in order: right,center,left */
+	SCOLS_CELL_FL_LEFT    = 0,
+	SCOLS_CELL_FL_CENTER  = (1 << 0),
+	SCOLS_CELL_FL_RIGHT   = (1 << 1)
 };
 
 extern struct libscols_iter *scols_new_iter(int direction);
