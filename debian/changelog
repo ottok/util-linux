@@ -1,3 +1,14 @@
+util-linux (2.29.1-1) unstable; urgency=medium
+
+  * Bump versions in shlibs to match recent symbols updates
+  * Drop XC- prefix for Package-Type of libmount1-udeb
+  * New upstream release.
+    - fixes sulogin issues (Closes: #846107, #846112)
+    - fixes chrt default policy (Closes: #846572)
+  * Add more lintian overrides
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 20 Jan 2017 17:33:41 +0100
+
 util-linux (2.29-1) unstable; urgency=medium
 
   * New upstream release.
