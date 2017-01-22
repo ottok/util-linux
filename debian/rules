@@ -152,7 +152,7 @@ override_dh_makeshlibs:
 		--add-udeb=libuuid1-udeb
 
 override_dh_fixperms:
-	dh_fixperms -i -s -Xusr/bin/wall -Xbin/mount -Xbin/umount
+	dh_fixperms -i -a -Xusr/bin/wall -Xbin/mount -Xbin/umount
 
 override_dh_auto_test:
 ifeq ($(DEB_HOST_ARCH_OS), linux)
