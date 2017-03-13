@@ -27,7 +27,7 @@ endif
 CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
 
 CONFOPTS += --localstatedir=/run
-CONFOPTS += --disable-silent-rules
+
 CONFOPTS += --without-python
 
 # disable utilities shipped by other packages
