@@ -36,6 +36,12 @@ CONFOPTS += --disable-kill
 CONFOPTS += --disable-eject
 # => passwd
 CONFOPTS += --disable-chfn-chsh
+# => bsdmainutils
+CONFOPTS += --disable-look
+CONFOPTS += --disable-hexdump
+CONFOPTS += --disable-col --disable-colcrt --disable-colrm --disable-column
+CONFOPTS += --disable-ul
+CONFOPTS += --disable-cal
 
 %:
 	dh $@
@@ -57,13 +63,6 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	install -m644 sys-utils/fstrim.timer debian/tmp/lib/systemd/system/fstrim.timer
 endif
 	#
-	# the version in bsdmainutils seems newer.
-	rm -f debian/tmp/usr/bin/look debian/tmp/usr/share/man/man1/look.1
-	rm -f debian/tmp/usr/bin/hexdump debian/tmp/usr/share/man/man1/hexdump.1
-	# and it's less pain to just let bsmainutils deliver col for now.
-	rm -f debian/tmp/usr/bin/col* debian/tmp/usr/share/man/man1/col*.1
-	rm -f debian/tmp/usr/bin/ul debian/tmp/usr/share/man/man1/ul*.1
-	rm -f debian/tmp/usr/bin/cal debian/tmp/usr/share/man/man1/cal.1
 	# remove *.la files
 	rm -f debian/tmp/usr/lib/*/*.la
 
