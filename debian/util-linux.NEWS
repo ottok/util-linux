@@ -1,3 +1,10 @@
+util-linux (2.X-Y) UNRELEASED; urgency=medium
+
+  * The deprecated 'pg' utility is no longer shipped.
+    (Please use either 'more' or 'less' instead.)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 13 Mar 2017 19:27:14 +0100
+
 util-linux (2.25.1~rc1-1) experimental; urgency=medium
 
   * This version adds a number of patches which again makes
