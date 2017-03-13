@@ -16,7 +16,6 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 else
 	CONFOPTS += --with-systemd --with-udev
 endif
-CONFOPTS += --enable-tunelp
 endif
 
 # build static versions of programs used in fdisk-udeb and util-linux-udeb
