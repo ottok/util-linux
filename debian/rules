@@ -5,6 +5,7 @@ include /usr/share/dpkg/pkg-info.mk
 
 CONFOPTS += --libdir=/lib/$(DEB_HOST_MULTIARCH)
 CONFOPTS += --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
+CONFOPTS += --localstatedir=/run
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --enable-raw
@@ -19,8 +20,6 @@ endif
 
 # build static versions of programs used in fdisk-udeb and util-linux-udeb
 CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
-
-CONFOPTS += --localstatedir=/run
 
 # Help welcome packaging the (libmount) python bindings.
 # See http://bugs.debian.org/811361
