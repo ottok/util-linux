@@ -279,7 +279,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends: libuuid1 (>= 2.25-5~), ${misc:Pre-Depends}
-Depends: adduser, passwd, ${misc:Depends}, ${shlibs:Depends}
+Depends: adduser, ${misc:Depends}, ${shlibs:Depends}
 Replaces: e2fsprogs (<= 1.40.3-1ubuntu1)
 Multi-Arch: foreign
 Description: runtime components for the Universally Unique ID library
