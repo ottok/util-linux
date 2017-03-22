@@ -28,7 +28,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="20-Jan-2017"
+LIBBLKID_DATE="22-Feb-2017"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -428,7 +428,8 @@ AC_CHECK_FUNCS([reboot], [have_reboot=yes],[have_reboot=no])
 AM_CONDITIONAL([HAVE_OPENAT], [test "x$have_openat" = xyes])
 
 AC_CHECK_FUNCS([isnan], [],
-       [AC_CHECK_LIB([m], [isnan], [MATH_LIBS="-lm"])]
+	[AC_CHECK_LIB([m], [isnan], [MATH_LIBS="-lm"])]
+	[AC_CHECK_LIB([m], [__isnan], [MATH_LIBS="-lm"])]
 )
 AC_SUBST([MATH_LIBS])
 
@@ -1828,12 +1829,12 @@ AM_CONDITIONAL([BUILD_SETTERM], [test "x$build_setterm" = xyes])
 # ionice, taskset and chrt
 AC_ARG_ENABLE([schedutils],
   AS_HELP_STRING([--disable-schedutils], [do not build chrt, ionice, taskset]),
-  [], [UL_DEFAULT_ENABLE([schedutils], [yes])]
+  [], [UL_DEFAULT_ENABLE([schedutils], [check])]
 )
-UL_BUILD_INIT([schedutils])
 
-UL_BUILD_INIT([ionice], [check])
-UL_REQUIRES_BUILD([ionice], [schedutils])
+
+UL_ENABLE_ALIAS([ionice], [schedutils])
+UL_BUILD_INIT([ionice])
 UL_REQUIRES_SYSCALL_CHECK([ionice],
 	[UL_CHECK_SYSCALL([ioprio_set],
 	  [alpha],	[442],
@@ -1860,8 +1861,9 @@ UL_REQUIRES_SYSCALL_CHECK([ionice],
 
 AM_CONDITIONAL([BUILD_IONICE], [test "x$build_ionice" = xyes])
 
-UL_BUILD_INIT([taskset], [check])
-UL_REQUIRES_BUILD([taskset], [schedutils])
+
+UL_ENABLE_ALIAS([taskset], [schedutils])
+UL_BUILD_INIT([taskset])
 UL_REQUIRES_HAVE([taskset], [cpu_set_t], [cpu_set_t type])
 UL_REQUIRES_SYSCALL_CHECK([taskset],
 	[UL_CHECK_SYSCALL([sched_getaffinity])],
@@ -1873,8 +1875,8 @@ have_schedsetter=no
 AS_IF([test "x$ac_cv_func_sched_setscheduler" = xyes], [have_schedsetter=yes],
       [test "x$ac_cv_func_sched_setattr" = xyes], [have_schedsetter=yes])
 
-UL_BUILD_INIT([chrt], [check])
-UL_REQUIRES_BUILD([chrt], [schedutils])
+UL_ENABLE_ALIAS([chrt], [schedutils])
+UL_BUILD_INIT([chrt])
 UL_REQUIRES_HAVE([chrt], [schedsetter], [sched_set functions])
 AM_CONDITIONAL([BUILD_CHRT], [test "x$build_chrt" = xyes])
 

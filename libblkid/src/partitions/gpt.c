@@ -166,8 +166,8 @@ static int is_pmbr_valid(blkid_probe pr, int *has)
 
 	if (has)
 		*has = 0;
-	if (flags & BLKID_PARTS_FORCE_GPT)
-		goto ok;			/* skip PMBR check */
+	else if (flags & BLKID_PARTS_FORCE_GPT)
+		return 1;			/* skip PMBR check */
 
 	data = blkid_probe_get_sector(pr, 0);
 	if (!data) {
@@ -180,8 +180,10 @@ static int is_pmbr_valid(blkid_probe pr, int *has)
 		goto failed;
 
 	for (i = 0, p = mbr_get_partition(data, 0); i < 4; i++, p++) {
-		if (p->sys_ind == MBR_GPT_PARTITION)
+		if (p->sys_ind == MBR_GPT_PARTITION) {
+			DBG(LOWPROBE, ul_debug(" #%d valid PMBR partition", i + 1));
 			goto ok;
+		}
 	}
 failed:
 	return 0;
@@ -210,10 +212,12 @@ static struct gpt_header *get_gpt_header(
 	struct gpt_header *h;
 	uint32_t crc;
 	uint64_t lu, fu;
-	size_t esz;
+	uint64_t esz;
 	uint32_t hsz, ssz;
 
 	ssz = blkid_probe_get_sectorsize(pr);
+
+	DBG(LOWPROBE, ul_debug(" checking for GPT header at %ju", lba));
 
 	/* whole sector is allocated for GPT header */
 	h = (struct gpt_header *) get_lba_buffer(pr, lba, ssz);
@@ -264,16 +268,15 @@ static struct gpt_header *get_gpt_header(
 		return NULL;
 	}
 
-	if (le32_to_cpu(h->num_partition_entries) == 0 ||
-	    le32_to_cpu(h->sizeof_partition_entry) == 0 ||
-	    ULONG_MAX / le32_to_cpu(h->num_partition_entries) < le32_to_cpu(h->sizeof_partition_entry)) {
+	/* Size of blocks with GPT entries */
+	esz = (uint64_t)le32_to_cpu(h->num_partition_entries) *
+		le32_to_cpu(h->sizeof_partition_entry);
+
+	if (esz == 0 || esz >= UINT32_MAX ||
+	    le32_to_cpu(h->sizeof_partition_entry) != sizeof(struct gpt_entry)) {
 		DBG(LOWPROBE, ul_debug("GPT entries undefined"));
 		return NULL;
 	}
-
-	/* Size of blocks with GPT entries */
-	esz = le32_to_cpu(h->num_partition_entries) *
-			le32_to_cpu(h->sizeof_partition_entry);
 
 	/* The header seems valid, save it
 	 * (we don't care about zeros in hdr->reserved2 area) */
