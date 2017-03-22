@@ -34,11 +34,11 @@ extern "C" {
  *
  * Library version string
  */
-#define LIBFDISK_VERSION   "2.29.1"
+#define LIBFDISK_VERSION   "2.29.2"
 
 #define LIBFDISK_MAJOR_VERSION   2
 #define LIBFDISK_MINOR_VERSION   29
-#define LIBFDISK_PATCH_VERSION   1
+#define LIBFDISK_PATCH_VERSION   2
 
 /**
  * fdisk_context:
