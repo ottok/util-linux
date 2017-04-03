@@ -6,6 +6,8 @@ util-linux (2.X-Y) UNRELEASED; urgency=medium
     (Parallell port printers are suspected to be extinct by now.)
   * The deprecated 'line' utility is no longer shipped.
     (Please use the 'head' utility instead.)
+  * The deprecated 'tailf' utility is no longer shipped.
+    (Please use 'tail -f' instead.)
 
  -- Andreas Henriksson <andreas@fatal.se>  Mon, 13 Mar 2017 19:27:14 +0100
 
