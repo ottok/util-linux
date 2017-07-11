@@ -1,4 +1,4 @@
-util-linux (2.X-Y) UNRELEASED; urgency=medium
+util-linux (2.29.2-2) unstable; urgency=medium
 
   * The deprecated 'pg' utility is no longer shipped.
     (Please use either 'more' or 'less' instead.)

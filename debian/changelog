@@ -1,3 +1,32 @@
+util-linux (2.29.2-2) unstable; urgency=medium
+
+  "The big post-release cleanup."
+
+  [ Andreas Henriksson ]
+  * Add DEP12 upstream metadata (Closes: #852731)
+  * Revert "Add configure flag to make libmount skip /etc/mtab"
+  * Drop explicit --disable-silent-rules configure flag
+  * Stop shipping the deprecated 'pg' utility
+  * Revert "Explicitly (re)enable deprecated pg utility"
+  * Stop shipping deprecated 'tunelp' utility
+  * Stop shipping the deprecated 'line' utility
+  * Drop explicitly passing CC for cross-building
+  * Use configure flags to disable utils shipped by bsdmainutils
+  * Revert "Attempt to work around debootstrap problems for hwclock.sh"
+  * Drop no longer needed lintian overrides for dropped workaround
+  * Drop obsolete fdisk reclaim on PPC
+  * Revert "Rename libuuid user to uuidd in libuuidd1 postinst as well"
+  * Revert "libuuid1: add passwd dependency for user migration"
+  * Drop obsolete uuid-runtime user/group migration code
+  * Remove 'pg' from being a pager alternative
+  * Stop shipping deprecated tailf utility
+  * Mention tailf removal in util-linux.NEWS
+
+  [ Christian Hofstaedtler ]
+  * Fix debhelper -s deprecation warning (Closes: #852228)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 11 Jul 2017 03:19:46 +0200
+
 util-linux (2.29.2-1) unstable; urgency=medium
 
   * New upstream release.
