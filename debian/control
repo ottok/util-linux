@@ -69,7 +69,7 @@ Description: locales files for util-linux
 Package: mount
 Architecture: linux-any
 Build-Profiles: <!stage1>
-Essential: yes
+Important: yes
 Section: admin
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: ${misc:Depends}, util-linux (>= 2.29.2-3~)
