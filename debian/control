@@ -124,7 +124,7 @@ Description: collection of partitioning utilities
 Package: fdisk-udeb
 Architecture: hurd-any linux-any
 Build-Profiles: <!stage1>
-Priority: extra
+Priority: optional
 Section: debian-installer
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Package-Type: udeb
