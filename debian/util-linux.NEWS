@@ -1,4 +1,4 @@
-util-linux (2.29.2-3) UNRELEASED; urgency=medium
+util-linux (2.29.2-3) experimental; urgency=medium
 
   * The cfdisk, fdisk and sfdisk utilities has been split out into a
     separate fdisk package. Any package needing these utilities should
@@ -6,7 +6,7 @@ util-linux (2.29.2-3) UNRELEASED; urgency=medium
     (The second part of it makes the depenency also be fulfilled in case
      of stretch-backports and should be considered optional.)
 
- -- Andreas Henriksson <andreas@fatal.se>  Sun, 06 Aug 2017 13:43:47 +0200
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 06 Aug 2017 14:59:02 +0200
 
 util-linux (2.29.2-2) unstable; urgency=medium
 
