@@ -14,8 +14,6 @@ bin/more
 bin/mountpoint
 sbin/agetty
 sbin/blkid
-sbin/cfdisk
-sbin/fdisk
 sbin/findfs
 sbin/fsck
 sbin/fsck.cramfs
@@ -26,7 +24,6 @@ sbin/mkfs.bfs
 sbin/mkfs.cramfs
 sbin/mkfs.minix
 sbin/runuser
-sbin/sfdisk
 sbin/sulogin
 sbin/swaplabel
 sbin/wipefs

@@ -34,7 +34,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
-Depends: ${misc:Depends},
+Depends: ${misc:Depends}, fdisk
 Suggests: dosfstools, kbd | console-tools, util-linux-locales
 Replaces: bash-completion (<< 1:2.1-4.1~),
           sysvinit-utils (<< 2.88dsf-59.1~),
@@ -49,8 +49,9 @@ Multi-Arch: foreign
 Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
  are oriented towards maintenance of your system. Some of the more
- important utilities included in this package allow you to partition
- your hard disk, view kernel messages, and create new filesystems.
+ important utilities included in this package allow you to view kernel
+ messages, create new filesystems, view block device information,
+ interface with real time clock, etc.
 
 Package: util-linux-locales
 Architecture: all
@@ -96,6 +97,29 @@ Description: basic utilities from 4.4BSD-Lite
  This package contains the bare minimum of BSD utilities needed for a
  Debian system: logger, renice, script, scriptreplay, and wall. The
  remaining standard BSD utilities are provided by bsdmainutils.
+
+Package: fdisk
+Architecture: any
+Build-Profiles: <!stage1>
+Important: yes
+Section: utils
+Priority: important
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Replaces: util-linux (<< 2.29.2-3~)
+Breaks: util-linux (<< 2.29.2-3~)
+Multi-Arch: foreign
+Description: collection of partitioning utilities
+ This package contains the classic fdisk, sfdisk and cfdisk partitioning
+ utilities from the util-linux suite.
+ .
+ The utilities included in this package allow you to partition
+ your hard disk. The utilities supports both modern and legacy
+ partition tables (eg. GPT, MBR, etc).
+ .
+ The fdisk utility is the classical text-mode utility.
+ The cfdisk utilitity gives a more userfriendly curses based interface.
+ The sfdisk utility is mostly for automation and scripting uses.
 
 Package: fdisk-udeb
 Architecture: hurd-any linux-any
