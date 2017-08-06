@@ -39,14 +39,12 @@ Suggests: dosfstools, kbd | console-tools, util-linux-locales
 Replaces: bash-completion (<< 1:2.1-4.1~),
           sysvinit-utils (<< 2.88dsf-59.1~),
           initscripts (<< 2.88dsf-59.2~),
-          mount (= 2.26.2-3),
-          mount (= 2.26.2-3ubuntu1)
+          mount (<< 2.29.2-3~)
 Breaks: bash-completion (<< 1:2.1-4.1~),
           grml-debootstrap (<< 0.68),
           cloud-utils (<< 0.27-1~),
           sysvinit-utils (<< 2.88dsf-59.4~),
-          mount (= 2.26.2-3),
-          mount (= 2.26.2-3ubuntu1)
+          mount (<< 2.29.2-3~)
 Multi-Arch: foreign
 Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
@@ -74,7 +72,7 @@ Build-Profiles: <!stage1>
 Essential: yes
 Section: admin
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, util-linux (>= 2.29.2-3~)
 Suggests: nfs-common (>=1:1.1.0-13)
 Breaks: bash-completion (<< 1:2.1-4.3~)
 Replaces: bash-completion (<< 1:2.1-4.3~)
