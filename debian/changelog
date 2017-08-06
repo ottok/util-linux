@@ -1,3 +1,15 @@
+util-linux (2.29.2-3) UNRELEASED; urgency=medium
+
+  * Enable more tests by build-dep on bc, socat and netbase (Closes: #867183)
+  * Move findmnt from mount to util-linux package
+  * Make mount package non-Essential (Important: yes)
+  * Split out cfdisk, fdisk and sfdisk to separate package
+  * Switch fdisk-udeb Priority from extra to optional
+  * Add util-linux NEWS entry for fdisk package split
+  * Add mount NEWS entry about now being non-Essential
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 06 Aug 2017 14:02:16 +0200
+
 util-linux (2.29.2-2) unstable; urgency=medium
 
   "The big post-release cleanup."
