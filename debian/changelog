@@ -1,3 +1,10 @@
+util-linux (2.29.2-4) unstable; urgency=medium
+
+  * Bump Standards-Version to 4.0.1
+  * Upload to unstable.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 17 Aug 2017 14:31:09 +0200
+
 util-linux (2.29.2-3) experimental; urgency=medium
 
   * Enable more tests by build-dep on bc, socat and netbase (Closes: #867183)
