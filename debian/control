@@ -70,7 +70,7 @@ Description: locales files for util-linux
 Package: mount
 Architecture: linux-any
 Build-Profiles: <!stage1>
-Important: yes
+XB-Important: yes
 Section: admin
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: ${misc:Depends}, util-linux (>= 2.29.2-3~)
@@ -101,7 +101,7 @@ Description: basic utilities from 4.4BSD-Lite
 Package: fdisk
 Architecture: any
 Build-Profiles: <!stage1>
-Important: yes
+XB-Important: yes
 Section: utils
 Priority: important
 Pre-Depends: ${misc:Pre-Depends}
