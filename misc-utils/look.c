@@ -66,12 +66,12 @@
 #define	GREATER		1
 #define	LESS		(-1)
 
-int dflag, fflag;
+static int dflag, fflag;
 /* uglified the source a bit with globals, so that we only need
    to allocate comparbuf once */
-int stringlen;
-char *string;
-char *comparbuf;
+static int stringlen;
+static char *string;
+static char *comparbuf;
 
 static char *binary_search (char *, char *);
 static int compare (char *, char *);
@@ -127,9 +127,8 @@ main(int argc, char *argv[])
 			return EXIT_SUCCESS;
 		case 'h':
 			usage(stdout);
-		case '?':
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	argc -= optind;
 	argv += optind;
@@ -165,13 +164,13 @@ main(int argc, char *argv[])
 	return look(front, back);
 }
 
-int
+static int
 look(char *front, char *back)
 {
 	int ch;
 	char *readp, *writep;
 
-	/* Reformat string string to avoid doing it multiple times later. */
+	/* Reformat string to avoid doing it multiple times later. */
 	if (dflag) {
 		for (readp = writep = string; (ch = *readp++) != 0;) {
 			if (isalnum(ch) || isblank(ch))
@@ -233,7 +232,7 @@ look(char *front, char *back)
 #define	SKIP_PAST_NEWLINE(p, back) \
 	while (p < back && *p++ != '\n')
 
-char *
+static char *
 binary_search(char *front, char *back)
 {
 	char *p;
@@ -267,7 +266,7 @@ binary_search(char *front, char *back)
  * 	o front points at the first character in a line.
  *	o front is before or at the first line to be printed.
  */
-char *
+static char *
 linear_search(char *front, char *back)
 {
 	while (front < back) {
@@ -287,7 +286,7 @@ linear_search(char *front, char *back)
 /*
  * Print as many lines as match string, starting at front.
  */
-void
+static void
 print_from(char *front, char *back)
 {
 	int eol;
@@ -322,7 +321,7 @@ print_from(char *front, char *back)
  * We use strcasecmp etc, since it knows how to ignore case also
  * in other locales.
  */
-int
+static int
 compare(char *s2, char *s2end) {
 	int i;
 	char *p;

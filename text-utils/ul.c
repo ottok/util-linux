@@ -43,12 +43,19 @@
 #include <stdio.h>
 #include <unistd.h>		/* for getopt(), isatty() */
 #include <string.h>		/* for memset(), strcpy() */
-#include <term.h>		/* for setupterm() */
 #include <stdlib.h>		/* for getenv() */
 #include <limits.h>		/* for INT_MAX */
 #include <signal.h>		/* for signal() */
 #include <errno.h>
 #include <getopt.h>
+
+#if defined(HAVE_NCURSESW_TERM_H)
+# include <ncursesw/term.h>
+#elif defined(HAVE_NCURSES_TERM_H)
+# include <ncurses/term.h>
+#elif defined(HAVE_TERM_H)
+# include <term.h>
+#endif
 
 #include "nls.h"
 #include "xalloc.h"
@@ -70,7 +77,6 @@ static int put1wc(int c)
 #define putwp(s) putp(s)
 #endif
 
-static void usage(FILE *out);
 static int handle_escape(FILE * f);
 static void filter(FILE *f);
 static void flushln(void);
@@ -101,33 +107,33 @@ static void print_out(char *line);
 #define	UNDERL	010	/* Ul */
 #define	BOLD	020	/* Bold */
 
-int	must_use_uc, must_overstrike;
-char	*CURS_UP,
-	*CURS_RIGHT,
-	*CURS_LEFT,
-	*ENTER_STANDOUT,
-	*EXIT_STANDOUT,
-	*ENTER_UNDERLINE,
-	*EXIT_UNDERLINE,
-	*ENTER_DIM,
-	*ENTER_BOLD,
-	*ENTER_REVERSE,
-	*UNDER_CHAR,
-	*EXIT_ATTRIBUTES;
+static int	must_use_uc, must_overstrike;
+static char	*CURS_UP,
+		*CURS_RIGHT,
+		*CURS_LEFT,
+		*ENTER_STANDOUT,
+		*EXIT_STANDOUT,
+		*ENTER_UNDERLINE,
+		*EXIT_UNDERLINE,
+		*ENTER_DIM,
+		*ENTER_BOLD,
+		*ENTER_REVERSE,
+		*UNDER_CHAR,
+		*EXIT_ATTRIBUTES;
 
-struct	CHAR	{
+struct CHAR {
 	char	c_mode;
 	wchar_t	c_char;
 	int	c_width;
 };
 
-struct	CHAR	*obuf;
-int	obuflen;
-int	col, maxcol;
-int	mode;
-int	halfpos;
-int	upln;
-int	iflag;
+static struct	CHAR	*obuf;
+static int	obuflen;
+static int	col, maxcol;
+static int	mode;
+static int	halfpos;
+static int	upln;
+static int	iflag;
 
 static void __attribute__((__noreturn__))
 usage(FILE *out)
@@ -157,11 +163,11 @@ int main(int argc, char **argv)
 	FILE *f;
 
 	static const struct option longopts[] = {
-		{ "terminal",	required_argument,	0, 't' },
-		{ "indicated",	no_argument,		0, 'i' },
-		{ "version",	no_argument,		0, 'V' },
-		{ "help",	no_argument,		0, 'h' },
-		{ NULL, 0, 0, 0 }
+		{ "terminal",	required_argument,	NULL, 't' },
+		{ "indicated",	no_argument,		NULL, 'i' },
+		{ "version",	no_argument,		NULL, 'V' },
+		{ "help",	no_argument,		NULL, 'h' },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	setlocale(LC_ALL, "");
@@ -192,7 +198,7 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	setupterm(termtype, STDOUT_FILENO, &ret);
 	switch (ret) {

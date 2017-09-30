@@ -31,6 +31,7 @@ include/bitops.h
 include/blkdev.h
 include/canonicalize.h
 include/carefulputc.h
+include/cctype.h
 include/c.h
 include/closestream.h
 include/color-names.h
@@ -50,6 +51,7 @@ include/loopdev.h
 include/mangle.h
 include/match.h
 include/mbsalign.h
+include/mbsedit.h
 include/md5.h
 include/minix.h
 include/monotonic.h
@@ -129,7 +131,6 @@ libblkid/src/superblocks/hfs.c
 libblkid/src/superblocks/highpoint_raid.c
 libblkid/src/superblocks/hpfs.c
 libblkid/src/superblocks/iso9660.c
-libblkid/src/superblocks/iso9660.h
 libblkid/src/superblocks/isw_raid.c
 libblkid/src/superblocks/jfs.c
 libblkid/src/superblocks/jmicron_raid.c
@@ -211,6 +212,7 @@ lib/loopdev.c
 lib/mangle.c
 lib/match.c
 lib/mbsalign.c
+lib/mbsedit.c
 lib/md5.c
 lib/monotonic.c
 libmount/python/context.c
@@ -308,6 +310,7 @@ login-utils/utmpdump.c
 login-utils/vipw.c
 misc-utils/blkid.c
 misc-utils/cal.c
+misc-utils/fincore.c
 misc-utils/findfs.c
 misc-utils/findmnt.c
 misc-utils/findmnt.h
@@ -330,7 +333,9 @@ schedutils/chrt.c
 schedutils/ionice.c
 schedutils/taskset.c
 sys-utils/blkdiscard.c
+sys-utils/blkzone.c
 sys-utils/chcpu.c
+sys-utils/chmem.c
 sys-utils/ctrlaltdel.c
 sys-utils/dmesg.c
 sys-utils/eject.c
@@ -354,6 +359,7 @@ sys-utils/lscpu.c
 sys-utils/lscpu-dmi.c
 sys-utils/lscpu.h
 sys-utils/lsipc.c
+sys-utils/lsmem.c
 sys-utils/lsns.c
 sys-utils/mount.c
 sys-utils/mountpoint.c
@@ -398,5 +404,4 @@ text-utils/line.c
 text-utils/more.c
 text-utils/pg.c
 text-utils/rev.c
-text-utils/tailf.c
 text-utils/ul.c

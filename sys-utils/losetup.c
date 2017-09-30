@@ -225,6 +225,7 @@ static int set_scols_data(struct loopdev_cxt *lc, struct libscols_line *ln)
 		const char *p = NULL;			/* external data */
 		char *np = NULL;			/* allocated here */
 		uint64_t x = 0;
+		int rc;
 
 		switch(get_column_id(i)) {
 		case COL_NAME:
@@ -285,9 +286,12 @@ static int set_scols_data(struct loopdev_cxt *lc, struct libscols_line *ln)
 
 
 		if (p)
-			scols_line_set_data(ln, i, p);		/* calls strdup() */
+			rc = scols_line_set_data(ln, i, p);	/* calls strdup() */
 		else if (np)
-			scols_line_refer_data(ln, i, np);	/* only refers */
+			rc = scols_line_refer_data(ln, i, np);	/* only refers */
+
+		if (rc)
+			err(EXIT_FAILURE, _("failed to add output data"));
 	}
 
 	return 0;
@@ -307,7 +311,7 @@ static int show_table(struct loopdev_cxt *lc,
 	scols_init_debug(0);
 
 	if (!(tb = scols_new_table()))
-		err(EXIT_FAILURE, _("failed to initialize output table"));
+		err(EXIT_FAILURE, _("failed to allocate output table"));
 	scols_table_enable_raw(tb, raw);
 	scols_table_enable_json(tb, json);
 	scols_table_enable_noheadings(tb, no_headings);
@@ -319,14 +323,14 @@ static int show_table(struct loopdev_cxt *lc,
 		struct colinfo *ci = get_column_info(i);
 
 		if (!scols_table_new_column(tb, ci->name, ci->whint, ci->flags))
-			err(EXIT_FAILURE, _("failed to initialize output column"));
+			err(EXIT_FAILURE, _("failed to allocate output column"));
 	}
 
 	/* only one loopdev requested (already assigned to loopdev_cxt) */
 	if (loopcxt_get_device(lc)) {
 		ln = scols_table_new_line(tb, NULL);
 		if (!ln)
-			err(EXIT_FAILURE, _("failed to initialize output line"));
+			err(EXIT_FAILURE, _("failed to allocate output line"));
 		rc = set_scols_data(lc, ln);
 
 	/* list all loopdevs */
@@ -355,7 +359,7 @@ static int show_table(struct loopdev_cxt *lc,
 
 			ln = scols_table_new_line(tb, NULL);
 			if (!ln)
-				err(EXIT_FAILURE, _("failed to initialize output column"));
+				err(EXIT_FAILURE, _("failed to allocate output line"));
 			rc = set_scols_data(lc, ln);
 			if (rc)
 				break;
@@ -385,6 +389,7 @@ static void usage(FILE *out)
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_("Set up and control loop devices.\n"), out);
 
+	/* commands */
 	fputs(USAGE_OPTIONS, out);
 	fputs(_(" -a, --all                     list all used devices\n"), out);
 	fputs(_(" -d, --detach <loopdev>...     detach one or more devices\n"), out);
@@ -394,8 +399,8 @@ static void usage(FILE *out)
 	fputs(_(" -j, --associated <file>       list all devices associated with <file>\n"), out);
 	fputs(_(" -L, --nooverlap               avoid possible conflict between devices\n"), out);
 
+	/* commands options */
 	fputs(USAGE_SEPARATOR, out);
-
 	fputs(_(" -o, --offset <num>            start at offset <num> into file\n"), out);
 	fputs(_("     --sizelimit <num>         device is limited to <num> bytes of the file\n"), out);
 	fputs(_(" -P, --partscan                create a partitioned loop device\n"), out);
@@ -404,19 +409,19 @@ static void usage(FILE *out)
 	fputs(_("     --show                    print device name after setup (with -f)\n"), out);
 	fputs(_(" -v, --verbose                 verbose mode\n"), out);
 
+	/* output options */
 	fputs(USAGE_SEPARATOR, out);
-
-	fputs(_(" -l, --list                    list info about all or specified (default)\n"), out);
-	fputs(_(" -O, --output <cols>           specify columns to output for --list\n"), out);
-	fputs(_(" -n, --noheadings              don't print headings for --list output\n"), out);
-	fputs(_("     --raw                     use raw --list output format\n"), out);
 	fputs(_(" -J, --json                    use JSON --list output format\n"), out);
+	fputs(_(" -l, --list                    list info about all or specified (default)\n"), out);
+	fputs(_(" -n, --noheadings              don't print headings for --list output\n"), out);
+	fputs(_(" -O, --output <cols>           specify columns to output for --list\n"), out);
+	fputs(_("     --raw                     use raw --list output format\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
 	fputs(USAGE_HELP, out);
 	fputs(USAGE_VERSION, out);
 
-	fputs(_("\nAvailable --list columns:\n"), out);
+	fputs(_("\nAvailable --output columns:\n"), out);
 	for (i = 0; i < ARRAY_SIZE(infos); i++)
 		fprintf(out, " %12s  %s\n", infos[i].name, _(infos[i].help));
 
@@ -574,28 +579,28 @@ int main(int argc, char **argv)
 		OPT_DIO
 	};
 	static const struct option longopts[] = {
-		{ "all", 0, 0, 'a' },
-		{ "set-capacity", 1, 0, 'c' },
-		{ "detach", 1, 0, 'd' },
-		{ "detach-all", 0, 0, 'D' },
-		{ "find", 0, 0, 'f' },
-		{ "nooverlap", 0, 0, 'L' },
-		{ "help", 0, 0, 'h' },
-		{ "associated", 1, 0, 'j' },
-		{ "json", 0, 0, 'J' },
-		{ "list", 0, 0, 'l' },
-		{ "noheadings", 0, 0, 'n' },
-		{ "offset", 1, 0, 'o' },
-		{ "output", 1, 0, 'O' },
-		{ "sizelimit", 1, 0, OPT_SIZELIMIT },
-		{ "partscan", 0, 0, 'P' },
-		{ "read-only", 0, 0, 'r' },
-		{ "direct-io", 2, 0, OPT_DIO },
-		{ "raw", 0, 0, OPT_RAW },
-		{ "show", 0, 0, OPT_SHOW },
-		{ "verbose", 0, 0, 'v' },
-		{ "version", 0, 0, 'V' },
-		{ NULL, 0, 0, 0 }
+		{ "all",          no_argument,       NULL, 'a'           },
+		{ "set-capacity", required_argument, NULL, 'c'           },
+		{ "detach",       required_argument, NULL, 'd'           },
+		{ "detach-all",   no_argument,       NULL, 'D'           },
+		{ "find",         no_argument,       NULL, 'f'           },
+		{ "nooverlap",    no_argument,       NULL, 'L'           },
+		{ "help",         no_argument,       NULL, 'h'           },
+		{ "associated",   required_argument, NULL, 'j'           },
+		{ "json",         no_argument,       NULL, 'J'           },
+		{ "list",         no_argument,       NULL, 'l'           },
+		{ "noheadings",   no_argument,       NULL, 'n'           },
+		{ "offset",       required_argument, NULL, 'o'           },
+		{ "output",       required_argument, NULL, 'O'           },
+		{ "sizelimit",    required_argument, NULL, OPT_SIZELIMIT },
+		{ "partscan",     no_argument,       NULL, 'P'           },
+		{ "read-only",    no_argument,       NULL, 'r'           },
+		{ "direct-io",    optional_argument, NULL, OPT_DIO       },
+		{ "raw",          no_argument,       NULL, OPT_RAW       },
+		{ "show",         no_argument,       NULL, OPT_SHOW      },
+		{ "verbose",      no_argument,       NULL, 'v'           },
+		{ "version",      no_argument,       NULL, 'V'           },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
@@ -698,7 +703,7 @@ int main(int argc, char **argv)
 			flags |= LOOPDEV_FL_SIZELIMIT;
                         break;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

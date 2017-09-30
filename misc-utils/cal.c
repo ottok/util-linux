@@ -80,12 +80,13 @@ static int has_term = 0;
 static const char *Senter = "", *Sexit = "";	/* enter and exit standout mode */
 
 #if defined(HAVE_LIBNCURSES) || defined(HAVE_LIBNCURSESW)
-# ifdef HAVE_NCURSES_H
-#  include <ncurses.h>
-# elif defined(HAVE_NCURSES_NCURSES_H)
-#  include <ncurses/ncurses.h>
+# if defined(HAVE_NCURSESW_TERM_H)
+#  include <ncursesw/term.h>
+# elif defined(HAVE_NCURSES_TERM_H)
+#  include <ncurses/term.h>
+# elif defined(HAVE_TERM_H)
+#  include <term.h>
 # endif
-# include <term.h>
 #endif
 
 static int setup_terminal(char *term
@@ -97,7 +98,7 @@ static int setup_terminal(char *term
 #if defined(HAVE_LIBNCURSES) || defined(HAVE_LIBNCURSESW)
 	int ret;
 
-	if (setupterm(term, STDOUT_FILENO, &ret) != OK || ret != 1)
+	if (setupterm(term, STDOUT_FILENO, &ret) != 0 || ret != 1)
 		return -1;
 #endif
 	return 0;
@@ -114,7 +115,7 @@ static void my_putstring(char *s)
 }
 
 static const char *my_tgetstr(char *ss
-	#if !defined(HAVE_LIBNCURSES) && !defined(HAVE_LIBNCURSESW)
+#if !defined(HAVE_LIBNCURSES) && !defined(HAVE_LIBNCURSESW)
 			__attribute__((__unused__))
 #endif
 		)
@@ -206,7 +207,7 @@ struct cal_control {
 	const char *abbr_month[MONTHS_IN_YEAR];	/* abbreviated month names */
 
 	int colormode;			/* day and week number highlight */
-	int num_months;			/* number of requested monts */
+	int num_months;			/* number of requested months */
 	int span_months;		/* span the date */
 	int months_in_row;		/* number of months horizontally in print out */
 	int weekstart;			/* day the week starts, often Sun or Mon */
@@ -284,7 +285,7 @@ int main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'Y','n','y' },
 		{ 0 }
 	};
@@ -394,9 +395,8 @@ int main(int argc, char **argv)
 			return EXIT_SUCCESS;
 		case 'h':
 			usage(stdout);
-		case '?':
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
@@ -543,7 +543,7 @@ static void init_monthnames(struct cal_control *ctl)
 {
 	size_t i;
 
-	if (ctl->full_month[0] != '\0')
+	if (ctl->full_month[0] != NULL)
 		return;		/* already initialized */
 
 	for (i = 0; i < MONTHS_IN_YEAR; i++)
@@ -554,7 +554,7 @@ static void init_abbr_monthnames(struct cal_control *ctl)
 {
 	size_t i;
 
-	if (ctl->abbr_month[0] != '\0')
+	if (ctl->abbr_month[0] != NULL)
 		return;		/* already initialized */
 
 	for (i = 0; i < MONTHS_IN_YEAR; i++)

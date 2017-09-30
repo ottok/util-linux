@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <libsmartcols.h>
 #ifdef HAVE_LIBREADLINE
+# define _FUNCTION_DEF
 # include <readline/readline.h>
 #endif
 
@@ -51,6 +52,7 @@
 #endif
 
 int pwipemode = WIPEMODE_AUTO;
+static int wipemode = WIPEMODE_AUTO;
 
 /*
  * fdisk debug stuff (see fdisk.h and include/debug.h)
@@ -430,8 +432,8 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt)
 		return NULL;
 
         q = fdisk_label_has_code_parttypes(lb) ?
-		_("Partition type (type L to list all types): ") :
-		_("Hex code (type L to list all codes): ");
+		_("Hex code (type L to list all codes): ") :
+		_("Partition type (type L to list all types): ");
 	do {
 		char buf[256];
 		int rc = get_user_reply(cxt, q, buf, sizeof(buf));
@@ -723,6 +725,30 @@ static fdisk_sector_t get_dev_blocks(char *dev)
 	return size/2;
 }
 
+
+void follow_wipe_mode(struct fdisk_context *cxt)
+{
+	int dowipe = wipemode == WIPEMODE_ALWAYS ? 1 : 0;
+
+	if (isatty(STDIN_FILENO) && wipemode == WIPEMODE_AUTO)
+		dowipe = 1;	/* do it in interactive mode */
+
+	if (fdisk_is_ptcollision(cxt) && wipemode != WIPEMODE_NEVER)
+		dowipe = 1;	/* always remove old PT */
+
+	fdisk_enable_wipe(cxt, dowipe);
+	if (dowipe)
+		fdisk_warnx(cxt, _(
+			"The old %s signature will be removed by a write command."),
+			fdisk_get_collision(cxt));
+	else
+		fdisk_warnx(cxt, _(
+			"The old %s signature may remain on the device. "
+			"It is recommended to wipe the device with wipefs(8) or "
+			"fdisk --wipe, in order to avoid possible collisions."),
+			fdisk_get_collision(cxt));
+}
+
 static void __attribute__ ((__noreturn__)) usage(FILE *out)
 {
 	fputs(USAGE_HEADER, out);
@@ -777,7 +803,6 @@ int main(int argc, char **argv)
 {
 	int rc, i, c, act = ACT_FDISK;
 	int colormode = UL_COLORMODE_UNDEF;
-	int wipemode = WIPEMODE_AUTO;
 	struct fdisk_context *cxt;
 	char *outarg = NULL;
 	enum {
@@ -926,7 +951,7 @@ int main(int argc, char **argv)
 			fdisk_set_size_unit(cxt, FDISK_SIZEUNIT_BYTES);
 			break;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
@@ -995,24 +1020,9 @@ int main(int argc, char **argv)
 
 		fflush(stdout);
 
-		if (fdisk_get_collision(cxt)) {
-			int dowipe = wipemode == WIPEMODE_ALWAYS ? 1 : 0;
+		if (fdisk_get_collision(cxt))
+			follow_wipe_mode(cxt);
 
-			fdisk_warnx(cxt, _("Device %s already contains a %s signature."),
-				argv[optind], fdisk_get_collision(cxt));
-
-			if (isatty(STDIN_FILENO) && wipemode == WIPEMODE_AUTO)
-				dowipe = 1;	/* do it in interactive mode */
-
-			fdisk_enable_wipe(cxt, dowipe);
-			if (dowipe)
-				fdisk_warnx(cxt, _(
-					"The signature will be removed by a write command."));
-			else
-				fdisk_warnx(cxt, _(
-					"It is strongly recommended to wipe the device with "
-					"wipefs(8), in order to avoid possible collisions."));
-		}
 		if (!fdisk_has_label(cxt)) {
 			fdisk_info(cxt, _("Device does not contain a recognized partition table."));
 			fdisk_create_disklabel(cxt, NULL);

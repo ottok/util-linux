@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <sys/param.h>
 
-#include "nls.h"
 #include "blkdev.h"
 #include "fdiskP.h"
 #include "pt-mbr.h"
@@ -43,7 +42,7 @@ static const char *bsd_dktypenames[] = {
 	"HP-FL",
 	"type 9",
 	"floppy",
-	0
+	NULL
 };
 #define BSD_DKMAXTYPES	(ARRAY_SIZE(bsd_dktypenames) - 1)
 
@@ -858,6 +857,9 @@ static int bsd_readlabel(struct fdisk_context *cxt)
 	cxt->geom.sectors = d->d_nsectors;
 	cxt->geom.heads = d->d_ntracks;
 	cxt->geom.cylinders = d->d_ncylinders;
+
+	if (fdisk_has_user_device_geometry(cxt))
+		fdisk_apply_user_device_properties(cxt);
 
 	cxt->label->nparts_cur = d->d_npartitions;
 	cxt->label->nparts_max = BSD_MAXPARTITIONS;

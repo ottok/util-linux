@@ -33,7 +33,6 @@
 #include "c.h"
 #include "env.h"
 #include "optutils.h"
-#include "exitcodes.h"
 #include "closestream.h"
 #include "pathnames.h"
 #include "canonicalize.h"
@@ -66,7 +65,7 @@ static void __attribute__((__noreturn__)) print_version(void)
 		fputs(*p++, stdout);
 	}
 	fputs(")\n", stdout);
-	exit(MOUNT_EX_SUCCESS);
+	exit(MNT_EX_SUCCESS);
 }
 static void __attribute__((__noreturn__)) usage(FILE *out)
 {
@@ -102,7 +101,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(USAGE_VERSION, out);
 	fprintf(out, USAGE_MAN_TAIL("umount(8)"));
 
-	exit(out == stderr ? MOUNT_EX_USAGE : MOUNT_EX_SUCCESS);
+	exit(out == stderr ? MNT_EX_USAGE : MNT_EX_SUCCESS);
 }
 
 static void __attribute__((__noreturn__)) exit_non_root(const char *option)
@@ -113,16 +112,16 @@ static void __attribute__((__noreturn__)) exit_non_root(const char *option)
 	if (ruid == 0 && euid != 0) {
 		/* user is root, but setuid to non-root */
 		if (option)
-			errx(MOUNT_EX_USAGE,
+			errx(MNT_EX_USAGE,
 				_("only root can use \"--%s\" option "
 				 "(effective UID is %u)"),
 					option, euid);
-		errx(MOUNT_EX_USAGE, _("only root can do that "
+		errx(MNT_EX_USAGE, _("only root can do that "
 				 "(effective UID is %u)"), euid);
 	}
 	if (option)
-		errx(MOUNT_EX_USAGE, _("only root can use \"--%s\" option"), option);
-	errx(MOUNT_EX_USAGE, _("only root can do that"));
+		errx(MNT_EX_USAGE, _("only root can use \"--%s\" option"), option);
+	errx(MNT_EX_USAGE, _("only root can do that"));
 }
 
 static void success_message(struct libmnt_context *cxt)
@@ -144,123 +143,20 @@ static void success_message(struct libmnt_context *cxt)
 		warnx(_("%s unmounted"), tgt);
 }
 
-/*
- * Handles generic errors like ENOMEM, ...
- *
- * rc = 0 success
- *     <0 error (usually -errno)
- *
- * Returns exit status (MOUNT_EX_*) and prints error message.
- */
-static int handle_generic_errors(int rc, const char *msg, ...)
-{
-	va_list va;
-
-	va_start(va, msg);
-	errno = -rc;
-
-	switch(errno) {
-	case EINVAL:
-	case EPERM:
-		vwarn(msg, va);
-		rc = MOUNT_EX_USAGE;
-		break;
-	case ENOMEM:
-		vwarn(msg, va);
-		rc = MOUNT_EX_SYSERR;
-		break;
-	default:
-		vwarn(msg, va);
-		rc = MOUNT_EX_FAIL;
-		break;
-	}
-	va_end(va);
-	return rc;
-}
-
 static int mk_exit_code(struct libmnt_context *cxt, int rc)
 {
-	int syserr;
-	const char *tgt = mnt_context_get_target(cxt);
+	char buf[BUFSIZ] = { 0 };
 
-	if (mnt_context_helper_executed(cxt))
-		/*
-		 * /sbin/umount.<type> called, return status
-		 */
-		return mnt_context_get_helper_status(cxt);
-
-	if (rc == 0 && mnt_context_get_status(cxt) == 1)
-		/*
-		 * Libmount success && syscall success.
-		 */
-		return MOUNT_EX_SUCCESS;
-
-
-	if (!mnt_context_syscall_called(cxt)) {
-		/*
-		 * libmount errors (extra library checks)
-		 */
-		if (rc == -EPERM && !mnt_context_tab_applied(cxt)) {
-			/* failed to evaluate permissions because not found
-			 * relevant entry in mtab */
-			warnx(_("%s: not mounted"), tgt);
-			return MOUNT_EX_USAGE;
-		}
-		return handle_generic_errors(rc, _("%s: umount failed"), tgt);
-
-	} else if (mnt_context_get_syscall_errno(cxt) == 0) {
-		/*
-		 * umount(2) syscall success, but something else failed
-		 * (probably error in mtab processing).
-		 */
-		if (rc < 0)
-			return handle_generic_errors(rc,
-				_("%s: filesystem was unmounted, but mount(8) failed"),
-				tgt);
-
-		return MOUNT_EX_SOFTWARE;	/* internal error */
-
+	rc = mnt_context_get_excode(cxt, rc, buf, sizeof(buf));
+	if (*buf) {
+		const char *spec = mnt_context_get_target(cxt);
+		if (!spec)
+			spec = mnt_context_get_source(cxt);
+		if (!spec)
+			spec = "???";
+		warnx(_("%s: %s."), spec, buf);
 	}
-
-	/*
-	 * umount(2) errors
-	 */
-	syserr = mnt_context_get_syscall_errno(cxt);
-
-	switch(syserr) {
-	case ENXIO:
-		warnx(_("%s: invalid block device"), tgt);	/* ??? */
-		break;
-	case EINVAL:
-		warnx(_("%s: not mounted"), tgt);
-		break;
-	case EIO:
-		warnx(_("%s: can't write superblock"), tgt);
-		break;
-	case EBUSY:
-		warnx(_("%s: target is busy\n"
-		       "        (In some cases useful info about processes that\n"
-		       "         use the device is found by lsof(8) or fuser(1).)"),
-			tgt);
-		break;
-	case ENOENT:
-		if (tgt && *tgt)
-			warnx(_("%s: mountpoint not found"), tgt);
-		else
-			warnx(_("undefined mountpoint"));
-		break;
-	case EPERM:
-		warnx(_("%s: must be superuser to unmount"), tgt);
-		break;
-	case EACCES:
-		warnx(_("%s: block devices are not permitted on filesystem"), tgt);
-		break;
-	default:
-		errno = syserr;
-		warn("%s", tgt);
-		break;
-	}
-	return MOUNT_EX_FAIL;
+	return rc;
 }
 
 static int umount_all(struct libmnt_context *cxt)
@@ -272,7 +168,7 @@ static int umount_all(struct libmnt_context *cxt)
 	itr = mnt_new_iter(MNT_ITER_BACKWARD);
 	if (!itr) {
 		warn(_("failed to initialize libmount iterator"));
-		return MOUNT_EX_SYSERR;
+		return MNT_EX_SYSERR;
 	}
 
 	while (mnt_context_next_umount(cxt, itr, &fs, &mntrc, &ignored) == 0) {
@@ -285,7 +181,7 @@ static int umount_all(struct libmnt_context *cxt)
 		} else {
 			int xrc = mk_exit_code(cxt, mntrc);
 
-			if (xrc == MOUNT_EX_SUCCESS
+			if (xrc == MNT_EX_SUCCESS
 			    && mnt_context_is_verbose(cxt))
 				printf("%-25s: successfully unmounted\n", tgt);
 			rc |= xrc;
@@ -301,15 +197,15 @@ static int umount_one(struct libmnt_context *cxt, const char *spec)
 	int rc;
 
 	if (!spec)
-		return MOUNT_EX_SOFTWARE;
+		return MNT_EX_SOFTWARE;
 
 	if (mnt_context_set_target(cxt, spec))
-		err(MOUNT_EX_SYSERR, _("failed to set umount target"));
+		err(MNT_EX_SYSERR, _("failed to set umount target"));
 
 	rc = mnt_context_umount(cxt);
 	rc = mk_exit_code(cxt, rc);
 
-	if (rc == MOUNT_EX_SUCCESS && mnt_context_is_verbose(cxt))
+	if (rc == MNT_EX_SUCCESS && mnt_context_is_verbose(cxt))
 		success_message(cxt);
 
 	mnt_reset_context(cxt);
@@ -320,7 +216,7 @@ static struct libmnt_table *new_mountinfo(struct libmnt_context *cxt)
 {
 	struct libmnt_table *tb = mnt_new_table();
 	if (!tb)
-		err(MOUNT_EX_SYSERR, _("libmount table allocation failed"));
+		err(MNT_EX_SYSERR, _("libmount table allocation failed"));
 
 	mnt_table_set_parser_errcb(tb, table_parser_errcb);
 	mnt_table_set_cache(tb, mnt_context_get_cache(cxt));
@@ -344,7 +240,7 @@ static int umount_one_if_mounted(struct libmnt_context *cxt, const char *spec)
 
 	rc = mnt_context_find_umount_fs(cxt, spec, &fs);
 	if (rc == 1) {
-		rc = MOUNT_EX_SUCCESS;		/* already unmounted */
+		rc = MNT_EX_SUCCESS;		/* already unmounted */
 		mnt_reset_context(cxt);
 	} else if (rc < 0) {
 		rc = mk_exit_code(cxt, rc);	/* error */
@@ -363,7 +259,7 @@ static int umount_do_recurse(struct libmnt_context *cxt,
 	int rc;
 
 	if (!itr)
-		err(MOUNT_EX_SYSERR, _("libmount iterator allocation failed"));
+		err(MNT_EX_SYSERR, _("libmount iterator allocation failed"));
 
 	/* umount all children */
 	for (;;) {
@@ -371,13 +267,13 @@ static int umount_do_recurse(struct libmnt_context *cxt,
 		if (rc < 0) {
 			warnx(_("failed to get child fs of %s"),
 					mnt_fs_get_target(fs));
-			rc = MOUNT_EX_SOFTWARE;
+			rc = MNT_EX_SOFTWARE;
 			goto done;
 		} else if (rc == 1)
 			break;		/* no more children */
 
 		rc = umount_do_recurse(cxt, tb, child);
-		if (rc != MOUNT_EX_SUCCESS)
+		if (rc != MNT_EX_SUCCESS)
 			goto done;
 	}
 
@@ -395,7 +291,7 @@ static int umount_recursive(struct libmnt_context *cxt, const char *spec)
 
 	tb = new_mountinfo(cxt);
 	if (!tb)
-		return MOUNT_EX_SOFTWARE;
+		return MNT_EX_SOFTWARE;
 
 	/* it's always real mountpoint, don't assume that the target maybe a device */
 	mnt_context_disable_swapmatch(cxt, 1);
@@ -404,7 +300,7 @@ static int umount_recursive(struct libmnt_context *cxt, const char *spec)
 	if (fs)
 		rc = umount_do_recurse(cxt, tb, fs);
 	else {
-		rc = MOUNT_EX_USAGE;
+		rc = MNT_EX_USAGE;
 		warnx(access(spec, F_OK) == 0 ?
 				_("%s: not mounted") :
 				_("%s: not found"), spec);
@@ -427,7 +323,7 @@ static int umount_alltargets(struct libmnt_context *cxt, const char *spec, int r
 	 */
 	rc = mnt_context_find_umount_fs(cxt, spec, &fs);
 	if (rc == 1) {
-		rc = MOUNT_EX_USAGE;
+		rc = MNT_EX_USAGE;
 		warnx(access(spec, F_OK) == 0 ?
 				_("%s: not mounted") :
 				_("%s: not found"), spec);
@@ -437,18 +333,18 @@ static int umount_alltargets(struct libmnt_context *cxt, const char *spec, int r
 		return mk_exit_code(cxt, rc);		/* error */
 
 	if (!mnt_fs_get_srcpath(fs) || !mnt_fs_get_devno(fs))
-		errx(MOUNT_EX_USAGE, _("%s: failed to determine source "
+		errx(MNT_EX_USAGE, _("%s: failed to determine source "
 				"(--all-targets is unsupported on systems with "
 				"regular mtab file)."), spec);
 
 	itr = mnt_new_iter(MNT_ITER_BACKWARD);
 	if (!itr)
-		err(MOUNT_EX_SYSERR, _("libmount iterator allocation failed"));
+		err(MNT_EX_SYSERR, _("libmount iterator allocation failed"));
 
 	/* get on @cxt independent mountinfo */
 	tb = new_mountinfo(cxt);
 	if (!tb) {
-		rc = MOUNT_EX_SOFTWARE;
+		rc = MNT_EX_SOFTWARE;
 		goto done;
 	}
 
@@ -468,7 +364,7 @@ static int umount_alltargets(struct libmnt_context *cxt, const char *spec, int r
 		else
 			rc = umount_one_if_mounted(cxt, mnt_fs_get_target(fs));
 
-		if (rc != MOUNT_EX_SUCCESS)
+		if (rc != MNT_EX_SUCCESS)
 			break;
 	}
 
@@ -492,7 +388,7 @@ static char *sanitize_path(const char *path)
 
 	p = canonicalize_path_restricted(path);
 	if (!p)
-		err(MOUNT_EX_USAGE, "%s", path);
+		err(MNT_EX_USAGE, "%s", path);
 
 	return p;
 }
@@ -508,26 +404,26 @@ int main(int argc, char **argv)
 	};
 
 	static const struct option longopts[] = {
-		{ "all", 0, 0, 'a' },
-		{ "all-targets", 0, 0, 'A' },
-		{ "detach-loop", 0, 0, 'd' },
-		{ "fake", 0, 0, UMOUNT_OPT_FAKE },
-		{ "force", 0, 0, 'f' },
-		{ "help", 0, 0, 'h' },
-		{ "internal-only", 0, 0, 'i' },
-		{ "lazy", 0, 0, 'l' },
-		{ "no-canonicalize", 0, 0, 'c' },
-		{ "no-mtab", 0, 0, 'n' },
-		{ "read-only", 0, 0, 'r' },
-		{ "recursive", 0, 0, 'R' },
-		{ "test-opts", 1, 0, 'O' },
-		{ "types", 1, 0, 't' },
-		{ "verbose", 0, 0, 'v' },
-		{ "version", 0, 0, 'V' },
-		{ NULL, 0, 0, 0 }
+		{ "all",             no_argument,       NULL, 'a'             },
+		{ "all-targets",     no_argument,       NULL, 'A'             },
+		{ "detach-loop",     no_argument,       NULL, 'd'             },
+		{ "fake",            no_argument,       NULL, UMOUNT_OPT_FAKE },
+		{ "force",           no_argument,       NULL, 'f'             },
+		{ "help",            no_argument,       NULL, 'h'             },
+		{ "internal-only",   no_argument,       NULL, 'i'             },
+		{ "lazy",            no_argument,       NULL, 'l'             },
+		{ "no-canonicalize", no_argument,       NULL, 'c'             },
+		{ "no-mtab",         no_argument,       NULL, 'n'             },
+		{ "read-only",       no_argument,       NULL, 'r'             },
+		{ "recursive",       no_argument,       NULL, 'R'             },
+		{ "test-opts",       required_argument, NULL, 'O'             },
+		{ "types",           required_argument, NULL, 't'             },
+		{ "verbose",         no_argument,       NULL, 'v'             },
+		{ "version",         no_argument,       NULL, 'V'             },
+		{ NULL, 0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'A','a' },			/* all-targets,all */
 		{ 'R','a' },			/* recursive,all */
 		{ 'O','R','t'},			/* options,recursive,types */
@@ -545,7 +441,7 @@ int main(int argc, char **argv)
 	mnt_init_debug(0);
 	cxt = mnt_new_context();
 	if (!cxt)
-		err(MOUNT_EX_SYSERR, _("libmount context allocation failed"));
+		err(MNT_EX_SYSERR, _("libmount context allocation failed"));
 
 	mnt_context_set_tables_errcb(cxt, table_parser_errcb);
 
@@ -598,7 +494,7 @@ int main(int argc, char **argv)
 			break;
 		case 'O':
 			if (mnt_context_set_options_pattern(cxt, optarg))
-				err(MOUNT_EX_SYSERR, _("failed to set options pattern"));
+				err(MNT_EX_SYSERR, _("failed to set options pattern"));
 			break;
 		case 't':
 			types = optarg;
@@ -610,8 +506,7 @@ int main(int argc, char **argv)
 			print_version();
 			break;
 		default:
-			usage(stderr);
-			break;
+			errtryhelp(MNT_EX_USAGE);
 		}
 	}
 

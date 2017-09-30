@@ -262,18 +262,18 @@ int main(int argc, char *argv[])
 	int c, rc;
 
 	static const struct option longopts[] = {
-		{ "configure",	required_argument, 0, 'c' },
-		{ "deconfigure",required_argument, 0, 'g' },
-		{ "disable",	required_argument, 0, 'd' },
-		{ "dispatch",	required_argument, 0, 'p' },
-		{ "enable",	required_argument, 0, 'e' },
-		{ "help",	no_argument,       0, 'h' },
-		{ "rescan",	no_argument,       0, 'r' },
-		{ "version",	no_argument,       0, 'V' },
-		{ NULL,		0, 0, 0 }
+		{ "configure",	required_argument, NULL, 'c' },
+		{ "deconfigure",required_argument, NULL, 'g' },
+		{ "disable",	required_argument, NULL, 'd' },
+		{ "dispatch",	required_argument, NULL, 'p' },
+		{ "enable",	required_argument, NULL, 'e' },
+		{ "help",	no_argument,       NULL, 'h' },
+		{ "rescan",	no_argument,       NULL, 'r' },
+		{ "version",	no_argument,       NULL, 'V' },
+		{ NULL,		0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'c','d','e','g','p' },
 		{ 0 }
 	};
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
 			printf(UTIL_LINUX_VERSION);
 			return EXIT_SUCCESS;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

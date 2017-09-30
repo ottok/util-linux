@@ -71,11 +71,11 @@ static unsigned int timeout;
 static int profile;
 static volatile uint32_t openfd;		/* Remember higher file descriptors */
 
-struct sigaction saved_sigint;
-struct sigaction saved_sigtstp;
-struct sigaction saved_sigquit;
-struct sigaction saved_sighup;
-struct sigaction saved_sigchld;
+static struct sigaction saved_sigint;
+static struct sigaction saved_sigtstp;
+static struct sigaction saved_sigquit;
+static struct sigaction saved_sighup;
+static struct sigaction saved_sigchld;
 
 static volatile sig_atomic_t alarm_rised;
 static volatile sig_atomic_t sigchild;
@@ -89,7 +89,7 @@ static volatile sig_atomic_t sigchild;
 # define WEXITED 0
 #endif
 
-static int locked_account_password(const char *passwd)
+static int locked_account_password(const char * const passwd)
 {
 	if (passwd && (*passwd == '*' || *passwd == '!'))
 		return 1;
@@ -101,9 +101,9 @@ static int locked_account_password(const char *passwd)
  */
 static void tcinit(struct console *con)
 {
-	int mode = 0, flags = 0;
+	int flags = 0, mode = 0;
 	struct termios *tio = &con->tio;
-	int fd = con->fd;
+	const int fd = con->fd;
 #ifdef USE_PLYMOUTH_SUPPORT
 	struct termios lock;
 	int i = (plymouth_command(MAGIC_PING)) ? PLYMOUTH_TERMIOS_FLAGS_DELAY : 0;
@@ -216,8 +216,8 @@ setattr:
  */
 static void tcfinal(struct console *con)
 {
-	struct termios *tio;
-	int fd;
+	struct termios *tio = &con->tio;
+	const int fd = con->fd;
 
 	if ((con->flags & CON_SERIAL) == 0) {
 		xsetenv("TERM", "linux", 1);
@@ -233,9 +233,6 @@ static void tcfinal(struct console *con)
 #else
 	xsetenv("TERM", "vt102", 1);
 #endif
-	tio = &con->tio;
-	fd = con->fd;
-
 	tio->c_iflag |= (IXON | IXOFF);
 	tio->c_lflag |= (ICANON | ISIG | ECHO|ECHOE|ECHOK|ECHOKE);
 	tio->c_oflag |= OPOST;
@@ -557,22 +554,17 @@ err:
  */
 static void setup(struct console *con)
 {
-	pid_t pid, pgrp, ppgrp, ttypgrp;
-	int fd;
+	int fd = con->fd;
+	const pid_t pid = getpid(), pgrp = getpgid(0), ppgrp =
+	    getpgid(getppid()), ttypgrp = tcgetpgrp(fd);
 
 	if (con->flags & CON_NOTTY)
 		return;
-	fd = con->fd;
 
 	/*
 	 * Only go through this trouble if the new
 	 * tty doesn't fall in this process group.
 	 */
-	pid = getpid();
-	pgrp = getpgid(0);
-	ppgrp = getpgid(getppid());
-	ttypgrp = tcgetpgrp(fd);
-
 	if (pgrp != ttypgrp && ppgrp != ttypgrp) {
 		if (pid != getsid(0)) {
 			if (pid == getpgid(0))
@@ -608,21 +600,20 @@ static void setup(struct console *con)
  * Ask for the password. Note that there is no default timeout as we normally
  * skip this during boot.
  */
-static char *getpasswd(struct console *con)
+static const char *getpasswd(struct console *con)
 {
 	struct sigaction sa;
 	struct termios tty;
 	static char pass[128], *ptr;
 	struct chardata *cp;
-	char *ret = pass;
+	const char *ret = pass;
 	unsigned char tc;
 	char c, ascval;
 	int eightbit;
-	int fd;
+	const int fd = con->fd;
 
 	if (con->flags & CON_NOTTY)
 		goto out;
-	fd = con->fd;
 	cp = &con->cp;
 	tty = con->tio;
 
@@ -728,8 +719,8 @@ static void sushell(struct passwd *pwd)
 {
 	char shell[PATH_MAX];
 	char home[PATH_MAX];
-	char *p;
-	char *su_shell;
+	char const *p;
+	char const *su_shell;
 
 	/*
 	 * Set directory and shell.
@@ -827,13 +818,12 @@ static void usage(FILE *out)
 
 int main(int argc, char **argv)
 {
-	LIST_HEAD(consoles);
-	struct list_head *ptr;
+	struct list_head *ptr, consoles;
 	struct console *con;
 	char *tty = NULL;
 	struct passwd *pwd;
-	struct timespec sigwait = { .tv_sec = 0, .tv_nsec = 50000000 };
-	siginfo_t status = {};
+	const struct timespec sigwait = { .tv_sec = 0, .tv_nsec = 50000000 };
+	siginfo_t status = { 0 };
 	sigset_t set;
 	int c, reconnect = 0;
 	int opt_e = 0;
@@ -841,13 +831,15 @@ int main(int argc, char **argv)
 	pid_t pid;
 
 	static const struct option longopts[] = {
-		{ "login-shell",  0, 0, 'p' },
-		{ "timeout",      1, 0, 't' },
-		{ "force",        0, 0, 'e' },
-		{ "help",         0, 0, 'h' },
-		{ "version",      0, 0, 'V' },
-		{ NULL,           0, 0, 0 }
+		{ "login-shell",  no_argument,       NULL, 'p' },
+		{ "timeout",      required_argument, NULL, 't' },
+		{ "force",        no_argument,       NULL, 'e' },
+		{ "help",         no_argument,       NULL, 'h' },
+		{ "version",      no_argument,       NULL, 'V' },
+		{ NULL, 0, NULL, 0 }
 	};
+
+	INIT_LIST_HEAD(&consoles);
 
 	/*
 	 * If we are init we need to set up a own session.
@@ -1017,7 +1009,7 @@ int main(int argc, char **argv)
 				mask_signal(SIGINT,  SIG_IGN, &saved_sigint);
 
 				if (failed) {
-					fprintf(stderr, _("Can not execute su shell\n\n"));
+					fprintf(stderr, _("cannot execute su shell\n\n"));
 					break;
 				}
 				fprintf(stderr, _("Login incorrect\n\n"));
@@ -1056,7 +1048,7 @@ int main(int argc, char **argv)
 				continue;
 		}
 
-		errx(EXIT_FAILURE, _("Can not wait on su shell\n\n"));
+		errx(EXIT_FAILURE, _("cannot wait on su shell\n\n"));
 
 	} while (1);
 

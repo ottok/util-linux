@@ -25,6 +25,10 @@
 # include <sys/sysmacros.h>     /* for major, minor */
 #endif
 
+#ifndef LOGIN_NAME_MAX
+# define LOGIN_NAME_MAX 256
+#endif
+
 /*
  * Compiler-specific stuff
  */
@@ -202,6 +206,21 @@ errmsg(char doexit, int excode, char adderr, const char *fmt, ...)
 # define warnx(FMT...) errmsg(0, 0, 0, FMT)
 #endif
 #endif /* !HAVE_ERR_H */
+
+
+/* Don't use inline function to avoid '#include "nls.h"' in c.h
+ */
+#define errtryhelp(eval) __extension__ ({ \
+	fprintf(stderr, _("Try '%s --help' for more information.\n"), \
+			program_invocation_short_name); \
+	exit(eval); \
+})
+
+#define errtryh(eval) __extension__ ({ \
+	fprintf(stderr, _("Try '%s -h' for more information.\n"), \
+			program_invocation_short_name); \
+	exit(eval); \
+})
 
 
 static inline __attribute__((const)) int is_power_of_2(unsigned long num)

@@ -25,10 +25,9 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <utmp.h>
+#include <utmpx.h>
 #include <getopt.h>
 #include <time.h>
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <langinfo.h>
 #include <grp.h>
@@ -56,7 +55,13 @@
 #endif
 
 #if defined(__FreeBSD_kernel__)
-#include <pty.h>
+# include <pty.h>
+# ifdef HAVE_UTMP_H
+#  include <utmp.h>
+# endif
+# ifdef HAVE_LIBUTIL_H
+#  include <libutil.h>
+# endif
 #endif
 
 #ifdef __linux__
@@ -488,9 +493,12 @@ int main(int argc, char **argv)
 		login_options_to_argv(login_argv, &login_argc,
 				      options.logopt, username);
 	} else {
-		if (fakehost && (options.flags & F_REMOTE)) {
-			login_argv[login_argc++] = "-h";
-			login_argv[login_argc++] = fakehost;
+		if (options.flags & F_REMOTE) {
+			if (fakehost) {
+				login_argv[login_argc++] = "-h";
+				login_argv[login_argc++] = fakehost;
+			} else if (options.flags & F_NOHOSTNAME)
+				login_argv[login_argc++] = "-H";
 		}
 		if (username) {
 			if (options.autolog)
@@ -623,41 +631,41 @@ static void parse_args(int argc, char **argv, struct options *op)
 		RELOAD_OPTION,
 	};
 	const struct option longopts[] = {
-		{  "8bits",	     no_argument,	 0,  '8'  },
-		{  "autologin",	     required_argument,	 0,  'a'  },
-		{  "noreset",	     no_argument,	 0,  'c'  },
-		{  "chdir",	     required_argument,	 0,  'C'  },
-		{  "delay",	     required_argument,	 0,  'd'  },
-		{  "remote",         no_argument,        0,  'E'  },
-		{  "issue-file",     required_argument,  0,  'f'  },
-		{  "flow-control",   no_argument,	 0,  'h'  },
-		{  "host",	     required_argument,  0,  'H'  },
-		{  "noissue",	     no_argument,	 0,  'i'  },
-		{  "init-string",    required_argument,  0,  'I'  },
-		{  "noclear",	     no_argument,	 0,  'J'  },
-		{  "login-program",  required_argument,  0,  'l'  },
-		{  "local-line",     optional_argument,	 0,  'L'  },
-		{  "extract-baud",   no_argument,	 0,  'm'  },
-		{  "skip-login",     no_argument,	 0,  'n'  },
-		{  "nonewline",	     no_argument,	 0,  'N'  },
-		{  "login-options",  required_argument,  0,  'o'  },
-		{  "login-pause",    no_argument,        0,  'p'  },
-		{  "nice",	     required_argument,  0,  'P'  },
-		{  "chroot",	     required_argument,	 0,  'r'  },
-		{  "hangup",	     no_argument,	 0,  'R'  },
-		{  "keep-baud",      no_argument,	 0,  's'  },
-		{  "timeout",	     required_argument,  0,  't'  },
-		{  "detect-case",    no_argument,	 0,  'U'  },
-		{  "wait-cr",	     no_argument,	 0,  'w'  },
-		{  "nohints",        no_argument,        0,  NOHINTS_OPTION },
-		{  "nohostname",     no_argument,	 0,  NOHOSTNAME_OPTION },
-		{  "long-hostname",  no_argument,	 0,  LONGHOSTNAME_OPTION },
-		{  "reload",         no_argument,        0,  RELOAD_OPTION },
-		{  "version",	     no_argument,	 0,  VERSION_OPTION  },
-		{  "help",	     no_argument,	 0,  HELP_OPTION     },
-		{  "erase-chars",    required_argument,  0,  ERASE_CHARS_OPTION },
-		{  "kill-chars",     required_argument,  0,  KILL_CHARS_OPTION },
-		{ NULL, 0, 0, 0 }
+		{  "8bits",	     no_argument,	 NULL,  '8'  },
+		{  "autologin",	     required_argument,	 NULL,  'a'  },
+		{  "noreset",	     no_argument,	 NULL,  'c'  },
+		{  "chdir",	     required_argument,	 NULL,  'C'  },
+		{  "delay",	     required_argument,	 NULL,  'd'  },
+		{  "remote",         no_argument,        NULL,  'E'  },
+		{  "issue-file",     required_argument,  NULL,  'f'  },
+		{  "flow-control",   no_argument,	 NULL,  'h'  },
+		{  "host",	     required_argument,  NULL,  'H'  },
+		{  "noissue",	     no_argument,	 NULL,  'i'  },
+		{  "init-string",    required_argument,  NULL,  'I'  },
+		{  "noclear",	     no_argument,	 NULL,  'J'  },
+		{  "login-program",  required_argument,  NULL,  'l'  },
+		{  "local-line",     optional_argument,	 NULL,  'L'  },
+		{  "extract-baud",   no_argument,	 NULL,  'm'  },
+		{  "skip-login",     no_argument,	 NULL,  'n'  },
+		{  "nonewline",	     no_argument,	 NULL,  'N'  },
+		{  "login-options",  required_argument,  NULL,  'o'  },
+		{  "login-pause",    no_argument,        NULL,  'p'  },
+		{  "nice",	     required_argument,  NULL,  'P'  },
+		{  "chroot",	     required_argument,	 NULL,  'r'  },
+		{  "hangup",	     no_argument,	 NULL,  'R'  },
+		{  "keep-baud",      no_argument,	 NULL,  's'  },
+		{  "timeout",	     required_argument,  NULL,  't'  },
+		{  "detect-case",    no_argument,	 NULL,  'U'  },
+		{  "wait-cr",	     no_argument,	 NULL,  'w'  },
+		{  "nohints",        no_argument,        NULL,  NOHINTS_OPTION },
+		{  "nohostname",     no_argument,	 NULL,  NOHOSTNAME_OPTION },
+		{  "long-hostname",  no_argument,	 NULL,  LONGHOSTNAME_OPTION },
+		{  "reload",         no_argument,        NULL,  RELOAD_OPTION },
+		{  "version",	     no_argument,	 NULL,  VERSION_OPTION  },
+		{  "help",	     no_argument,	 NULL,  HELP_OPTION     },
+		{  "erase-chars",    required_argument,  NULL,  ERASE_CHARS_OPTION },
+		{  "kill-chars",     required_argument,  NULL,  KILL_CHARS_OPTION },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	while ((c = getopt_long(argc, argv,
@@ -885,13 +893,13 @@ static void parse_speeds(struct options *op, char *arg)
 /* Update our utmp entry. */
 static void update_utmp(struct options *op)
 {
-	struct utmp ut;
+	struct utmpx ut;
 	time_t t;
 	pid_t pid = getpid();
 	pid_t sid = getsid(0);
 	char *vcline = op->vcline;
 	char *line   = op->tty;
-	struct utmp *utp;
+	struct utmpx *utp;
 
 	/*
 	 * The utmp file holds miscellaneous information about things started by
@@ -901,8 +909,8 @@ static void update_utmp(struct options *op)
 	 * utmp file can be opened for update, and if we are able to find our
 	 * entry in the utmp file.
 	 */
-	utmpname(_PATH_UTMP);
-	setutent();
+	utmpxname(_PATH_UTMP);
+	setutxent();
 
 	/*
 	 * Find my pid in utmp.
@@ -913,7 +921,7 @@ static void update_utmp(struct options *op)
 	 * FIXME: The present code is taken from login.c, so if this is changed,
 	 * maybe login has to be changed as well (is this true?).
 	 */
-	while ((utp = getutent()))
+	while ((utp = getutxent()))
 		if (utp->ut_pid == pid
 				&& utp->ut_type >= INIT_PROCESS
 				&& utp->ut_type <= DEAD_PROCESS)
@@ -943,37 +951,15 @@ static void update_utmp(struct options *op)
 	if (fakehost)
 		strncpy(ut.ut_host, fakehost, sizeof(ut.ut_host));
 	time(&t);
-#if defined(_HAVE_UT_TV)
 	ut.ut_tv.tv_sec = t;
-#else
-	ut.ut_time = t;
-#endif
 	ut.ut_type = LOGIN_PROCESS;
 	ut.ut_pid = pid;
 	ut.ut_session = sid;
 
-	pututline(&ut);
-	endutent();
+	pututxline(&ut);
+	endutxent();
 
-	{
-#ifdef HAVE_UPDWTMP
-		updwtmp(_PATH_WTMP, &ut);
-#else
-		int ut_fd;
-		int lf;
-
-		if ((lf = open(_PATH_WTMPLOCK, O_CREAT | O_WRONLY, 0660)) >= 0) {
-			flock(lf, LOCK_EX);
-			if ((ut_fd =
-			     open(_PATH_WTMP, O_APPEND | O_WRONLY)) >= 0) {
-				write_all(ut_fd, &ut, sizeof(ut));
-				close(ut_fd);
-			}
-			flock(lf, LOCK_UN);
-			close(lf);
-		}
-#endif				/* HAVE_UPDWTMP */
-	}
+	updwtmpx(_PATH_WTMP, &ut);
 }
 
 #endif				/* SYSV_STYLE */
@@ -1296,15 +1282,10 @@ static void termio_init(struct options *op, struct termios *tp)
 
 	/* Check for terminal size and if not found set default */
 	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == 0) {
-		int set = 0;
-		if (ws.ws_row == 0) {
+		if (ws.ws_row == 0)
 			ws.ws_row = 24;
-			set++;
-		}
-		if (ws.ws_col == 0) {
+		if (ws.ws_col == 0)
 			ws.ws_col = 80;
-			set++;
-		}
 		if (ioctl(STDIN_FILENO, TIOCSWINSZ, &ws))
 			debug("TIOCSWINSZ ioctl failed\n");
 	}
@@ -1601,23 +1582,7 @@ static int process_netlink(void)
 static int wait_for_term_input(int fd)
 {
 	char buffer[sizeof(struct inotify_event) + NAME_MAX + 1];
-	struct termios orig, nonc;
 	fd_set rfds;
-	int count, i;
-
-	/* Our aim here is to fall through if something fails
-         * and not be stuck waiting. On failure assume we have input */
-
-	if (tcgetattr(fd, &orig) != 0)
-		return 1;
-
-	memcpy(&nonc, &orig, sizeof (nonc));
-	nonc.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHOKE);
-	nonc.c_cc[VMIN] = 1;
-	nonc.c_cc[VTIME] = 0;
-
-	if (tcsetattr(fd, TCSANOW, &nonc) != 0)
-		return 1;
 
 	if (inotify_fd == AGETTY_RELOAD_FDNONE) {
 		/* make sure the reload trigger file exists */
@@ -1658,15 +1623,6 @@ static int wait_for_term_input(int fd)
 			return 1;
 
 		if (FD_ISSET(fd, &rfds)) {
-			count = read(fd, buffer, sizeof (buffer));
-
-			tcsetattr(fd, TCSANOW, &orig);
-
-			/* Reinject the bytes we read back into the buffer, usually just one byte */
-			for (i = 0; i < count; i++)
-				ioctl(fd, TIOCSTI, buffer + i);
-
-			/* Have terminal input */
 			return 1;
 
 		} else if (netlink_fd >= 0 && FD_ISSET(netlink_fd, &rfds)) {
@@ -1678,9 +1634,6 @@ static int wait_for_term_input(int fd)
 			while (read(inotify_fd, buffer, sizeof (buffer)) > 0);
 		}
 
-		tcsetattr(fd, TCSANOW, &orig);
-
-		/* Need to reprompt */
 		return 0;
 	}
 }
@@ -1741,8 +1694,9 @@ again:
 				termio_clear(STDOUT_FILENO);
 			goto again;
 		}
-#endif
+#else
 		getc(stdin);
+#endif
 	}
 #ifdef KDGKBLED
 	if (!(op->flags & F_NOHINTS) && !op->autolog &&
@@ -1861,15 +1815,21 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 	*bp = '\0';
 
 	while (*logname == '\0') {
-
 		/* Write issue file and prompt */
 		do_prompt(op, tp);
 
 #ifdef AGETTY_RELOAD
-		/* If asked to reprompt *before* terminal input arrives, then do so */
 		if (!wait_for_term_input(STDIN_FILENO)) {
+			/* refresh prompt -- discard input data, clear terminal
+			 * and call do_prompt() again
+			 */
+			if ((op->flags & F_VCONSOLE) == 0)
+				sleep(1);
+			tcflush(STDIN_FILENO, TCIFLUSH);
 			if (op->flags & F_VCONSOLE)
 				termio_clear(STDOUT_FILENO);
+			bp = logname;
+			*bp = '\0';
 			continue;
 		}
 #endif
@@ -1880,7 +1840,9 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 
 			char key;
 
+			debug("read from FD\n");
 			if (read(STDIN_FILENO, &c, 1) < 1) {
+				debug("read failed\n");
 
 				/* The terminal could be open with O_NONBLOCK when
 				 * -L (force CLOCAL) is specified...  */
@@ -1963,6 +1925,7 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 			}
 		}
 	}
+
 #ifdef HAVE_WIDECHAR
 	if ((op->flags & (F_EIGHTBITS|F_UTF8)) == (F_EIGHTBITS|F_UTF8)) {
 		/* Check out UTF-8 multibyte characters */
@@ -2465,18 +2428,21 @@ static void output_special_char(unsigned char c, struct options *op,
 			uname(&uts);
 			fputs(uts.sysname, stdout);
 		}
+
+		free(var);
+
 		break;
 	}
 	case 'u':
 	case 'U':
 	{
 		int users = 0;
-		struct utmp *ut;
-		setutent();
-		while ((ut = getutent()))
+		struct utmpx *ut;
+		setutxent();
+		while ((ut = getutxent()))
 			if (ut->ut_type == USER_PROCESS)
 				users++;
-		endutent();
+		endutxent();
 		if (c == 'U')
 			printf(P_("%d user", "%d users", users), users);
 		else
@@ -2554,7 +2520,7 @@ static void init_special_char(char* arg, struct options *op)
 }
 
 /*
- * Appends @str to @dest and if @dest is not empty then use use @sep as a
+ * Appends @str to @dest and if @dest is not empty then use @sep as a
  * separator. The maximal final length of the @dest is @len.
  *
  * Returns the final @dest length or -1 in case of error.

@@ -20,7 +20,6 @@
 #include "c.h"
 #include "libfdisk.h"
 
-#include "nls.h"		/* temporary before dialog API will be implemented */
 #include "list.h"
 #include "debug.h"
 #include <stdio.h>
@@ -46,6 +45,18 @@ UL_DEBUG_DECLARE_MASK(libfdisk);
 #define DBG(m, x)	__UL_DBG(libfdisk, LIBFDISK_DEBUG_, m, x)
 #define ON_DBG(m, x)	__UL_DBG_CALL(libfdisk, LIBFDISK_DEBUG_, m, x)
 #define DBG_FLUSH	__UL_DBG_FLUSH(libfdisk, LIBFDISK_DEBUG_)
+
+/*
+ * NLS -- the library has to be independent on main program, so define
+ * UL_TEXTDOMAIN_EXPLICIT before you include nls.h.
+ *
+ * Now we use util-linux.po (=PACKAGE), rather than maintain the texts
+ * in the separate libfdisk.po file.
+ */
+#define LIBFDISK_TEXTDOMAIN	PACKAGE
+#define UL_TEXTDOMAIN_EXPLICIT	LIBFDISK_TEXTDOMAIN
+#include "nls.h"
+
 
 #ifdef TEST_PROGRAM
 struct fdisk_test {
@@ -346,10 +357,13 @@ struct fdisk_ask {
 struct fdisk_context {
 	int dev_fd;         /* device descriptor */
 	char *dev_path;     /* device path */
+	struct stat dev_st; /* stat(2) result */
+
 	int refcount;
 
 	unsigned char *firstsector; /* buffer with master boot record */
 	unsigned long firstsector_bufsz;
+
 
 	/* topology */
 	unsigned long io_size;		/* I/O size used by fdisk */
@@ -363,6 +377,7 @@ struct fdisk_context {
 		     display_in_cyl_units : 1,	/* for obscure labels */
 		     display_details : 1,	/* expert display mode */
 		     protect_bootbits : 1,	/* don't zeroize first sector */
+		     pt_collision : 1,		/* another PT detected by libblkid */
 		     listonly : 1;		/* list partition, nothing else */
 
 	char *collision;			/* name of already existing FS/PT */
@@ -397,6 +412,7 @@ struct fdisk_context {
 	struct fdisk_script	*script;	/* what we want to follow */
 };
 
+
 /* context.c */
 extern int __fdisk_switch_label(struct fdisk_context *cxt,
 				    struct fdisk_label *lb);
@@ -409,7 +425,9 @@ fdisk_sector_t fdisk_cround(struct fdisk_context *cxt, fdisk_sector_t num);
 extern int fdisk_discover_geometry(struct fdisk_context *cxt);
 extern int fdisk_discover_topology(struct fdisk_context *cxt);
 
+extern int fdisk_has_user_device_geometry(struct fdisk_context *cxt);
 extern int fdisk_apply_user_device_properties(struct fdisk_context *cxt);
+extern int fdisk_apply_label_device_properties(struct fdisk_context *cxt);
 extern void fdisk_zeroize_device_properties(struct fdisk_context *cxt);
 
 /* utils.c */
@@ -471,5 +489,6 @@ void fdisk_free_wipe_areas(struct fdisk_context *cxt);
 int fdisk_set_wipe_area(struct fdisk_context *cxt, uint64_t start, uint64_t size, int enable);
 int fdisk_do_wipe(struct fdisk_context *cxt);
 int fdisk_has_wipe_area(struct fdisk_context *cxt, uint64_t start, uint64_t size);
+int fdisk_check_collisions(struct fdisk_context *cxt);
 
 #endif /* _LIBFDISK_PRIVATE_H */

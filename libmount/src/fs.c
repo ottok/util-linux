@@ -43,7 +43,7 @@ struct libmnt_fs *mnt_new_fs(void)
  * @fs: fs pointer
  *
  * Deallocates the fs. This function does not care about reference count. Don't
- * use this function directly -- it's better to use use mnt_unref_fs().
+ * use this function directly -- it's better to use mnt_unref_fs().
  *
  * The reference counting is supported since util-linux v2.24.
  */
@@ -1132,6 +1132,8 @@ int mnt_fs_get_priority(struct libmnt_fs *fs)
  * mnt_fs_set_priority:
  * @fs: /proc/swaps entry
  * @prio: priority
+ *
+ * Since: 2.28
  *
  * Returns: 0 or -1 in case of error
  */

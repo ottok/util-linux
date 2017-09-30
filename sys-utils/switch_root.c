@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <getopt.h>
 
 #include "c.h"
 #include "nls.h"
@@ -94,8 +95,12 @@ static int recursiveRemove(int fd)
 				continue;
 			}
 
-			/* remove subdirectories if device is same as dir */
-			if (S_ISDIR(sb.st_mode) && sb.st_dev == rb.st_dev) {
+			/* skip if device is not the same */
+			if (sb.st_dev != rb.st_dev)
+				continue;
+
+			/* remove subdirectories */
+			if (S_ISDIR(sb.st_mode)) {
 				int cfd;
 
 				cfd = openat(dfd, d->d_name, O_RDONLY);
@@ -104,8 +109,7 @@ static int recursiveRemove(int fd)
 					close(cfd);
 				}
 				isdir = 1;
-			} else
-				continue;
+			}
 		}
 
 		if (unlinkat(dfd, d->d_name, isdir ? AT_REMOVEDIR : 0))
@@ -214,14 +218,25 @@ static void __attribute__((__noreturn__)) usage(FILE *output)
 int main(int argc, char *argv[])
 {
 	char *newroot, *init, **initargs;
+	int c;
+	static const struct option longopts[] = {
+		{"version", no_argument, NULL, 'V'},
+		{"help", no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
+	};
+
 	atexit(close_stdout);
 
-	if (argv[1] && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")))
-		usage(stdout);
-	if (argv[1] && (!strcmp(argv[1], "--version") || !strcmp(argv[1], "-V"))) {
-		printf(UTIL_LINUX_VERSION);
-		return EXIT_SUCCESS;
-	}
+	while ((c = getopt_long(argc, argv, "Vh", longopts, NULL)) != -1)
+		switch (c) {
+		case 'V':
+			printf(UTIL_LINUX_VERSION);
+			return EXIT_SUCCESS;
+		case 'h':
+			usage(stdout);
+		default:
+			errtryhelp(EXIT_FAILURE);
+		}
 	if (argc < 3)
 		usage(stderr);
 

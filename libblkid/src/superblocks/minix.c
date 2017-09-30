@@ -77,6 +77,9 @@ static int probe_minix(blkid_probe pr,
 	unsigned char *ext;
 	const unsigned char *data;
 	int version = 0, swabme = 0;
+	unsigned long zones, ninodes, imaps, zmaps;
+	off_t firstz;
+	size_t zone_size;
 
 	data = blkid_probe_get_buffer(pr, 1024,
 			max(sizeof(struct minix_super_block),
@@ -84,14 +87,9 @@ static int probe_minix(blkid_probe pr,
 	if (!data)
 		return errno ? -errno : 1;
 	version = get_minix_version(data, &swabme);
-	if (version < 1)
-		return 1;
-
-	unsigned long zones, ninodes, imaps, zmaps;
-	off_t firstz;
-	size_t zone_size;
-
-	if (version <= 2) {
+	switch (version) {
+	case 1:
+	case 2: {
 		struct minix_super_block *sb = (struct minix_super_block *) data;
 
 		uint16_t state = minix_swab16(swabme, sb->s_state);
@@ -105,7 +103,9 @@ static int probe_minix(blkid_probe pr,
 		zmaps   = minix_swab16(swabme, sb->s_zmap_blocks);
 		firstz  = minix_swab16(swabme, sb->s_firstdatazone);
 		zone_size = sb->s_log_zone_size;
-	} else if (version == 3) {
+		break;
+	}
+	case 3: {
 		struct minix3_super_block *sb = (struct minix3_super_block *) data;
 
 		zones = minix_swab32(swabme, sb->s_zones);
@@ -114,6 +114,10 @@ static int probe_minix(blkid_probe pr,
 		zmaps   = minix_swab16(swabme, sb->s_zmap_blocks);
 		firstz  = minix_swab16(swabme, sb->s_firstdatazone);
 		zone_size = sb->s_log_zone_size;
+		break;
+	}
+	default:
+		return 1;
 	}
 
 	/* sanity checks to be sure that the FS is really minix.

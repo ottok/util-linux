@@ -23,7 +23,6 @@
  *
  *	make uuidd uuidgen localstatedir=/var
  */
-#include <error.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,13 +36,14 @@
 #include "c.h"
 #include "xalloc.h"
 #include "strutils.h"
+#include "nls.h"
 
 #define LOG(level,args) if (loglev >= level) { fprintf args; }
 
-size_t nprocesses = 4;
-size_t nthreads = 4;
-size_t nobjects = 4096;
-size_t loglev = 1;
+static size_t nprocesses = 4;
+static size_t nthreads = 4;
+static size_t nobjects = 4096;
+static size_t loglev = 1;
 
 struct processentry {
 	pid_t		pid;
@@ -77,7 +77,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 {
 	fprintf(out, "\n %s [options]\n", program_invocation_short_name);
 
-	fprintf(out, "  -p <num>     number of of nprocesses (default:%zu)\n", nprocesses);
+	fprintf(out, "  -p <num>     number of nprocesses (default:%zu)\n", nprocesses);
 	fprintf(out, "  -t <num>     number of nthreads (default:%zu)\n", nthreads);
 	fprintf(out, "  -o <num>     number of nobjects (default:%zu)\n", nobjects);
 	fprintf(out, "  -l <level>   log level (default:%zu)\n", loglev);
@@ -145,7 +145,7 @@ static void *create_uuids(thread_t *th)
 		obj->pid = th->proc->pid;
 		obj->idx = th->index + i;;
 	}
-	return 0;
+	return NULL;
 }
 
 static void *thread_body(void *arg)
@@ -168,7 +168,8 @@ static void create_nthreads(process_t *proc, size_t index)
 
 		rc = pthread_attr_init(&th->thread_attr);
 		if (rc) {
-			error(0, rc, "%d: pthread_attr_init failed", proc->pid);
+			errno = rc;
+			warn("%d: pthread_attr_init failed", proc->pid);
 			break;
 		}
 
@@ -177,12 +178,13 @@ static void create_nthreads(process_t *proc, size_t index)
 		rc = pthread_create(&th->tid, &th->thread_attr, &thread_body, th);
 
 		if (rc) {
-			error(0, rc, "%d: pthread_create failed", proc->pid);
+			errno = rc;
+			warn("%d: pthread_create failed", proc->pid);
 			break;
 		}
 
-		LOG(2, (stderr, "%d: started thread [tid=%d,index=%zu]\n",
-		     proc->pid, (int) th->tid, th->index));
+		LOG(2, (stderr, "%d: started thread [tid=%jd,index=%zu]\n",
+		     proc->pid, (intmax_t) th->tid, th->index));
 		index += nobjects;
 		ncreated++;
 	}
@@ -196,11 +198,13 @@ static void create_nthreads(process_t *proc, size_t index)
 		thread_t *th = &threads[i];
 
 		rc = pthread_join(th->tid, (void *) &th->retval);
-		if (rc)
-			error(EXIT_FAILURE, rc, "pthread_join failed");
+		if (rc) {
+			errno = rc;
+			err(EXIT_FAILURE, "pthread_join failed");
+		}
 
-		LOG(2, (stderr, "%d: thread exited [tid=%d,return=%d]\n",
-		     proc->pid, (int) th->tid, th->retval));
+		LOG(2, (stderr, "%d: thread exited [tid=%jd,return=%d]\n",
+		     proc->pid, (intmax_t) th->tid, th->retval));
 	}
 }
 
@@ -252,7 +256,7 @@ static void object_dump(size_t idx, object_t *obj)
 	fprintf(stderr, "  uuid:    <%s>\n", p);
 	fprintf(stderr, "  idx:     %zu\n", obj->idx);
 	fprintf(stderr, "  process: %d\n", (int) obj->pid);
-	fprintf(stderr, "  thread:  %d\n", (int) obj->tid);
+	fprintf(stderr, "  thread:  %jd\n", (intmax_t) obj->tid);
 	fprintf(stderr, "}\n");
 }
 
@@ -279,8 +283,7 @@ int main(int argc, char *argv[])
 			usage(stdout);
 			break;
 		default:
-			usage(stderr);
-			break;
+			errtryh(EXIT_FAILURE);
 		}
 	}
 

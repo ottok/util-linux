@@ -17,7 +17,6 @@
 #include <stdint.h>
 
 #include "superblocks.h"
-#include "iso9660.h"
 
 struct dstring128 {
 	uint8_t	clen;
@@ -81,42 +80,41 @@ static inline int gen_uuid_from_volset_id(unsigned char uuid[17], struct dstring
 {
 	size_t i;
 	size_t len;
-	size_t binpos;
-	unsigned char buf[128];
+	size_t nonhexpos;
+	unsigned char buf[17];
+
+	memset(buf, 0, sizeof(buf));
 
 	if (volset_id->clen == 8)
-		memcpy(buf, volset_id->c, 16);
+		len = blkid_encode_to_utf8(BLKID_ENC_LATIN1, buf, sizeof(buf), volset_id->c, 127);
 	else if (volset_id->clen == 16)
-		blkid_encode_to_utf8(BLKID_ENC_UTF16BE, buf, sizeof(buf), volset_id->c, 127);
+		len = blkid_encode_to_utf8(BLKID_ENC_UTF16BE, buf, sizeof(buf), volset_id->c, 127);
 	else
 		return -1;
-
-	buf[16] = 0;
-	len = strlen((char *) buf);
 
 	if (len < 8)
 		return -1;
 
-	for (i = len; i < 16; ++i)
-		buf[i] = 0;
-
-	binpos = 16;
-	for (i = 0; i < len; ++i) {
-		if (!isalnum(buf[i])) {
-			binpos = i;
+	nonhexpos = 16;
+	for (i = 0; i < 16; ++i) {
+		if (!isxdigit(buf[i])) {
+			nonhexpos = i;
 			break;
 		}
 	}
 
-	if (binpos < 8) {
+	if (nonhexpos < 8) {
+		snprintf((char *) uuid, 17, "%02x%02x%02x%02x%02x%02x%02x%02x",
+			buf[0], buf[1], buf[2], buf[3],
+			buf[4], buf[5], buf[6], buf[7]);
+	} else if (nonhexpos < 16) {
 		for (i = 0; i < 8; ++i)
-			snprintf((char *) uuid + 2 * i, 3, "%02x", buf[i]);
-	} else if (binpos < 16) {
-		memcpy(uuid, buf, 8);
-		for (i = 0; i < 4; ++i)
-			snprintf((char *) uuid + 8 + 2 * i, 3, "%02x", buf[8+i]);
+			uuid[i] = tolower(buf[i]);
+		snprintf((char *) uuid + 8, 9, "%02x%02x%02x%02x",
+			buf[8], buf[9], buf[10], buf[11]);
 	} else {
-		memcpy(uuid, buf, 16);
+		for (i = 0; i < 16; ++i)
+			uuid[i] = tolower(buf[i]);
 		uuid[16] = 0;
 	}
 
@@ -129,7 +127,7 @@ static int probe_udf(blkid_probe pr,
 	struct volume_descriptor *vd;
 	struct volume_structure_descriptor *vsd;
 	unsigned int bs;
-	unsigned int pbs[2];
+	unsigned int pbs[5];
 	unsigned int b;
 	unsigned int type;
 	unsigned int count;
@@ -143,9 +141,12 @@ static int probe_udf(blkid_probe pr,
 
 	/* The block size of a UDF filesystem is that of the underlying
 	 * storage; we check later on for the special case of image files,
-	 * which may have the 2048-byte block size of optical media. */
+	 * which may have any block size valid for UDF filesystem */
 	pbs[0] = blkid_probe_get_sectorsize(pr);
-	pbs[1] = 0x800;
+	pbs[1] = 512;
+	pbs[2] = 1024;
+	pbs[3] = 2048;
+	pbs[4] = 4096;
 
 	/* check for a Volume Structure Descriptor (VSD); each is
 	 * 2048 bytes long */
@@ -170,8 +171,6 @@ nsr:
 					sizeof(*vsd));
 		if (!vsd)
 			return errno ? -errno : 1;
-		if (vsd->id[0] == '\0')
-			return 1;
 		if (memcmp(vsd->id, "NSR02", 5) == 0)
 			goto anchor;
 		if (memcmp(vsd->id, "NSR03", 5) == 0)
@@ -181,7 +180,7 @@ nsr:
 
 anchor:
 	/* read Anchor Volume Descriptor (AVDP), checking block size */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 5; i++) {
 		vd = (struct volume_descriptor *)
 			blkid_probe_get_buffer(pr, 256 * pbs[i], sizeof(*vd));
 		if (!vd)
@@ -201,27 +200,7 @@ real_blksz:
 	count = le32_to_cpu(vd->type.anchor.length) / bs;
 	loc = le32_to_cpu(vd->type.anchor.location);
 
-	/* check if the list is usable */
-	for (b = 0; b < count; b++) {
-		vd = (struct volume_descriptor *)
-			blkid_probe_get_buffer(pr,
-					(uint64_t) (loc + b) * bs,
-					sizeof(*vd));
-		if (!vd)
-			return errno ? -errno : 1;
-	}
-
-	/* Try extract all possible ISO9660 information -- if there is
-	 * usable LABEL and UUID in ISO header then use it, otherwise
-	 * read UDF specific LABEL and UUID */
-	if (probe_iso9660(pr, mag) == 0) {
-		if (__blkid_probe_lookup_value(pr, "LABEL") != NULL)
-			have_label = 1;
-		if (__blkid_probe_lookup_value(pr, "UUID") != NULL)
-			have_uuid = 1;
-	}
-
-	/* Read UDF identifiers */
+	/* pick the primary descriptor from the list and read UDF identifiers */
 	for (b = 0; b < count; b++) {
 		vd = (struct volume_descriptor *)
 			blkid_probe_get_buffer(pr,
@@ -238,8 +217,9 @@ real_blksz:
 			if (!have_volid) {
 				uint8_t clen = vd->type.primary.ident.clen;
 				if (clen == 8)
-					have_volid = !blkid_probe_set_id_label(pr, "VOLUME_ID",
-							vd->type.primary.ident.c, 31);
+					have_volid = !blkid_probe_set_utf8_id_label(pr, "VOLUME_ID",
+							vd->type.primary.ident.c, 31,
+							BLKID_ENC_LATIN1);
 				else if (clen == 16)
 					have_volid = !blkid_probe_set_utf8_id_label(pr, "VOLUME_ID",
 							vd->type.primary.ident.c, 31,
@@ -265,14 +245,15 @@ real_blksz:
 				 * =================================================================================
 				 *
 				 * Implementation in libblkid:
-				 * The first 16 characters of VolumeSetIdentifier are used to generate UUID.
-				 * If all 16 characters are alphanumeric then they are used unchanged as UUID.
-				 * If one of first 8 characters (time value) is not alphanumeric then first
-				 * 8 characters are encoded to their hexadecimal values in 16 characters and
-				 * set as UUID. If all first 8 characters (time value) are alphanumeric but
-				 * some other remaining character is not then first 8 characters are unchanged
-				 * (set as first part of UUID string), next 4 characters are encoded to their
-				 * hexadecimal values (in 8 characters) and set as second part of UUID string.
+				 * The first 16 (Unicode) characters of VolumeSetIdentifier are encoded to UTF-8
+				 * and then first 16 UTF-8 bytes are used to generate UUID. If all 16 bytes are
+				 * hexadecimal digits then their lowercase variants are used as UUID. If one of
+				 * the first 8 bytes (time value) is not hexadecimal digit then first 8 bytes are
+				 * encoded to their hexadecimal representations, resulting in 16 characters and
+				 * set as UUID. If all first 8 bytes (time value) are hexadecimal digits but some
+				 * remaining not then lowercase variant of the first 8 bytes are used as first
+				 * part of UUID and next 4 bytes encoded in hexadecimal representations (resulting
+				 * in 8 characters) are used as second part of UUID string.
 				 */
 				unsigned char uuid[17];
 				if (gen_uuid_from_volset_id(uuid, &vd->type.primary.volset_id) == 0)
@@ -281,8 +262,9 @@ real_blksz:
 			if (!have_volsetid) {
 				uint8_t clen = vd->type.primary.volset_id.clen;
 				if (clen == 8)
-					have_volsetid = !blkid_probe_set_id_label(pr, "VOLUME_SET_ID",
-							vd->type.primary.volset_id.c, 127);
+					have_volsetid = !blkid_probe_set_utf8_id_label(pr, "VOLUME_SET_ID",
+							vd->type.primary.volset_id.c, 127,
+							BLKID_ENC_LATIN1);
 				else if (clen == 16)
 					have_volsetid = !blkid_probe_set_utf8_id_label(pr, "VOLUME_SET_ID",
 							vd->type.primary.volset_id.c, 127,
@@ -319,11 +301,13 @@ real_blksz:
 				uint8_t clen = vd->type.logical.logvol_id.clen;
 				if (clen == 8) {
 					if (!have_label)
-						have_label = !blkid_probe_set_label(pr,
-								vd->type.logical.logvol_id.c, 127);
+						have_label = !blkid_probe_set_utf8label(pr,
+								vd->type.logical.logvol_id.c, 127,
+								BLKID_ENC_LATIN1);
 					if (!have_logvolid)
-						have_logvolid = !blkid_probe_set_id_label(pr, "LOGICAL_VOLUME_ID",
-								vd->type.logical.logvol_id.c, 127);
+						have_logvolid = !blkid_probe_set_utf8_id_label(pr, "LOGICAL_VOLUME_ID",
+								vd->type.logical.logvol_id.c, 127,
+								BLKID_ENC_LATIN1);
 				} else if (clen == 16) {
 					if (!have_label)
 						have_label = !blkid_probe_set_utf8label(pr,

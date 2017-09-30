@@ -176,7 +176,7 @@ leave(int status) {
 	exit(status);
 }
 
-static void
+static void __attribute__((__noreturn__))
 usage(FILE *out) {
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] <device>\n"), program_invocation_short_name);
@@ -401,6 +401,7 @@ map_block(struct minix_inode *inode, unsigned int blknr) {
 	unsigned short ind[MINIX_BLOCK_SIZE >> 1];
 	unsigned short dind[MINIX_BLOCK_SIZE >> 1];
 	int blk_chg, block, result;
+	size_t range;
 
 	if (blknr < 7)
 		return check_zone_nr(inode->i_zone + blknr, &changed);
@@ -418,7 +419,12 @@ map_block(struct minix_inode *inode, unsigned int blknr) {
 	block = check_zone_nr(inode->i_zone + 8, &changed);
 	read_block(block, (char *)dind);
 	blk_chg = 0;
-	result = check_zone_nr(dind + (blknr / 512), &blk_chg);
+	range = blknr / 512;
+	if (ARRAY_SIZE(dind) <= range) {
+		printf(_("Warning: block out of range\n"));
+		return 1;
+	}
+	result = check_zone_nr(dind + range, &blk_chg);
 	if (blk_chg)
 		write_block(block, (char *)dind);
 	block = result;
@@ -1323,7 +1329,7 @@ main(int argc, char **argv) {
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(FSCK_EX_USAGE);
 		}
 	argc -= optind;
 	argv += optind;

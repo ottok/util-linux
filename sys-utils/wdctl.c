@@ -212,7 +212,7 @@ static void add_flag_line(struct libscols_table *table, struct wdinfo *wd, const
 
 	line = scols_table_new_line(table, NULL);
 	if (!line) {
-		warn(_("failed to initialize output line"));
+		warn(_("failed to allocate output line"));
 		return;
 	}
 
@@ -239,8 +239,10 @@ static void add_flag_line(struct libscols_table *table, struct wdinfo *wd, const
 			break;
 		}
 
-		if (str)
-			scols_line_set_data(line, i, str);
+		if (str && scols_line_set_data(line, i, str)) {
+			warn(_("failed to add output data"));
+			break;
+		}
 	}
 }
 
@@ -256,7 +258,7 @@ static int show_flags(struct wdinfo *wd, uint32_t wanted)
 	/* create output table */
 	table = scols_new_table();
 	if (!table) {
-		warn(_("failed to initialize output table"));
+		warn(_("failed to allocate output table"));
 		return -1;
 	}
 	scols_table_enable_raw(table, raw);
@@ -267,7 +269,7 @@ static int show_flags(struct wdinfo *wd, uint32_t wanted)
 		struct colinfo *col = get_column_info(i);
 
 		if (!scols_table_new_column(table, col->name, col->whint, col->flags)) {
-			warnx(_("failed to initialize output column"));
+			warnx(_("failed to allocate output column"));
 			goto done;
 		}
 	}
@@ -342,7 +344,7 @@ static int set_watchdog(struct wdinfo *wd, int timeout)
 		warn(_("cannot set timeout for %s"), wd->device);
 	}
 
-	if (close_fd(fd))
+	if (close(fd))
 		warn(_("write failed"));
 	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 	printf(P_("Timeout has been set to %d second.\n",
@@ -407,7 +409,7 @@ static int read_watchdog(struct wdinfo *wd)
 		 * the machine might end up rebooting. */
 	}
 
-	if (close_fd(fd))
+	if (close(fd))
 		warn(_("write failed"));
 	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 
@@ -495,7 +497,7 @@ int main(int argc, char *argv[])
 		{ NULL, 0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'F','f' },			/* noflags,flags*/
 		{ 0 }
 	};
@@ -553,10 +555,8 @@ int main(int argc, char *argv[])
 			noident = 1;
 			notimeouts = 1;
 			break;
-
-		case '?':
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

@@ -45,6 +45,16 @@ function ts_cd {
 	fi
 }
 
+function ts_separator {
+	local header="$1"
+	echo >> $TS_OUTPUT
+	if [ -z "$header" ]; then
+		echo "============================================" >> $TS_OUTPUT
+	else
+		echo "=====$header================================" >> $TS_OUTPUT
+	fi
+}
+
 function ts_report {
 	local desc=
 
@@ -263,6 +273,7 @@ function ts_init_env {
 	ts_init_core_env
 
 	TS_VERBOSE=$(ts_has_option "verbose" "$*")
+	TS_SHOWDIFF=$(ts_has_option "show-diff" "$*")
 	TS_PARALLEL=$(ts_has_option "parallel" "$*")
 	TS_KNOWN_FAIL=$(ts_has_option "known-fail" "$*")
 	TS_SKIP_LOOPDEVS=$(ts_has_option "skip-loopdevs" "$*")
@@ -389,6 +400,13 @@ function ts_gen_diff {
 
 	if [ $? -ne 0 ] || [ -s $TS_DIFF ]; then
 		res=1
+		if [ "$TS_SHOWDIFF" == "yes" ]; then
+			echo
+			echo "diff-{{{"
+			cat $TS_DIFF
+			echo "}}}-diff"
+			echo
+		fi
 	else
 		rm -f $TS_DIFF;
 	fi

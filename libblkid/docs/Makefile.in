@@ -297,6 +297,8 @@ XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
 XSLTPROC = @XSLTPROC@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -417,7 +419,7 @@ EXTRA_HFILES =
 # Header files to ignore when scanning. Use base file name, no paths
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
 IGNORE_HFILES = blkidP.h partitions.h superblocks.h \
-	      topology.h aix.h dos.h iso9660.h
+	      topology.h aix.h dos.h
 
 
 # Images to copy into HTML directory.

@@ -115,11 +115,6 @@
 #include "strutils.h"
 #include "list.h"
 
-/* chains */
-extern const struct blkid_chaindrv superblocks_drv;
-extern const struct blkid_chaindrv topology_drv;
-extern const struct blkid_chaindrv partitions_drv;
-
 /*
  * All supported chains
  */
@@ -631,7 +626,7 @@ unsigned char *blkid_probe_get_buffer(blkid_probe pr, uint64_t off, uint64_t len
 		return NULL;
 	}
 
-	if (len == 0 || pr->off + pr->size < real_off + len) {
+	if (len == 0 || (!S_ISCHR(pr->mode) && pr->off + pr->size < real_off + len)) {
 		DBG(BUFFER, ul_debug("\t  ignore: request out of probing area"));
 		errno = 0;
 		return NULL;
@@ -806,6 +801,7 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 {
 	struct stat sb;
 	uint64_t devsiz = 0;
+	char *dm_uuid = NULL;
 
 	blkid_reset_probe(pr);
 	blkid_probe_reset_buffer(pr);
@@ -869,7 +865,8 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	if (pr->size <= 1440 * 1024 && !S_ISCHR(sb.st_mode))
 		pr->flags |= BLKID_FL_TINY_DEV;
 
-	if (S_ISBLK(sb.st_mode) && sysfs_devno_is_lvm_private(sb.st_rdev)) {
+	if (S_ISBLK(sb.st_mode) &&
+	    sysfs_devno_is_lvm_private(sb.st_rdev, &dm_uuid)) {
 		DBG(LOWPROBE, ul_debug("ignore private LVM device"));
 		pr->flags |= BLKID_FL_NOSCAN_DEV;
 	}
@@ -877,6 +874,7 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 #ifdef CDROM_GET_CAPABILITY
 	else if (S_ISBLK(sb.st_mode) &&
 	    !blkid_probe_is_tiny(pr) &&
+	    !dm_uuid &&
 	    blkid_probe_is_wholedisk(pr) &&
 	    ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0) {
 
@@ -884,6 +882,7 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		cdrom_size_correction(pr);
 	}
 #endif
+	free(dm_uuid);
 
 	DBG(LOWPROBE, ul_debug("ready for low-probing, offset=%"PRIu64", size=%"PRIu64"",
 				pr->off, pr->size));
@@ -1669,6 +1668,24 @@ unsigned int blkid_probe_get_sectorsize(blkid_probe pr)
 
 	pr->blkssz = DEFAULT_SECTOR_SIZE;
 	return pr->blkssz;
+}
+
+/**
+ * blkid_probe_set_sectorsize:
+ * @pr: probe
+ * @sz: new size (to overwrite system default)
+ *
+ * Note that blkid_probe_set_device() resets this setting. Use it after
+ * blkid_probe_set_device() and before any probing call.
+ *
+ * Since: 2.30
+ *
+ * Returns: 0 or <0 in case of error
+ */
+int blkid_probe_set_sectorsize(blkid_probe pr, unsigned int sz)
+{
+	pr->blkssz = sz;
+	return 0;
 }
 
 /**

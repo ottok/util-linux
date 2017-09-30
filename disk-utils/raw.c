@@ -32,11 +32,11 @@
 
 #define RAW_NR_MINORS 8192
 
-int do_query;
-int do_query_all;
+static int do_query;
+static int do_query_all;
 
-int master_fd;
-int raw_minor;
+static int master_fd;
+static int raw_minor;
 
 void open_raw_ctl(void);
 static int query(int minor_raw, const char *raw_name, int quiet);
@@ -100,11 +100,11 @@ int main(int argc, char *argv[])
 	struct stat statbuf;
 
 	static const struct option longopts[] = {
-		{"query", no_argument, 0, 'q'},
-		{"all", no_argument, 0, 'a'},
-		{"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},
-		{NULL, no_argument, 0, '0'},
+		{"query",   no_argument, NULL, 'q'},
+		{"all",     no_argument, NULL, 'a'},
+		{"version", no_argument, NULL, 'V'},
+		{"help",    no_argument, NULL, 'h'},
+		{NULL, 0, NULL, '0'},
 	};
 
 	setlocale(LC_ALL, "");
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 		case 'h':
 			usage(EXIT_SUCCESS);
 		default:
-			usage(EXIT_FAILURE);
+			errtryhelp(EXIT_FAILURE);
 		}
 
 	/*
