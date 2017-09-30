@@ -50,6 +50,18 @@ UL_DEBUG_DECLARE_MASK(libmount);
 #define ON_DBG(m, x)	__UL_DBG_CALL(libmount, MNT_DEBUG_, m, x)
 #define DBG_FLUSH	__UL_DBG_FLUSH(libmount, MNT_DEBUG_)
 
+/*
+ * NLS -- the library has to be independent on main program, so define
+ * UL_TEXTDOMAIN_EXPLICIT before you include nls.h.
+ *
+ * Now we use util-linux.po (=PACKAGE), rather than maintain the texts
+ * in the separate libmount.po file.
+ */
+#define LIBMOUNT_TEXTDOMAIN	PACKAGE
+#define UL_TEXTDOMAIN_EXPLICIT	LIBMOUNT_TEXTDOMAIN
+#include "nls.h"
+
+
 /* extension for files in the directory */
 #define MNT_MNTTABDIR_EXT	".fstab"
 
@@ -313,6 +325,8 @@ struct libmnt_context
 
 
 	int	syscall_status;	/* 1: not called yet, 0: success, <0: -errno */
+
+	unsigned int	enabled_textdomain : 1;		/* bindtextdomain() called */
 };
 
 /* flags */
@@ -328,6 +342,7 @@ struct libmnt_context
 #define MNT_FL_RDONLY_UMOUNT	(1 << 11)	/* remount,ro after EBUSY umount(2) */
 #define MNT_FL_FORK		(1 << 12)
 #define MNT_FL_NOSWAPMATCH	(1 << 13)
+#define MNT_FL_RWONLY_MOUNT	(1 << 14)	/* explicit mount -w; never try read-only  */
 
 #define MNT_FL_MOUNTDATA	(1 << 20)
 #define MNT_FL_TAB_APPLIED	(1 << 21)	/* mtab/fstab merged to cxt->fs */
@@ -338,6 +353,7 @@ struct libmnt_context
 #define MNT_FL_LOOPDEV_READY	(1 << 26)	/* /dev/loop<N> initialized by the library */
 #define MNT_FL_MOUNTOPTS_FIXED  (1 << 27)
 #define MNT_FL_TABPATHS_CHECKED	(1 << 28)
+#define MNT_FL_FORCED_RDONLY	(1 << 29)	/* mounted read-only on write-protected device */
 
 /* default flags */
 #define MNT_FL_DEFAULT		0
@@ -407,6 +423,10 @@ extern int mnt_fork_context(struct libmnt_context *cxt);
 extern int mnt_context_set_tabfilter(struct libmnt_context *cxt,
 				     int (*fltr)(struct libmnt_fs *, void *),
 				     void *data);
+
+extern int mnt_context_get_generic_excode(int rc, char *buf, size_t bufsz, char *fmt, ...);
+extern int mnt_context_get_mount_excode(struct libmnt_context *cxt, int mntrc, char *buf, size_t bufsz);
+extern int mnt_context_get_umount_excode(struct libmnt_context *cxt, int mntrc, char *buf, size_t bufsz);
 
 /* tab_update.c */
 extern int mnt_update_set_filename(struct libmnt_update *upd,

@@ -183,12 +183,14 @@ int fdisk_lba_is_phy_aligned(struct fdisk_context *cxt, fdisk_sector_t lba)
 	return lba_is_phy_aligned(cxt, lba);
 }
 
-static unsigned long get_sector_size(int fd)
+static unsigned long get_sector_size(struct fdisk_context *cxt)
 {
 	int sect_sz;
 
-	if (!blkdev_get_sector_size(fd, &sect_sz))
+	if (!fdisk_is_regfile(cxt) &&
+	    !blkdev_get_sector_size(cxt->dev_fd, &sect_sz))
 		return (unsigned long) sect_sz;
+
 	return DEFAULT_SECTOR_SIZE;
 }
 
@@ -319,11 +321,13 @@ int fdisk_save_user_sector_size(struct fdisk_context *cxt,
  */
 int fdisk_has_user_device_properties(struct fdisk_context *cxt)
 {
-	return (cxt->user_pyh_sector
-		    || cxt->user_log_sector
-		    || cxt->user_geom.heads
-		    || cxt->user_geom.sectors
-		    || cxt->user_geom.cylinders);
+	return (cxt->user_pyh_sector || cxt->user_log_sector ||
+		fdisk_has_user_device_geometry(cxt));
+}
+
+int fdisk_has_user_device_geometry(struct fdisk_context *cxt)
+{
+	return (cxt->user_geom.heads || cxt->user_geom.sectors || cxt->user_geom.cylinders);
 }
 
 int fdisk_apply_user_device_properties(struct fdisk_context *cxt)
@@ -344,7 +348,7 @@ int fdisk_apply_user_device_properties(struct fdisk_context *cxt)
 
 		if (cxt->sector_size != old_secsz) {
 			cxt->total_sectors = (old_total * (old_secsz/512)) / (cxt->sector_size >> 9);
-			DBG(CXT, ul_debugobj(cxt, "new total sectors: %ju", cxt->total_sectors));
+			DBG(CXT, ul_debugobj(cxt, "new total sectors: %ju", (uintmax_t)cxt->total_sectors));
 		}
 	}
 
@@ -431,23 +435,32 @@ int fdisk_reset_device_properties(struct fdisk_context *cxt)
  */
 int fdisk_discover_geometry(struct fdisk_context *cxt)
 {
-	fdisk_sector_t nsects;
+	fdisk_sector_t nsects = 0;
+	unsigned int h = 0, s = 0;
 
 	assert(cxt);
 	assert(cxt->geom.heads == 0);
 
 	DBG(CXT, ul_debugobj(cxt, "%s: discovering geometry...", cxt->dev_path));
 
-	/* get number of 512-byte sectors, and convert it the real sectors */
-	if (!blkdev_get_sectors(cxt->dev_fd, (unsigned long long *) &nsects))
-		cxt->total_sectors = (nsects / (cxt->sector_size >> 9));
+	if (fdisk_is_regfile(cxt))
+		cxt->total_sectors = cxt->dev_st.st_size / cxt->sector_size;
+	else {
+		/* get number of 512-byte sectors, and convert it the real sectors */
+		if (!blkdev_get_sectors(cxt->dev_fd, (unsigned long long *) &nsects))
+			cxt->total_sectors = (nsects / (cxt->sector_size >> 9));
+
+		/* what the kernel/bios thinks the geometry is */
+		blkdev_get_geometry(cxt->dev_fd, &h, &s);
+	}
 
 	DBG(CXT, ul_debugobj(cxt, "total sectors: %ju (ioctl=%ju)",
 				(uintmax_t) cxt->total_sectors,
 				(uintmax_t) nsects));
 
-	/* what the kernel/bios thinks the geometry is */
-	blkdev_get_geometry(cxt->dev_fd, &cxt->geom.heads, (unsigned int *) &cxt->geom.sectors);
+	cxt->geom.cylinders = 0;
+	cxt->geom.heads = h;
+	cxt->geom.sectors = s;
 
 	/* obtained heads and sectors */
 	recount_geometry(cxt);
@@ -500,7 +513,7 @@ int fdisk_discover_topology(struct fdisk_context *cxt)
 	blkid_free_probe(pr);
 #endif
 
-	cxt->sector_size = get_sector_size(cxt->dev_fd);
+	cxt->sector_size = get_sector_size(cxt);
 	if (!cxt->phy_sector_size) /* could not discover physical size */
 		cxt->phy_sector_size = cxt->sector_size;
 
@@ -601,6 +614,20 @@ static unsigned long topology_get_grain(struct fdisk_context *cxt)
 	return res;
 }
 
+/* apply label alignment setting to the context -- if not sure use
+ * fdisk_reset_alignment()
+ */
+int fdisk_apply_label_device_properties(struct fdisk_context *cxt)
+{
+	int rc = 0;
+
+	if (cxt->label && cxt->label->op->reset_alignment) {
+		DBG(CXT, ul_debugobj(cxt, "appling label device properties..."));
+		rc = cxt->label->op->reset_alignment(cxt);
+	}
+	return rc;
+}
+
 /**
  * fdisk_reset_alignment:
  * @cxt: fdisk context
@@ -625,8 +652,7 @@ int fdisk_reset_alignment(struct fdisk_context *cxt)
 	cxt->last_lba = cxt->total_sectors - 1;
 
 	/* overwrite default by label stuff */
-	if (cxt->label && cxt->label->op->reset_alignment)
-		rc = cxt->label->op->reset_alignment(cxt);
+	rc = fdisk_apply_label_device_properties(cxt);
 
 	DBG(CXT, ul_debugobj(cxt, "alignment reset to: "
 			    "first LBA=%ju, last LBA=%ju, grain=%lu [rc=%d]",

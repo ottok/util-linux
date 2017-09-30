@@ -12,7 +12,6 @@
 #include <unistd.h>		/* write */
 #include <sys/ioctl.h>		/* ioctl */
 
-#include "nls.h"
 #include "blkdev.h"
 #include "bitops.h"
 
@@ -120,7 +119,7 @@ static int sun_probe_label(struct fdisk_context *cxt)
 	assert(fdisk_is_label(cxt, SUN));
 
 	/* map first sector to header */
-	sun = (struct fdisk_sun_label *) cxt->label;
+	sun = self_label(cxt);
 	sun->header = (struct sun_disklabel *) cxt->firstsector;
 	sunlabel = sun->header;
 
@@ -145,6 +144,10 @@ static int sun_probe_label(struct fdisk_context *cxt)
 	cxt->geom.heads = be16_to_cpu(sunlabel->nhead);
 	cxt->geom.cylinders = be16_to_cpu(sunlabel->ncyl);
 	cxt->geom.sectors = be16_to_cpu(sunlabel->nsect);
+
+	/* we have on label geom, but user has to win */
+	if (fdisk_has_user_device_geometry(cxt))
+		fdisk_apply_user_device_properties(cxt);
 
 	if (be32_to_cpu(sunlabel->vtoc.version) != SUN_VTOC_VERSION) {
 		fdisk_warnx(cxt, _("Detected sun disklabel with wrong version [%d]."),
@@ -213,7 +216,7 @@ static int sun_create_disklabel(struct fdisk_context *cxt)
 	if (rc)
 		return rc;
 
-	sun = (struct fdisk_sun_label *) cxt->label;
+	sun = self_label(cxt);
 	sun->header = (struct sun_disklabel *) cxt->firstsector;
 
 	sunlabel = sun->header;
@@ -1117,7 +1120,7 @@ static const struct fdisk_field sun_fields[] =
 	{ FDISK_FIELD_ATTR,	N_("Flags"),	  0,	FDISK_FIELDFL_NUMBER }
 };
 
-const struct fdisk_label_operations sun_operations =
+static const struct fdisk_label_operations sun_operations =
 {
 	.probe		= sun_probe_label,
 	.write		= sun_write_disklabel,

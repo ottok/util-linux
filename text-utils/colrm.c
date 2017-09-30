@@ -158,9 +158,9 @@ int main(int argc, char **argv)
 	int opt;
 
 	static const struct option longopts[] = {
-		{"version", no_argument, 0, 'V'},
-		{"help", no_argument, 0, 'h'},
-		{NULL, 0, 0, 0}
+		{"version", no_argument, NULL, 'V'},
+		{"help",    no_argument, NULL, 'h'},
+		{NULL, 0, NULL, 0}
 	};
 
 	setlocale(LC_ALL, "");
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 
 	if (argc > 1)

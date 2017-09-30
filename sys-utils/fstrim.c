@@ -184,17 +184,17 @@ static int fstrim_all(struct fstrim_range *rangetpl, int verbose)
 
 	itr = mnt_new_iter(MNT_ITER_BACKWARD);
 	if (!itr)
-		err(MOUNT_EX_FAIL, _("failed to initialize libmount iterator"));
+		err(MNT_EX_FAIL, _("failed to initialize libmount iterator"));
 
 	tab = mnt_new_table_from_file(_PATH_PROC_MOUNTINFO);
 	if (!tab)
-		err(MOUNT_EX_FAIL, _("failed to parse %s"), _PATH_PROC_MOUNTINFO);
+		err(MNT_EX_FAIL, _("failed to parse %s"), _PATH_PROC_MOUNTINFO);
 
 	/* de-duplicate by mountpoints */
 	mnt_table_uniq_fs(tab, 0, uniq_fs_target_cmp);
 
 	/* de-duplicate by source and root */
-	mnt_table_uniq_fs(tab, 0, uniq_fs_source_cmp);
+	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
 
 	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
 		const char *src = mnt_fs_get_srcpath(fs),
@@ -237,9 +237,9 @@ static int fstrim_all(struct fstrim_range *rangetpl, int verbose)
 	mnt_free_iter(itr);
 
 	if (cnt && cnt == cnt_err)
-		return MOUNT_EX_FAIL;		/* all failed */
+		return MNT_EX_FAIL;		/* all failed */
 	if (cnt && cnt_err)
-		return MOUNT_EX_SOMEOK;		/* some ok */
+		return MNT_EX_SOMEOK;		/* some ok */
 
 	return EXIT_SUCCESS;
 }
@@ -274,14 +274,14 @@ int main(int argc, char **argv)
 	struct fstrim_range range;
 
 	static const struct option longopts[] = {
-	    { "all",       0, 0, 'a' },
-	    { "help",      0, 0, 'h' },
-	    { "version",   0, 0, 'V' },
-	    { "offset",    1, 0, 'o' },
-	    { "length",    1, 0, 'l' },
-	    { "minimum",   1, 0, 'm' },
-	    { "verbose",   0, 0, 'v' },
-	    { NULL,        0, 0, 0 }
+	    { "all",       no_argument,       NULL, 'a' },
+	    { "help",      no_argument,       NULL, 'h' },
+	    { "version",   no_argument,       NULL, 'V' },
+	    { "offset",    required_argument, NULL, 'o' },
+	    { "length",    required_argument, NULL, 'l' },
+	    { "minimum",   required_argument, NULL, 'm' },
+	    { "verbose",   no_argument,       NULL, 'v' },
+	    { NULL, 0, NULL, 0 }
 	};
 
 	setlocale(LC_ALL, "");
@@ -319,7 +319,7 @@ int main(int argc, char **argv)
 			verbose = 1;
 			break;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 			break;
 		}
 	}

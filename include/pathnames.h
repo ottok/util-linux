@@ -35,8 +35,6 @@
 # define _PATH_DEFPATH_ROOT	"/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 #endif
 
-#define _PATH_WTMPLOCK		"/etc/wtmplock"
-
 #define	_PATH_HUSHLOGIN		".hushlogin"
 #define	_PATH_HUSHLOGINS	"/etc/hushlogins"
 
@@ -196,6 +194,10 @@
 
 /* ctrlaltdel paths */
 #define _PATH_PROC_CTRL_ALT_DEL	"/proc/sys/kernel/ctrl-alt-del"
+
+/* hwclock-cmos paths */
+#define _PATH_DEV_PORT		"/dev/port"
+#define _PATH_PROC_CPUINFO	"/proc/cpuinfo"
 
 #endif /* PATHNAMES_H */
 

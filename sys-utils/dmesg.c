@@ -6,7 +6,6 @@
  *
  * This program comes with ABSOLUTELY NO WARRANTY.
  */
-#include <linux/unistd.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
@@ -603,7 +602,7 @@ static int fwrite_hex(const char *buf, size_t size, FILE *out)
 	size_t i;
 
 	for (i = 0; i < size; i++) {
-		int rc = fprintf(out, "\\x%02x", buf[i]);
+		int rc = fprintf(out, "\\x%02hhx", buf[i]);
 		if (rc < 0)
 			return rc;
 	}
@@ -863,7 +862,7 @@ static const char *get_subsys_delimiter(const char *mesg, size_t mesg_size)
 		const char *d = strnchr(p, sz, ':');
 		if (!d)
 			return NULL;
-		sz -= d - p;
+		sz -= d - p + 1;
 		if (sz) {
 			if (isblank(*(d + 1)))
 				return d;
@@ -1261,7 +1260,7 @@ int main(int argc, char *argv[])
 		{ NULL,	           0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {	/* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
 		{ 'C','D','E','c','n','r' },	/* clear,off,on,read-clear,level,raw*/
 		{ 'H','r' },			/* human, raw */
 		{ 'L','r' },			/* color, raw */
@@ -1380,9 +1379,8 @@ int main(int argc, char *argv[])
 		case OPT_TIME_FORMAT:
 			ctl.time_fmt = which_time_format(optarg);
 			break;
-		case '?':
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 	argc -= optind;

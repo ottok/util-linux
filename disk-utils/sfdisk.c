@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <libsmartcols.h>
 #ifdef HAVE_LIBREADLINE
+# define _FUNCTION_DEF
 # include <readline/readline.h>
 #endif
 #include <libgen.h>
@@ -48,6 +49,7 @@
 #include "all-io.h"
 #include "rpmatch.h"
 #include "loopdev.h"
+#include "optutils.h"
 
 #include "libfdisk.h"
 #include "fdisk-list.h"
@@ -55,7 +57,7 @@
 /*
  * sfdisk debug stuff (see fdisk.h and include/debug.h)
  */
-UL_DEBUG_DEFINE_MASK(sfdisk);
+static UL_DEBUG_DEFINE_MASK(sfdisk);
 UL_DEBUG_DEFINE_MASKNAMES(sfdisk) = UL_DEBUG_EMPTY_MASKNAMES;
 
 #define SFDISKPROG_DEBUG_INIT	(1 << 1)
@@ -1390,9 +1392,9 @@ static size_t last_pt_partno(struct sfdisk *sf)
 	return partno;
 }
 
+#ifdef BLKRRPART
 static int is_device_used(struct sfdisk *sf)
 {
-#ifdef BLKRRPART
 	struct stat st;
 	int fd;
 
@@ -1406,9 +1408,14 @@ static int is_device_used(struct sfdisk *sf)
 	if (fstat(fd, &st) == 0 && S_ISBLK(st.st_mode)
 	    && major(st.st_rdev) != LOOPDEV_MAJOR)
 		return ioctl(fd, BLKRRPART) != 0;
-#endif
 	return 0;
 }
+#else
+static int is_device_used(struct sfdisk *sf __attribute__((__unused__)))
+{
+	return 0;
+}
+#endif
 
 #ifdef HAVE_LIBREADLINE
 static char *sfdisk_fgets(struct fdisk_script *dp,
@@ -1457,10 +1464,40 @@ static int ignore_partition(struct fdisk_partition *pa)
 	return 0;
 }
 
+static void follow_wipe_mode(struct sfdisk *sf)
+{
+	int dowipe = sf->wipemode == WIPEMODE_ALWAYS ? 1 : 0;
+
+	if (sf->interactive && sf->wipemode == WIPEMODE_AUTO)
+		dowipe = 1;	/* do it in interactive mode */
+
+	if (fdisk_is_ptcollision(sf->cxt) && sf->wipemode != WIPEMODE_NEVER)
+		dowipe = 1;	/* always wipe old PT */
+
+	fdisk_enable_wipe(sf->cxt, dowipe);
+	if (sf->quiet)
+		return;
+
+	if (dowipe) {
+		if (!fdisk_is_ptcollision(sf->cxt)) {
+			fdisk_info(sf->cxt, _("The old %s signature will be removed by a write command."),
+					fdisk_get_collision(sf->cxt));
+			fputc('\n', stderr);
+		}
+	} else {
+		fdisk_warnx(sf->cxt, _(
+			"The old %s signature may remain on the device. "
+			"It is recommended to wipe the device with wipefs(8) or "
+			"sfdisk --wipe, in order to avoid possible collisions."),
+			fdisk_get_collision(sf->cxt));
+		fputc('\n', stderr);
+	}
+}
+
 static int wipe_partition(struct sfdisk *sf, size_t partno)
 {
 	int rc, yes = 0;
-	char *fstype = NULL;;
+	char *fstype = NULL;
 	struct fdisk_partition *tmp = NULL;
 
 	DBG(MISC, ul_debug("checking for signature"));
@@ -1607,25 +1644,8 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 			fputs(_(" OK\n\n"), stdout);
 	}
 
-	if (fdisk_get_collision(sf->cxt)) {
-		int dowipe = sf->wipemode == WIPEMODE_ALWAYS ? 1 : 0;
-
-		fdisk_warnx(sf->cxt, _("Device %s already contains a %s signature."),
-			devname, fdisk_get_collision(sf->cxt));
-
-		if (sf->interactive && sf->wipemode == WIPEMODE_AUTO)
-			dowipe = 1;	/* do it in interactive mode */
-
-		fdisk_enable_wipe(sf->cxt, dowipe);
-		if (dowipe)
-			fdisk_warnx(sf->cxt, _(
-				"The signature will be removed by a write command."));
-		else
-			fdisk_warnx(sf->cxt, _(
-				"It is strongly recommended to wipe the device with "
-				"wipefs(8), in order to avoid possible collisions."));
-		fputc('\n', stderr);
-	}
+	if (fdisk_get_collision(sf->cxt))
+		follow_wipe_mode(sf);
 
 	if (sf->backup)
 		backup_partition_table(sf, devname);
@@ -1723,6 +1743,9 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 					fdisk_warnx(sf->cxt, _(
 					  "Failed to apply script headers, "
 					  "disk label not created."));
+
+				if (rc == 0 && fdisk_get_collision(sf->cxt))
+					follow_wipe_mode(sf);
 			}
 			if (!rc && partno >= 0) {	/* -N <partno>, modify partition */
 				rc = fdisk_set_partition(sf->cxt, partno, pa);
@@ -1768,8 +1791,25 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 		}
 	} while (1);
 
+	/* create empty disk label if label, but no partition specified */
+	if (rc == SFDISK_DONE_EOF && created == 0
+	    && fdisk_script_has_force_label(dp) == 1
+	    && fdisk_table_get_nents(tb) == 0
+	    && fdisk_script_get_header(dp, "label")) {
+
+		int xrc = fdisk_apply_script_headers(sf->cxt, dp);
+		created = !xrc;
+		if (xrc) {
+			fdisk_warnx(sf->cxt, _(
+				  "Failed to apply script headers, "
+				  "disk label not created."));
+			rc = SFDISK_DONE_ABORT;
+		}
+	}
+
 	if (!sf->quiet && rc != SFDISK_DONE_ABORT) {
 		fdisk_info(sf->cxt, _("\nNew situation:"));
+		list_disk_identifier(sf->cxt);
 		list_disklabel(sf->cxt);
 	}
 
@@ -1785,6 +1825,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 				break;
 			}
 		}
+		/* fallthrough */
 	case SFDISK_DONE_WRITE:
 		rc = write_changes(sf);
 		break;
@@ -1921,7 +1962,6 @@ int main(int argc, char *argv[])
 		{ "output",  required_argument, NULL, 'o' },
 		{ "partno",  required_argument, NULL, 'N' },
 		{ "reorder", no_argument,       NULL, 'r' },
-		{ "show-size", no_argument,	NULL, 's' },
 		{ "show-geometry", no_argument, NULL, 'g' },
 		{ "quiet",   no_argument,       NULL, 'q' },
 		{ "verify",  no_argument,       NULL, 'V' },
@@ -1935,15 +1975,22 @@ int main(int argc, char *argv[])
 		{ "part-attrs", no_argument,    NULL, OPT_PARTATTRS },
 
 		{ "show-pt-geometry", no_argument, NULL, 'G' },		/* deprecated */
-		{ "unit",    required_argument, NULL, 'u' },
+		{ "unit",    required_argument, NULL, 'u' },		/* deprecated */
 		{ "Linux",   no_argument,       NULL, 'L' },		/* deprecated */
+		{ "show-size", no_argument,	NULL, 's' },		/* deprecated */
 
 		{ "change-id",no_argument,      NULL, OPT_CHANGE_ID },	/* deprecated */
 		{ "id",      no_argument,       NULL, 'c' },		/* deprecated */
 		{ "print-id",no_argument,       NULL, OPT_PRINT_ID },	/* deprecated */
 
-		{ NULL, 0, 0, 0 },
+		{ NULL, 0, NULL, 0 },
 	};
+	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
+		{ 's','u'},			/* --show-size --unit */
+		{ 0 }
+	};
+	int excl_st[ARRAY_SIZE(excl)] = UL_EXCL_STATUS_INIT;
+
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -1952,6 +1999,9 @@ int main(int argc, char *argv[])
 
 	while ((c = getopt_long(argc, argv, "aAbcdfFgGhJlLo:O:nN:qrsTu:vVX:Y:w:W:",
 					longopts, &longidx)) != -1) {
+
+		err_exclusive_options(c, longopts, excl, excl_st);
+
 		switch(c) {
 		case 'A':
 			sf->act = ACT_ACTIVATE;
@@ -1987,6 +2037,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'G':
 			warnx(_("--show-pt-geometry is no more implemented. Using --show-geometry."));
+			/* fallthrough */
 		case 'g':
 			sf->act = ACT_SHOW_GEOM;
 			break;
@@ -2087,7 +2138,7 @@ int main(int argc, char *argv[])
 			sf->notell = 1;
 			break;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

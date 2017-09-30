@@ -31,7 +31,7 @@
 #include <shadow.h>
 #include <paths.h>
 #include <time.h>
-#include <utmp.h>
+#include <utmpx.h>
 #include <signal.h>
 #include <err.h>
 #include <limits.h>
@@ -243,10 +243,10 @@ static const struct lslogins_coldesc coldescs[] =
 };
 
 struct lslogins_control {
-	struct utmp *wtmp;
+	struct utmpx *wtmp;
 	size_t wtmp_size;
 
-	struct utmp *btmp;
+	struct utmpx *btmp;
 	size_t btmp_size;
 
 	void *usertree;
@@ -410,19 +410,17 @@ again:
 	return res;
 }
 
-static struct utmp *get_last_wtmp(struct lslogins_control *ctl, const char *username)
+static struct utmpx *get_last_wtmp(struct lslogins_control *ctl, const char *username)
 {
 	size_t n = 0;
-	size_t len;
 
 	if (!username)
 		return NULL;
 
-	len = strlen(username);
 	n = ctl->wtmp_size - 1;
 	do {
 		if (!strncmp(username, ctl->wtmp[n].ut_user,
-		    len < UT_NAMESIZE ? len : UT_NAMESIZE))
+		             sizeof(ctl->wtmp[0].ut_user)))
 			return ctl->wtmp + n;
 	} while (n--);
 	return NULL;
@@ -447,40 +445,38 @@ static int require_btmp(void)
 	return 0;
 }
 
-static struct utmp *get_last_btmp(struct lslogins_control *ctl, const char *username)
+static struct utmpx *get_last_btmp(struct lslogins_control *ctl, const char *username)
 {
 	size_t n = 0;
-	size_t len;
 
 	if (!username)
 		return NULL;
 
-	len = strlen(username);
 	n = ctl->btmp_size - 1;
 	do {
 		if (!strncmp(username, ctl->btmp[n].ut_user,
-		    len < UT_NAMESIZE ? len : UT_NAMESIZE))
+		             sizeof(ctl->wtmp[0].ut_user)))
 			return ctl->btmp + n;
 	}while (n--);
 	return NULL;
 
 }
 
-static int read_utmp(char const *file, size_t *nents, struct utmp **res)
+static int read_utmp(char const *file, size_t *nents, struct utmpx **res)
 {
 	size_t n_read = 0, n_alloc = 0;
-	struct utmp *utmp = NULL, *u;
+	struct utmpx *utmp = NULL, *u;
 
-	if (utmpname(file) < 0)
+	if (utmpxname(file) < 0)
 		return -errno;
 
-	setutent();
+	setutxent();
 	errno = 0;
 
-	while ((u = getutent()) != NULL) {
+	while ((u = getutxent()) != NULL) {
 		if (n_read == n_alloc) {
 			n_alloc += 32;
-			utmp = xrealloc(utmp, n_alloc * sizeof (struct utmp));
+			utmp = xrealloc(utmp, n_alloc * sizeof (struct utmpx));
 		}
 		utmp[n_read++] = *u;
 	}
@@ -489,7 +485,7 @@ static int read_utmp(char const *file, size_t *nents, struct utmp **res)
 		return -errno;
 	}
 
-	endutent();
+	endutxent();
 
 	*nents = n_read;
 	*res = utmp;
@@ -582,7 +578,7 @@ static struct lslogins_user *get_user_info(struct lslogins_control *ctl, const c
 	struct passwd *pwd;
 	struct group *grp;
 	struct spwd *shadow;
-	struct utmp *user_wtmp = NULL, *user_btmp = NULL;
+	struct utmpx *user_wtmp = NULL, *user_btmp = NULL;
 	int n = 0;
 	time_t time;
 	uid_t uid;
@@ -899,12 +895,11 @@ static int create_usertree(struct lslogins_control *ctl)
 	size_t n = 0;
 
 	if (ctl->ulist_on) {
-		while (n < ctl->ulsiz) {
+		for (n = 0; n < ctl->ulsiz; n++) {
 			if (get_user(ctl, &user, ctl->ulist[n]))
-				return -1;
+				continue;
 			if (user) /* otherwise an invalid user name has probably been given */
 				tsearch(user, &ctl->usertree, cmp_uid);
-			++n;
 		}
 	} else {
 		while ((user = get_next_user(ctl)))
@@ -919,7 +914,7 @@ static struct libscols_table *setup_table(struct lslogins_control *ctl)
 	int n = 0;
 
 	if (!table)
-		errx(EXIT_FAILURE, _("failed to initialize output table"));
+		err(EXIT_FAILURE, _("failed to allocate output table"));
 	if (ctl->noheadings)
 		scols_table_enable_noheadings(table, 1);
 
@@ -976,6 +971,9 @@ static void fill_table(const void *u, const VISIT which, const int depth __attri
 		return;
 
 	ln = scols_table_new_line(tb, NULL);
+	if (!ln)
+		err(EXIT_FAILURE, _("failed to allocate output line"));
+
 	while (n < ncolumns) {
 		int rc = 0;
 
@@ -1071,8 +1069,8 @@ static void fill_table(const void *u, const VISIT which, const int depth __attri
 			err(EXIT_FAILURE, _("internal error: unknown column"));
 		}
 
-		if (rc != 0)
-			err(EXIT_FAILURE, _("failed to set data"));
+		if (rc)
+			err(EXIT_FAILURE, _("failed to add output data"));
 		++n;
 	}
 	return;
@@ -1447,7 +1445,7 @@ int main(int argc, char *argv[])
 			break;
 		}
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

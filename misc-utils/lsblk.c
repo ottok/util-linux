@@ -63,7 +63,7 @@
 
 #include "debug.h"
 
-UL_DEBUG_DEFINE_MASK(lsblk);
+static UL_DEBUG_DEFINE_MASK(lsblk);
 UL_DEBUG_DEFINE_MASKNAMES(lsblk) = UL_DEBUG_EMPTY_MASKNAMES;
 
 #define LSBLK_DEBUG_INIT	(1 << 1)
@@ -78,6 +78,8 @@ UL_DEBUG_DEFINE_MASKNAMES(lsblk) = UL_DEBUG_EMPTY_MASKNAMES;
 
 #define LSBLK_EXIT_SOMEOK 64
 #define LSBLK_EXIT_ALLFAILED 32
+
+static int column_id_to_number(int id);
 
 /* column IDs */
 enum {
@@ -124,7 +126,8 @@ enum {
 	COL_TRANSPORT,
 	COL_SUBSYS,
 	COL_REV,
-	COL_VENDOR
+	COL_VENDOR,
+	COL_ZONED,
 };
 
 /* basic table settings */
@@ -200,12 +203,15 @@ static struct colinfo infos[] = {
 	[COL_SUBSYS] = { "SUBSYSTEMS", 0.1, SCOLS_FL_NOEXTREMES, N_("de-duplicated chain of subsystems") },
 	[COL_REV]    = { "REV",   4, SCOLS_FL_RIGHT, N_("device revision") },
 	[COL_VENDOR] = { "VENDOR", 0.1, SCOLS_FL_TRUNC, N_("device vendor") },
+	[COL_ZONED]  = { "ZONED", 0.3, 0, N_("zone model") },
 };
 
 struct lsblk {
 	struct libscols_table *table;	/* output table */
 	struct libscols_column *sort_col;/* sort output by this column */
 	int sort_id;
+
+	int flags;			/* LSBLK_* */
 
 	unsigned int all_devices:1;	/* print all devices, including empty */
 	unsigned int bytes:1;		/* print SIZE in bytes */
@@ -214,9 +220,10 @@ struct lsblk {
 	unsigned int scsi:1;		/* print only device with HCTL (SCSI) */
 	unsigned int paths:1;		/* print devnames with "/dev" prefix */
 	unsigned int sort_hidden:1;	/* sort column not between output columns */
+	unsigned int force_tree_order:1;/* sort lines by parent->tree relation */
 };
 
-struct lsblk *lsblk;	/* global handler */
+static struct lsblk *lsblk;	/* global handler */
 
 /* columns[] array specifies all currently wanted output column. The columns
  * are defined by infos[] array and you can specify (on command line) each
@@ -225,17 +232,21 @@ struct lsblk *lsblk;	/* global handler */
 static int columns[ARRAY_SIZE(infos) * 2];
 static size_t ncolumns;
 
-static inline size_t err_columns_index(size_t arysz, size_t idx)
+
+static inline void add_column(int id)
 {
-	if (idx >= arysz)
+	if (ncolumns >= ARRAY_SIZE(columns))
 		errx(EXIT_FAILURE, _("too many columns specified, "
 				     "the limit is %zu columns"),
-				arysz - 1);
-	return idx;
+				ARRAY_SIZE(columns) - 1);
+	columns[ ncolumns++ ] =  id;
 }
 
-#define add_column(ary, n, id)	\
-		((ary)[ err_columns_index(ARRAY_SIZE(ary), (n)) ] = (id))
+static inline void add_uniq_column(int id)
+{
+	if (column_id_to_number(id) < 0)
+		add_column(id);
+}
 
 static int excludes[256];
 static size_t nexcludes;
@@ -247,7 +258,7 @@ static struct libmnt_table *mtab, *swaps;
 static struct libmnt_cache *mntcache;
 
 #ifdef HAVE_LIBUDEV
-struct udev *udev;
+static struct udev *udev;
 #endif
 
 struct blkdev_cxt {
@@ -448,7 +459,7 @@ static int is_active_swap(const char *filename)
 		mnt_table_parse_swaps(swaps, NULL);
 	}
 
-	return mnt_table_find_srcpath(swaps, filename, MNT_ITER_BACKWARD) != 0;
+	return mnt_table_find_srcpath(swaps, filename, MNT_ITER_BACKWARD) != NULL;
 }
 
 static char *get_device_mountpoint(struct blkdev_cxt *cxt)
@@ -1145,10 +1156,13 @@ static void set_scols_data(struct blkdev_cxt *cxt, int col, int id, struct libsc
 		if (!str)
 			str = xstrdup("0");
 		break;
+	case COL_ZONED:
+		str = sysfs_strdup(&cxt->sysfs, "queue/zoned");
+		break;
 	};
 
-	if (str)
-		scols_line_refer_data(ln, col, str);
+	if (str && scols_line_refer_data(ln, col, str))
+		err(EXIT_FAILURE, _("failed to add output data"));
 }
 
 static void fill_table_line(struct blkdev_cxt *cxt, struct libscols_line *scols_parent)
@@ -1157,7 +1171,7 @@ static void fill_table_line(struct blkdev_cxt *cxt, struct libscols_line *scols_
 
 	cxt->scols_line = scols_table_new_line(lsblk->table, scols_parent);
 	if (!cxt->scols_line)
-		return;
+		err(EXIT_FAILURE, _("failed to allocate output line"));
 
 	for (i = 0; i < ncolumns; i++)
 		set_scols_data(cxt, i, get_column_id(i), cxt->scols_line);
@@ -1257,7 +1271,7 @@ static int list_partitions(struct blkdev_cxt *wholedisk_cxt, struct blkdev_cxt *
 {
 	DIR *dir;
 	struct dirent *d;
-	struct blkdev_cxt part_cxt = { 0 };
+	struct blkdev_cxt part_cxt = { NULL };
 	int r = -1;
 
 	assert(wholedisk_cxt);
@@ -1360,7 +1374,7 @@ static int list_deps(struct blkdev_cxt *cxt)
 {
 	DIR *dir;
 	struct dirent *d;
-	struct blkdev_cxt dep = { 0 };
+	struct blkdev_cxt dep = { NULL };
 	const char *depname;
 
 	assert(cxt);
@@ -1421,7 +1435,7 @@ static int iterate_block_devices(void)
 {
 	DIR *dir;
 	struct dirent *d;
-	struct blkdev_cxt cxt = { 0 };
+	struct blkdev_cxt cxt = { NULL };
 
 	if (!(dir = opendir(_PATH_SYS_BLOCK)))
 		return -errno;
@@ -1475,7 +1489,7 @@ static char *devno_to_sysfs_name(dev_t devno, char *devname, char *buf, size_t b
 
 static int process_one_device(char *devname)
 {
-	struct blkdev_cxt parent = { 0 }, cxt = { 0 };
+	struct blkdev_cxt parent = { NULL }, cxt = { NULL };
 	struct stat st;
 	char buf[PATH_MAX + 1], *name = NULL, *diskname = NULL;
 	dev_t disk = 0;
@@ -1623,6 +1637,7 @@ static void __attribute__((__noreturn__)) help(FILE *out)
 	fputs(_(" -b, --bytes          print SIZE in bytes rather than in human readable format\n"), out);
 	fputs(_(" -d, --nodeps         don't print slaves or holders\n"), out);
 	fputs(_(" -D, --discard        print discard capabilities\n"), out);
+	fputs(_(" -z, --zoned          print zone model\n"), out);
 	fputs(_(" -e, --exclude <list> exclude devices by major number (default: RAM disks)\n"), out);
 	fputs(_(" -f, --fs             output info about filesystems\n"), out);
 	fputs(_(" -i, --ascii          use ascii characters only\n"), out);
@@ -1663,40 +1678,40 @@ static void check_sysdevblock(void)
 
 int main(int argc, char *argv[])
 {
-	struct lsblk _ls = { .sort_id = -1 };
-	int scols_flags = LSBLK_TREE;
+	struct lsblk _ls = { .sort_id = -1, .flags = LSBLK_TREE };
 	int c, status = EXIT_FAILURE;
 	char *outarg = NULL;
 	size_t i;
 
 	static const struct option longopts[] = {
-		{ "all",	0, 0, 'a' },
-		{ "bytes",      0, 0, 'b' },
-		{ "nodeps",     0, 0, 'd' },
-		{ "discard",    0, 0, 'D' },
-		{ "help",	0, 0, 'h' },
-		{ "json",       0, 0, 'J' },
-		{ "output",     1, 0, 'o' },
-		{ "output-all", 0, 0, 'O' },
-		{ "perms",      0, 0, 'm' },
-		{ "noheadings",	0, 0, 'n' },
-		{ "list",       0, 0, 'l' },
-		{ "ascii",	0, 0, 'i' },
-		{ "raw",        0, 0, 'r' },
-		{ "inverse",	0, 0, 's' },
-		{ "fs",         0, 0, 'f' },
-		{ "exclude",    1, 0, 'e' },
-		{ "include",    1, 0, 'I' },
-		{ "topology",   0, 0, 't' },
-		{ "paths",      0, 0, 'p' },
-		{ "pairs",      0, 0, 'P' },
-		{ "scsi",       0, 0, 'S' },
-		{ "sort",	1, 0, 'x' },
-		{ "version",    0, 0, 'V' },
-		{ NULL, 0, 0, 0 },
+		{ "all",	no_argument,       NULL, 'a' },
+		{ "bytes",      no_argument,       NULL, 'b' },
+		{ "nodeps",     no_argument,       NULL, 'd' },
+		{ "discard",    no_argument,       NULL, 'D' },
+		{ "zoned",      no_argument,       NULL, 'z' },
+		{ "help",	no_argument,       NULL, 'h' },
+		{ "json",       no_argument,       NULL, 'J' },
+		{ "output",     required_argument, NULL, 'o' },
+		{ "output-all", no_argument,       NULL, 'O' },
+		{ "perms",      no_argument,       NULL, 'm' },
+		{ "noheadings",	no_argument,       NULL, 'n' },
+		{ "list",       no_argument,       NULL, 'l' },
+		{ "ascii",	no_argument,       NULL, 'i' },
+		{ "raw",        no_argument,       NULL, 'r' },
+		{ "inverse",	no_argument,       NULL, 's' },
+		{ "fs",         no_argument,       NULL, 'f' },
+		{ "exclude",    required_argument, NULL, 'e' },
+		{ "include",    required_argument, NULL, 'I' },
+		{ "topology",   no_argument,       NULL, 't' },
+		{ "paths",      no_argument,       NULL, 'p' },
+		{ "pairs",      no_argument,       NULL, 'P' },
+		{ "scsi",       no_argument,       NULL, 'S' },
+		{ "sort",	required_argument, NULL, 'x' },
+		{ "version",    no_argument,       NULL, 'V' },
+		{ NULL, 0, NULL, 0 },
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'D','O' },
 		{ 'I','e' },
 		{ 'J', 'P', 'r' },
@@ -1719,7 +1734,7 @@ int main(int argc, char *argv[])
 	lsblk_init_debug();
 
 	while((c = getopt_long(argc, argv,
-			       "abdDe:fhJlnmo:OpPiI:rstVSx:", longopts, NULL)) != -1) {
+			       "abdDze:fhJlnmo:OpPiI:rstVSx:", longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
 
@@ -1734,11 +1749,15 @@ int main(int argc, char *argv[])
 			lsblk->nodeps = 1;
 			break;
 		case 'D':
-			add_column(columns, ncolumns++, COL_NAME);
-			add_column(columns, ncolumns++, COL_DALIGN);
-			add_column(columns, ncolumns++, COL_DGRAN);
-			add_column(columns, ncolumns++, COL_DMAX);
-			add_column(columns, ncolumns++, COL_DZERO);
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_DALIGN);
+			add_uniq_column(COL_DGRAN);
+			add_uniq_column(COL_DMAX);
+			add_uniq_column(COL_DZERO);
+			break;
+		case 'z':
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_ZONED);
 			break;
 		case 'e':
 			parse_excludes(optarg);
@@ -1747,13 +1766,13 @@ int main(int argc, char *argv[])
 			help(stdout);
 			break;
 		case 'J':
-			scols_flags |= LSBLK_JSON;
+			lsblk->flags |= LSBLK_JSON;
 			break;
 		case 'l':
-			scols_flags &= ~LSBLK_TREE; /* disable the default */
+			lsblk->flags &= ~LSBLK_TREE; /* disable the default */
 			break;
 		case 'n':
-			scols_flags |= LSBLK_NOHEADINGS;
+			lsblk->flags |= LSBLK_NOHEADINGS;
 			break;
 		case 'o':
 			outarg = optarg;
@@ -1766,84 +1785,84 @@ int main(int argc, char *argv[])
 			lsblk->paths = 1;
 			break;
 		case 'P':
-			scols_flags |= LSBLK_EXPORT;
-			scols_flags &= ~LSBLK_TREE;	/* disable the default */
+			lsblk->flags |= LSBLK_EXPORT;
+			lsblk->flags &= ~LSBLK_TREE;	/* disable the default */
 			break;
 		case 'i':
-			scols_flags |= LSBLK_ASCII;
+			lsblk->flags |= LSBLK_ASCII;
 			break;
 		case 'I':
 			parse_includes(optarg);
 			break;
 		case 'r':
-			scols_flags &= ~LSBLK_TREE;	/* disable the default */
-			scols_flags |= LSBLK_RAW;		/* enable raw */
+			lsblk->flags &= ~LSBLK_TREE;	/* disable the default */
+			lsblk->flags |= LSBLK_RAW;		/* enable raw */
 			break;
 		case 's':
 			lsblk->inverse = 1;
 			break;
 		case 'f':
-			add_column(columns, ncolumns++, COL_NAME);
-			add_column(columns, ncolumns++, COL_FSTYPE);
-			add_column(columns, ncolumns++, COL_LABEL);
-			add_column(columns, ncolumns++, COL_UUID);
-			add_column(columns, ncolumns++, COL_TARGET);
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_FSTYPE);
+			add_uniq_column(COL_LABEL);
+			add_uniq_column(COL_UUID);
+			add_uniq_column(COL_TARGET);
 			break;
 		case 'm':
-			add_column(columns, ncolumns++, COL_NAME);
-			add_column(columns, ncolumns++, COL_SIZE);
-			add_column(columns, ncolumns++, COL_OWNER);
-			add_column(columns, ncolumns++, COL_GROUP);
-			add_column(columns, ncolumns++, COL_MODE);
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_SIZE);
+			add_uniq_column(COL_OWNER);
+			add_uniq_column(COL_GROUP);
+			add_uniq_column(COL_MODE);
 			break;
 		case 't':
-			add_column(columns, ncolumns++, COL_NAME);
-			add_column(columns, ncolumns++, COL_ALIOFF);
-			add_column(columns, ncolumns++, COL_MINIO);
-			add_column(columns, ncolumns++, COL_OPTIO);
-			add_column(columns, ncolumns++, COL_PHYSEC);
-			add_column(columns, ncolumns++, COL_LOGSEC);
-			add_column(columns, ncolumns++, COL_ROTA);
-			add_column(columns, ncolumns++, COL_SCHED);
-			add_column(columns, ncolumns++, COL_RQ_SIZE);
-			add_column(columns, ncolumns++, COL_RA);
-			add_column(columns, ncolumns++, COL_WSAME);
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_ALIOFF);
+			add_uniq_column(COL_MINIO);
+			add_uniq_column(COL_OPTIO);
+			add_uniq_column(COL_PHYSEC);
+			add_uniq_column(COL_LOGSEC);
+			add_uniq_column(COL_ROTA);
+			add_uniq_column(COL_SCHED);
+			add_uniq_column(COL_RQ_SIZE);
+			add_uniq_column(COL_RA);
+			add_uniq_column(COL_WSAME);
 			break;
 		case 'S':
 			lsblk->nodeps = 1;
 			lsblk->scsi = 1;
-			add_column(columns, ncolumns++, COL_NAME);
-			add_column(columns, ncolumns++, COL_HCTL);
-			add_column(columns, ncolumns++, COL_TYPE);
-			add_column(columns, ncolumns++, COL_VENDOR);
-			add_column(columns, ncolumns++, COL_MODEL);
-			add_column(columns, ncolumns++, COL_REV);
-			add_column(columns, ncolumns++, COL_TRANSPORT);
+			add_uniq_column(COL_NAME);
+			add_uniq_column(COL_HCTL);
+			add_uniq_column(COL_TYPE);
+			add_uniq_column(COL_VENDOR);
+			add_uniq_column(COL_MODEL);
+			add_uniq_column(COL_REV);
+			add_uniq_column(COL_TRANSPORT);
 			break;
 		case 'V':
 			printf(UTIL_LINUX_VERSION);
 			return EXIT_SUCCESS;
 		case 'x':
-			scols_flags &= ~LSBLK_TREE; /* disable the default */
+			lsblk->flags &= ~LSBLK_TREE; /* disable the default */
 			lsblk->sort_id = column_name_to_id(optarg, strlen(optarg));
 			if (lsblk->sort_id >= 0)
 				break;
 			/* fallthrough */
 		default:
-			help(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
 	check_sysdevblock();
 
 	if (!ncolumns) {
-		add_column(columns, ncolumns++, COL_NAME);
-		add_column(columns, ncolumns++, COL_MAJMIN);
-		add_column(columns, ncolumns++, COL_RM);
-		add_column(columns, ncolumns++, COL_SIZE);
-		add_column(columns, ncolumns++, COL_RO);
-		add_column(columns, ncolumns++, COL_TYPE);
-		add_column(columns, ncolumns++, COL_TARGET);
+		add_column(COL_NAME);
+		add_column(COL_MAJMIN);
+		add_column(COL_RM);
+		add_column(COL_SIZE);
+		add_column(COL_RO);
+		add_column(COL_TYPE);
+		add_column(COL_TARGET);
 	}
 
 	if (outarg && string_add_to_idarray(outarg, columns, ARRAY_SIZE(columns),
@@ -1858,9 +1877,13 @@ int main(int argc, char *argv[])
 		 * /sys is no more sorted */
 		lsblk->sort_id = COL_MAJMIN;
 
+	/* For --inverse --list we still follow parent->child relation */
+	if (lsblk->inverse && !(lsblk->flags & LSBLK_TREE))
+		lsblk->force_tree_order = 1;
+
 	if (lsblk->sort_id >= 0 && column_id_to_number(lsblk->sort_id) < 0) {
 		/* the sort column is not between output columns -- add as hidden */
-		add_column(columns, ncolumns++, lsblk->sort_id);
+		add_column(lsblk->sort_id);
 		lsblk->sort_hidden = 1;
 	}
 
@@ -1871,14 +1894,14 @@ int main(int argc, char *argv[])
 	 * initialize output columns
 	 */
 	if (!(lsblk->table = scols_new_table()))
-		errx(EXIT_FAILURE, _("failed to initialize output table"));
-	scols_table_enable_raw(lsblk->table, !!(scols_flags & LSBLK_RAW));
-	scols_table_enable_export(lsblk->table, !!(scols_flags & LSBLK_EXPORT));
-	scols_table_enable_ascii(lsblk->table, !!(scols_flags & LSBLK_ASCII));
-	scols_table_enable_json(lsblk->table, !!(scols_flags & LSBLK_JSON));
-	scols_table_enable_noheadings(lsblk->table, !!(scols_flags & LSBLK_NOHEADINGS));
+		errx(EXIT_FAILURE, _("failed to allocate output table"));
+	scols_table_enable_raw(lsblk->table, !!(lsblk->flags & LSBLK_RAW));
+	scols_table_enable_export(lsblk->table, !!(lsblk->flags & LSBLK_EXPORT));
+	scols_table_enable_ascii(lsblk->table, !!(lsblk->flags & LSBLK_ASCII));
+	scols_table_enable_json(lsblk->table, !!(lsblk->flags & LSBLK_JSON));
+	scols_table_enable_noheadings(lsblk->table, !!(lsblk->flags & LSBLK_NOHEADINGS));
 
-	if (scols_flags & LSBLK_JSON)
+	if (lsblk->flags & LSBLK_JSON)
 		scols_table_set_name(lsblk->table, "blockdevices");
 
 	for (i = 0; i < ncolumns; i++) {
@@ -1886,14 +1909,14 @@ int main(int argc, char *argv[])
 		struct libscols_column *cl;
 		int id = get_column_id(i), fl = ci->flags;
 
-		if (!(scols_flags & LSBLK_TREE) && id == COL_NAME)
+		if (!(lsblk->flags & LSBLK_TREE) && id == COL_NAME)
 			fl &= ~SCOLS_FL_TREE;
 		if (lsblk->sort_hidden && lsblk->sort_id == id)
 			fl |= SCOLS_FL_HIDDEN;
 
 		cl = scols_table_new_column(lsblk->table, ci->name, ci->whint, fl);
 		if (!cl) {
-			warn(_("failed to initialize output column"));
+			warn(_("failed to allocate output column"));
 			goto leave;
 		}
 		if (!lsblk->sort_col && lsblk->sort_id == id) {
@@ -1922,6 +1945,8 @@ int main(int argc, char *argv[])
 
 	if (lsblk->sort_col)
 		scols_sort_table(lsblk->table, lsblk->sort_col);
+	if (lsblk->force_tree_order)
+		scols_sort_table_by_tree(lsblk->table);
 
 	scols_print_table(lsblk->table);
 

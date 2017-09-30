@@ -61,6 +61,8 @@ struct fdisk_context *fdisk_new_context(void)
 	cxt->labels[ cxt->nlabels++ ] = fdisk_new_sgi_label(cxt);
 	cxt->labels[ cxt->nlabels++ ] = fdisk_new_sun_label(cxt);
 
+	bindtextdomain(LIBFDISK_TEXTDOMAIN, LOCALEDIR);
+
 	return cxt;
 }
 
@@ -389,6 +391,23 @@ const char *fdisk_get_collision(struct fdisk_context *cxt)
 }
 
 /**
+ * fdisk_is_ptcollision:
+ * @cxt: fdisk context
+ *
+ * The collision detected by libblkid (usally another partition table). Note
+ * that libfdisk does not support all partitions tables, so fdisk_has_label()
+ * may return false, but fdisk_is_ptcollision() may return true.
+ *
+ * Since: 2.30
+ *
+ * Returns: 0 or 1
+ */
+int fdisk_is_ptcollision(struct fdisk_context *cxt)
+{
+	return cxt->pt_collision;
+}
+
+/**
  * fdisk_get_npartitions:
  * @cxt: context
  *
@@ -484,6 +503,8 @@ static void reset_context(struct fdisk_context *cxt)
 	free(cxt->collision);
 	cxt->collision = NULL;
 
+	memset(&cxt->dev_st, 0, sizeof(cxt->dev_st));
+
 	cxt->dev_fd = -1;
 	cxt->firstsector = NULL;
 	cxt->firstsector_bufsz = 0;
@@ -496,55 +517,6 @@ static void reset_context(struct fdisk_context *cxt)
 	cxt->label = NULL;
 
 	fdisk_free_wipe_areas(cxt);
-}
-
-/*
- * This function prints a warning if the device is not wiped (e.g. wipefs(8).
- * Please don't call this function if there is already a PT.
- *
- * Returns: 0 if nothing found, < 0 on error, 1 if found a signature
- */
-static int check_collisions(struct fdisk_context *cxt)
-{
-#ifdef HAVE_LIBBLKID
-	int rc = 0;
-	blkid_probe pr;
-
-	assert(cxt);
-	assert(cxt->dev_fd >= 0);
-
-	DBG(CXT, ul_debugobj(cxt, "wipe check: initialize libblkid prober"));
-
-	pr = blkid_new_probe();
-	if (!pr)
-		return -ENOMEM;
-	rc = blkid_probe_set_device(pr, cxt->dev_fd, 0, 0);
-	if (rc)
-		return rc;
-
-	blkid_probe_enable_superblocks(pr, 1);
-	blkid_probe_set_superblocks_flags(pr, BLKID_SUBLKS_TYPE);
-	blkid_probe_enable_partitions(pr, 1);
-
-	/* we care about the first found FS/raid, so don't call blkid_do_probe()
-	 * in loop or don't use blkid_do_fullprobe() ... */
-	rc = blkid_do_probe(pr);
-	if (rc == 0) {
-		const char *name = NULL;
-
-		if (blkid_probe_lookup_value(pr, "TYPE", &name, 0) == 0 ||
-		    blkid_probe_lookup_value(pr, "PTTYPE", &name, 0) == 0) {
-			cxt->collision = strdup(name);
-			if (!cxt->collision)
-				rc = -ENOMEM;
-		}
-	}
-
-	blkid_free_probe(pr);
-	return rc;
-#else
-	return 0;
-#endif
 }
 
 /**
@@ -577,7 +549,7 @@ int fdisk_assign_device(struct fdisk_context *cxt,
 		int rc, org = fdisk_is_listonly(cxt->parent);
 
 		/* assign_device() is sensitive to "listonly" mode, so let's
-		 * follow the current context setting for the parent to avoid 
+		 * follow the current context setting for the parent to avoid
 		 * unwanted extra warnings. */
 		fdisk_enable_listonly(cxt->parent, fdisk_is_listonly(cxt));
 
@@ -595,7 +567,10 @@ int fdisk_assign_device(struct fdisk_context *cxt,
 
 	fd = open(fname, (readonly ? O_RDONLY : O_RDWR ) | O_CLOEXEC);
 	if (fd < 0)
-		return -errno;
+		goto fail;
+
+	if (fstat(fd, &cxt->dev_st) != 0)
+		goto fail;
 
 	cxt->readonly = readonly;
 	cxt->dev_fd = fd;
@@ -606,28 +581,32 @@ int fdisk_assign_device(struct fdisk_context *cxt,
 	fdisk_discover_topology(cxt);
 	fdisk_discover_geometry(cxt);
 
+	fdisk_apply_user_device_properties(cxt);
+
 	if (fdisk_read_firstsector(cxt) < 0)
 		goto fail;
 
-	/* detect labels and apply labels specific stuff (e.g geometry)
-	 * to the context */
 	fdisk_probe_labels(cxt);
 
-	/* let's apply user geometry *after* label prober
-	 * to make it possible to override in-label setting */
-	fdisk_apply_user_device_properties(cxt);
+	fdisk_apply_label_device_properties(cxt);
 
 	/* warn about obsolete stuff on the device if we aren't in
 	 * list-only mode and there is not PT yet */
-	if (!fdisk_is_listonly(cxt) && !fdisk_has_label(cxt) && check_collisions(cxt) < 0)
+	if (!fdisk_is_listonly(cxt) && !fdisk_has_label(cxt)
+	    && fdisk_check_collisions(cxt) < 0)
 		goto fail;
 
 	DBG(CXT, ul_debugobj(cxt, "initialized for %s [%s]",
 			      fname, readonly ? "READ-ONLY" : "READ-WRITE"));
 	return 0;
 fail:
-	DBG(CXT, ul_debugobj(cxt, "failed to assign device"));
-	return -errno;
+	{
+		int rc = -errno;
+		if (fd >= 0)
+			close(fd);
+		DBG(CXT, ul_debugobj(cxt, "failed to assign device [rc=%d]", rc));
+		return rc;
+	}
 }
 
 /**
@@ -686,6 +665,20 @@ int fdisk_is_readonly(struct fdisk_context *cxt)
 {
 	assert(cxt);
 	return cxt->readonly;
+}
+
+/**
+ * fdisk_is_regfile:
+ * @cxt: context
+ *
+ * Since: 2.30
+ *
+ * Returns: 1 if open file descriptor is regular file rather than a block device.
+ */
+int fdisk_is_regfile(struct fdisk_context *cxt)
+{
+	assert(cxt);
+	return S_ISREG(cxt->dev_st.st_mode);
 }
 
 /**

@@ -77,6 +77,7 @@ int mnt_context_find_umount_fs(struct libmnt_context *cxt,
 	 * it's usable only for canonicalized stuff (e.g. kernel mountinfo).
 	 */
 	if (!mnt_context_mtab_writable(cxt) && *tgt == '/' &&
+	    !mnt_context_is_nocanonicalize(cxt) &&
 	    !mnt_context_is_force(cxt) && !mnt_context_is_lazy(cxt))
 		rc = mnt_context_get_mtab_for_target(cxt, &mtab, tgt);
 	else
@@ -245,6 +246,7 @@ static int lookup_umount_fs(struct libmnt_context *cxt)
 	    && !mnt_context_mtab_writable(cxt)
 	    && !mnt_context_is_force(cxt)
 	    && !mnt_context_is_lazy(cxt)
+	    && !mnt_context_is_nocanonicalize(cxt)
 	    && !mnt_context_is_loopdel(cxt)
 	    && mnt_stat_mountpoint(tgt, &st) == 0 && S_ISDIR(st.st_mode)
 	    && !has_utab_entry(cxt, tgt)) {
@@ -337,6 +339,7 @@ static int prepare_helper_from_options(struct libmnt_context *cxt,
 	char *suffix = NULL;
 	const char *opts;
 	size_t valsz;
+	int rc;
 
 	if (mnt_context_is_nohelpers(cxt))
 		return 0;
@@ -354,7 +357,10 @@ static int prepare_helper_from_options(struct libmnt_context *cxt,
 
 	DBG(CXT, ul_debugobj(cxt, "umount: umount.%s %s requested", suffix, name));
 
-	return mnt_context_prepare_helper(cxt, "umount", suffix);
+	rc = mnt_context_prepare_helper(cxt, "umount", suffix);
+	free(suffix);
+
+	return rc;
 }
 
 /*
@@ -1015,4 +1021,84 @@ int mnt_context_next_umount(struct libmnt_context *cxt,
 	if (mntrc)
 		*mntrc = rc;
 	return 0;
+}
+
+
+int mnt_context_get_umount_excode(
+			struct libmnt_context *cxt,
+			int rc,
+			char *buf,
+			size_t bufsz)
+{
+	if (mnt_context_helper_executed(cxt))
+		/*
+		 * /sbin/umount.<type> called, return status
+		 */
+		return mnt_context_get_helper_status(cxt);
+
+	if (rc == 0 && mnt_context_get_status(cxt) == 1)
+		/*
+		 * Libmount success && syscall success.
+		 */
+		return MNT_EX_SUCCESS;
+
+	if (!mnt_context_syscall_called(cxt)) {
+		/*
+		 * libmount errors (extra library checks)
+		 */
+		if (rc == -EPERM && !mnt_context_tab_applied(cxt)) {
+			/* failed to evaluate permissions because not found
+			 * relevant entry in mtab */
+			if (buf)
+				snprintf(buf, bufsz, _("not mounted"));
+			return MNT_EX_USAGE;
+		}
+		return mnt_context_get_generic_excode(rc, buf, bufsz,
+					_("umount failed: %m"));
+
+	} else if (mnt_context_get_syscall_errno(cxt) == 0) {
+		/*
+		 * umount(2) syscall success, but something else failed
+		 * (probably error in mtab processing).
+		 */
+		if (rc < 0)
+			return mnt_context_get_generic_excode(rc, buf, bufsz,
+				_("filesystem was unmounted, but any subsequent operation failed: %m"));
+
+		return MNT_EX_SOFTWARE;	/* internal error */
+	}
+
+	/*
+	 * umount(2) errors
+	 */
+	if (buf) {
+		int syserr = mnt_context_get_syscall_errno(cxt);
+
+		switch (syserr) {
+		case ENXIO:
+			snprintf(buf, bufsz, _("invalid block device"));	/* ??? */
+			break;
+		case EINVAL:
+			snprintf(buf, bufsz, _("not mounted"));
+			break;
+		case EIO:
+			snprintf(buf, bufsz, _("can't write superblock"));
+			break;
+		case EBUSY:
+			snprintf(buf, bufsz, _("target is busy"));
+			break;
+		case ENOENT:
+			snprintf(buf, bufsz, _("no mount point specified"));
+			break;
+		case EPERM:
+			snprintf(buf, bufsz, _("must be superuser to unmount"));
+			break;
+		case EACCES:
+			snprintf(buf, bufsz, _("block devices are not permitted on filesystem"));
+			break;
+		default:
+			return mnt_context_get_generic_excode(syserr, buf, bufsz,_("umount(2) system call failed: %m"));
+		}
+	}
+	return MNT_EX_FAIL;
 }

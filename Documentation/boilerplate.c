@@ -39,11 +39,11 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(_(" -r, --required <arg>    option requires an argument\n"), out);
 	fputs(_(" -z                      no long option\n"), out);
 	fputs(_("     --xyzzy             a long option only\n"), out);
-	fputs(_(" -e, --extremely-long-long-option\n"), out);
-	fputs(_("                         use next line for description when needed\n"), out);
-	fputs(_(" -l, --long-explanation  an example of very verbose, and chatty option\n"), out);
-	fputs(_("                           description on two, or multiple lines, where the\n"), out);
-	fputs(_("                           consecutive lines are intended by two spaces\n"), out);
+	fputs(_(" -e, --extremely-long-long-option\n"
+		"                         use next line for description when needed\n"), out);
+	fputs(_(" -l, --long-explanation  an example of very verbose, and chatty option\n"
+		"                           description on two, or multiple lines, where the\n"
+		"                           consecutive lines are intended by two spaces\n"), out);
 	fputs(_(" -f, --foobar            next option description resets indent\n"), out);
 	fputs(USAGE_SEPARATOR, out);
 	fputs(USAGE_HELP, out);
@@ -61,15 +61,15 @@ int main(int argc, char **argv)
 		OPT_OPTIONAL	/* see howto-man-page.txt about short option */
 	};
 	static const struct option longopts[] = {
-		{"no-argument", no_argument, NULL, 'n'},
-		{"required", required_argument, NULL, 'r'},
-		{"xyzzy", no_argument, NULL, OPT_XYZZY},
-		{"extremely-long-long-option", no_argument, NULL, 'e'},
-		{"long-explanation", no_argument, NULL, 'l'},
-		{"foobar", no_argument, NULL, 'f'},
-		{"version", no_argument, NULL, 'V'},
-		{"help", no_argument, NULL, 'h'},
-		{NULL, 0, NULL, 0}
+		{ "no-argument",                no_argument,       NULL, 'n'       },
+		{ "required",                   required_argument, NULL, 'r'       },
+		{ "extremely-long-long-option", no_argument,       NULL, 'e'       },
+		{ "xyzzy",                      no_argument,       NULL, OPT_XYZZY },
+		{ "long-explanation",           no_argument,       NULL, 'l'       },
+		{ "foobar",                     no_argument,       NULL, 'f'       },
+		{ "version",                    no_argument,       NULL, 'V'       },
+		{ "help",                       no_argument,       NULL, 'h'       },
+		{ NULL, 0, NULL, 0 }
 	};
 
 	setlocale(LC_ALL, "");
@@ -77,11 +77,12 @@ int main(int argc, char **argv)
 	textdomain(PACKAGE);
 	atexit(close_stdout);
 
-	while ((c = getopt_long(argc, argv, "nr:elfVh", longopts, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "nr:zelfVh", longopts, NULL)) != -1)
 		switch (c) {
 		case 'n':
 		case OPT_OPTIONAL:
 		case 'r':
+		case 'z':
 		case OPT_XYZZY:
 		case 'e':
 		case 'l':
@@ -93,7 +94,7 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 
 	return EXIT_SUCCESS;

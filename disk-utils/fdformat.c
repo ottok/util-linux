@@ -20,7 +20,7 @@
 
 #define SECTOR_SIZE 512
 
-struct floppy_struct param;
+static struct floppy_struct param;
 
 
 static void format_begin(int ctrl)
@@ -65,7 +65,7 @@ static void format_disk(int ctrl, unsigned int track_from, unsigned int track_to
 
 	format_end(ctrl);
 
-	printf(_("done\n"));
+	printf("     \b\b\b\b\b%s", _("done\n"));
 }
 
 static void verify_disk(int ctrl, unsigned int track_from, unsigned int track_to, unsigned int repair)
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 
 	argc -= optind;

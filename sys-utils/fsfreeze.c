@@ -33,16 +33,6 @@ enum fs_operation {
 	UNFREEZE
 };
 
-static int freeze_f(int fd)
-{
-	return ioctl(fd, FIFREEZE, 0);
-}
-
-static int unfreeze_f(int fd)
-{
-	return ioctl(fd, FITHAW, 0);
-}
-
 static void __attribute__((__noreturn__)) usage(FILE *out)
 {
 	fprintf(out, USAGE_HEADER);
@@ -50,7 +40,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	      _(" %s [options] <mountpoint>\n"), program_invocation_short_name);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(_("Suspend access to a filesystem (ext3/4, ReiserFS, JFS, XFS).\n"), out);
+	fputs(_("Suspend access to a filesystem.\n"), out);
 
 	fputs(USAGE_OPTIONS, out);
 	fputs(_(" -f, --freeze      freeze the filesystem\n"), out);
@@ -71,14 +61,14 @@ int main(int argc, char **argv)
 	struct stat sb;
 
 	static const struct option longopts[] = {
-	    { "help",      0, 0, 'h' },
-	    { "freeze",    0, 0, 'f' },
-	    { "unfreeze",  0, 0, 'u' },
-	    { "version",   0, 0, 'V' },
-	    { NULL,        0, 0, 0 }
+	    { "help",      no_argument, NULL, 'h' },
+	    { "freeze",    no_argument, NULL, 'f' },
+	    { "unfreeze",  no_argument, NULL, 'u' },
+	    { "version",   no_argument, NULL, 'V' },
+	    { NULL, 0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'f','u' },			/* freeze, unfreeze */
 		{ 0 }
 	};
@@ -107,8 +97,7 @@ int main(int argc, char **argv)
 			printf(UTIL_LINUX_VERSION);
 			exit(EXIT_SUCCESS);
 		default:
-			usage(stderr);
-			break;
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
@@ -139,13 +128,13 @@ int main(int argc, char **argv)
 
 	switch (action) {
 	case FREEZE:
-		if (freeze_f(fd)) {
+		if (ioctl(fd, FIFREEZE, 0)) {
 			warn(_("%s: freeze failed"), path);
 			goto done;
 		}
 		break;
 	case UNFREEZE:
-		if (unfreeze_f(fd)) {
+		if (ioctl(fd, FITHAW, 0)) {
 			warn(_("%s: unfreeze failed"), path);
 			goto done;
 		}

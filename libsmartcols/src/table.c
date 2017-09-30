@@ -171,7 +171,11 @@ struct libscols_cell *scols_table_get_title(struct libscols_table *tb)
  */
 int scols_table_add_column(struct libscols_table *tb, struct libscols_column *cl)
 {
-	if (!tb || !cl || !list_empty(&tb->tb_lines) || cl->table)
+	struct libscols_iter itr;
+	struct libscols_line *ln;
+	int rc = 0;
+
+	if (!tb || !cl || cl->table)
 		return -EINVAL;
 
 	if (cl->flags & SCOLS_FL_TREE)
@@ -183,13 +187,20 @@ int scols_table_add_column(struct libscols_table *tb, struct libscols_column *cl
 	cl->table = tb;
 	scols_ref_column(cl);
 
-	/* TODO:
-	 *
-	 * Currently it's possible to add/remove columns only if the table is
-	 * empty (see list_empty(tb->tb_lines) above). It would be nice to
-	 * enlarge/reduce lines cells[] always when we add/remove a new column.
+	if (list_empty(&tb->tb_lines))
+		return 0;
+
+	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
+
+	/* Realloc line cell arrays
 	 */
-	return 0;
+	while (scols_table_next_line(tb, &itr, &ln) == 0) {
+		rc = scols_line_alloc_cells(ln, tb->ncols);
+		if (rc)
+			break;
+	}
+
+	return rc;
 }
 
 /**
@@ -241,10 +252,63 @@ int scols_table_remove_columns(struct libscols_table *tb)
 }
 
 /**
+ * scols_table_move_column:
+ * @tb: table
+ * @pre: column before the column
+ * @cl: colum to move
+ *
+ * Move the @cl behind @pre. If the @pre is NULL then the @col is the first
+ * column in the table.
+ *
+ * Since: 2.30
+ *
+ * Returns: 0, a negative number in case of an error.
+ */
+int scols_table_move_column(struct libscols_table *tb,
+			    struct libscols_column *pre,
+			    struct libscols_column *cl)
+{
+	struct list_head *head;
+	struct libscols_iter itr;
+	struct libscols_column *p;
+	struct libscols_line *ln;
+	size_t n = 0, oldseq;
+
+	if (!tb || !cl)
+		return -EINVAL;
+
+	if (pre && pre->seqnum + 1 == cl->seqnum)
+		return 0;
+	if (pre == NULL && cl->seqnum == 0)
+		return 0;
+
+	DBG(TAB, ul_debugobj(tb, "move column %zu behind %zu",
+				cl->seqnum, pre? pre->seqnum : 0));
+
+	list_del_init(&cl->cl_columns);		/* remove from old position */
+
+	head = pre ? &pre->cl_columns : &tb->tb_columns;
+	list_add(&cl->cl_columns, head);	/* add to the new place */
+
+	oldseq = cl->seqnum;
+
+	/* fix seq. numbers */
+	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
+	while (scols_table_next_column(tb, &itr, &p) == 0)
+		p->seqnum = n++;
+
+	/* move data in lines */
+	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
+	while (scols_table_next_line(tb, &itr, &ln) == 0)
+		scols_line_move_cells(ln, cl->seqnum, oldseq);
+	return 0;
+}
+
+/**
  * scols_table_new_column:
  * @tb: table
  * @name: column header
- * @whint: column width hint (absolute width: N > 1; relative width: N < 1)
+ * @whint: column width hint (absolute width: N > 1; relative width: 0 < N < 1)
  * @flags: flags integer
  *
  * This is shortcut for
@@ -255,14 +319,31 @@ int scols_table_remove_columns(struct libscols_table *tb)
  *
  * The column width is possible to define by:
  *
- *  @whint = 0..1    : relative width, percent of terminal width
+ *  @whint: 0 < N < 1  : relative width, percent of terminal width
  *
- *  @whint = 1..N    : absolute width, empty column will be truncated to
+ *  @whint: N >= 1     : absolute width, empty column will be truncated to
  *                     the column header width if no specified STRICTWIDTH flag
  *
  * Note that if table has disabled "maxout" flag (disabled by default) than
  * relative width is used as a hint only. It's possible that column will be
  * narrow if the specified size is too large for column data.
+ *
+ *
+ * If the width of all columns is greater than terminal width then library
+ * tries to reduce width of the individual columns. It's done in three stages:
+ *
+ * #1 reduce columns with SCOLS_FL_TRUNC flag and with relative width if the
+ *    width is greater than width defined by @whint (@whint * terminal_width)
+ *
+ * #2 reduce all columns with SCOLS_FL_TRUNC flag
+ *
+ * #3 reduce all columns with relative width
+ *
+ * The next stage is always used if the previous stage is unsuccessful. Note
+ * that SCOLS_FL_WRAP is interpreted as SCOLS_FL_TRUNC when calculate column
+ * width (if custom wrap function is not specified), but the final text is not
+ * truncated, but wrapped to multi-line cell.
+ *
  *
  * The column is necessary to address by sequential number. The first defined
  * column has the colnum = 0. For example:
@@ -737,7 +818,7 @@ int scols_table_set_default_symbols(struct libscols_table *tb)
  * draw tree output. If no symbols are used for the table then library creates
  * default temporary symbols to draw output by scols_table_set_default_symbols().
  *
- * If @sy is NULL then remove reference from the currenly uses symbols.
+ * If @sy is NULL then remove reference from the currently used symbols.
  *
  * Returns: 0, a negative value in case of an error.
  */
@@ -749,7 +830,7 @@ int scols_table_set_symbols(struct libscols_table *tb,
 
 	/* remove old */
 	if (tb->symbols) {
-		DBG(TAB, ul_debugobj(tb, "remove symbols %p refrence", tb->symbols));
+		DBG(TAB, ul_debugobj(tb, "remove symbols %p reference", tb->symbols));
 		scols_unref_symbols(tb->symbols);
 		tb->symbols = NULL;
 	}
@@ -1102,7 +1183,6 @@ int scols_table_is_tree(const struct libscols_table *tb)
  * @sep: separator
  *
  * Sets the column separator of @tb to @sep.
- * Please note that @sep should always take up a single cell in the output.
  *
  * Returns: 0, a negative value in case of an error.
  */
@@ -1207,7 +1287,8 @@ static int sort_line_children(struct libscols_line *ln, struct libscols_column *
  * @tb: table
  * @cl: order by this column
  *
- * Orders the table by the column. See also scols_column_set_cmpfunc().
+ * Orders the table by the column. See also scols_column_set_cmpfunc(). If the
+ * tree output is enabled then children in the tree are recursively sorted too.
  *
  * Returns: 0, a negative value in case of an error.
  */
@@ -1230,6 +1311,60 @@ int scols_sort_table(struct libscols_table *tb, struct libscols_column *cl)
 
 	return 0;
 }
+
+static struct libscols_line *move_line_and_children(struct libscols_line *ln, struct libscols_line *pre)
+{
+	if (pre) {
+		list_del_init(&ln->ln_lines);			/* remove from old position */
+	        list_add(&ln->ln_lines, &pre->ln_lines);        /* add to the new place (behind @pre) */
+	}
+	pre = ln;
+
+	if (!list_empty(&ln->ln_branch)) {
+		struct list_head *p;
+
+		list_for_each(p, &ln->ln_branch) {
+			struct libscols_line *chld =
+					list_entry(p, struct libscols_line, ln_children);
+			pre = move_line_and_children(chld, pre);
+		}
+	}
+
+	return pre;
+}
+
+/**
+ * scols_sort_table_by_tree:
+ * @tb: table
+ *
+ * Reorders lines in the table by parent->child relation. Note that order of
+ * the lines in the table is independent on the tree hierarchy.
+ *
+ * Since: 2.30
+ *
+ * Returns: 0, a negative value in case of an error.
+ */
+int scols_sort_table_by_tree(struct libscols_table *tb)
+{
+	struct libscols_line *ln;
+	struct libscols_iter itr;
+
+	if (!tb)
+		return -EINVAL;
+
+	DBG(TAB, ul_debugobj(tb, "sorting table by tree"));
+
+	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
+	while (scols_table_next_line(tb, &itr, &ln) == 0) {
+		if (ln->parent)
+			continue;
+
+		move_line_and_children(ln, NULL);
+	}
+
+	return 0;
+}
+
 
 /**
  * scols_table_set_termforce:
@@ -1278,6 +1413,7 @@ int scols_table_get_termforce(const struct libscols_table *tb)
  */
 int scols_table_set_termwidth(struct libscols_table *tb, size_t width)
 {
+	DBG(TAB, ul_debugobj(tb, "set terminatl width: %zu", width));
 	tb->termwidth = width;
 	return 0;
 }

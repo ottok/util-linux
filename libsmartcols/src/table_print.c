@@ -275,7 +275,7 @@ static const char *get_cell_color(struct libscols_table *tb,
 	const char *color = NULL;
 
 	if (tb && tb->colors_wanted) {
-		if (ce && !color)
+		if (ce)
 			color = ce->color;
 		if (ln && !color)
 			color = ln->color;
@@ -455,7 +455,7 @@ static int print_data(struct libscols_table *tb,
 	case SCOLS_FMT_JSON:
 		fputs_quoted_json_lower(scols_cell_get_data(&cl->header), tb->out);
 		fputs(": ", tb->out);
-		if (!data || !*data)
+		if (!*data)
 			fputs("null", tb->out);
 		else
 			fputs_quoted_json(data, tb->out);
@@ -1090,11 +1090,14 @@ static int recount_widths(struct libscols_table *tb, struct libscols_buffer *buf
 	struct libscols_column *cl;
 	struct libscols_iter itr;
 	size_t width = 0, width_min = 0;	/* output width */
-	int trunc_only, rc = 0;
+	int stage, rc = 0;
 	int extremes = 0;
+	size_t colsepsz;
 
 
 	DBG(TAB, ul_debugobj(tb, "recounting widths (termwidth=%zu)", tb->termwidth));
+
+	colsepsz = mbs_safe_width(colsep(tb));
 
 	/* set basic columns width
 	 */
@@ -1110,8 +1113,8 @@ static int recount_widths(struct libscols_table *tb, struct libscols_buffer *buf
 
 		is_last = is_last_column(cl);
 
-		width += cl->width + (is_last ? 0 : 1);		/* separator for non-last column */
-		width_min += cl->width_min + (is_last ? 0 : 1);
+		width += cl->width + (is_last ? 0 : colsepsz);		/* separator for non-last column */
+		width_min += cl->width_min + (is_last ? 0 : colsepsz);
 		extremes += cl->is_extreme;
 	}
 
@@ -1217,60 +1220,91 @@ static int recount_widths(struct libscols_table *tb, struct libscols_buffer *buf
 		}
 	}
 
-	/* bad, we have to reduce output width, this is done in two steps:
-	 * 1) reduce columns with a relative width and with truncate flag
-	 * 2) reduce columns with a relative width without truncate flag
+	/* bad, we have to reduce output width, this is done in three stages:
+	 *
+	 * 1) trunc relative with trunc flag if the column width is greater than
+	 *    expected column width (it means "width_hint * terminal_width").
+	 *
+	 * 2) trunc all with trunc flag
+	 *
+	 * 3) trunc relative without trunc flag
+	 *
+	 * Note that SCOLS_FL_WRAP (if no custom wrap function is specified) is
+	 * interpreted as SCOLS_FL_TRUNC.
 	 */
-	trunc_only = 1;
-	while (width > tb->termwidth) {
-		size_t org = width;
+	for (stage = 1; width > tb->termwidth && stage <= 3; ) {
+		size_t org_width = width;
 
-		DBG(TAB, ul_debugobj(tb, " reduce width (current=%zu, "
-					 "wanted=%zu, mode=%s)",
-					width, tb->termwidth,
-					trunc_only ? "trunc-only" : "all-relative"));
+		DBG(TAB, ul_debugobj(tb, " reduce width - #%d stage (current=%zu, wanted=%zu)",
+				stage, width, tb->termwidth));
 
 		scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
 		while (scols_table_next_column(tb, &itr, &cl) == 0) {
 
-			DBG(TAB, ul_debugobj(cl, "  checking %s (width=%zu, treeart=%zu)",
+			int trunc_flag = 0;
+
+			DBG(TAB, ul_debugobj(cl, "   checking %s (width=%zu, treeart=%zu)",
 						cl->header.data, cl->width, cl->width_treeart));
 			if (scols_column_is_hidden(cl))
 				continue;
 			if (width <= tb->termwidth)
 				break;
-			if (cl->width_hint > 1 && !scols_column_is_trunc(cl))
-				continue;	/* never truncate columns with absolute sizes */
-			if (scols_column_is_tree(cl) && width <= cl->width_treeart)
-				continue;	/* never truncate the tree */
-			if (trunc_only && !(scols_column_is_trunc(cl) ||
-					(scols_column_is_wrap(cl) && !scols_column_is_customwrap(cl))))
-				continue;
+
+			/* never truncate if already minimal width */
 			if (cl->width == cl->width_min)
 				continue;
 
-			DBG(TAB, ul_debugobj(tb, "  trying to reduce: %s (width=%zu)", cl->header.data, cl->width));
+			/* never truncate the tree */
+			if (scols_column_is_tree(cl) && width <= cl->width_treeart)
+				continue;
 
-			/* truncate column with relative sizes */
-			if (cl->width_hint < 1 && cl->width > 0 && width > 0 &&
-			    cl->width >= (size_t) (cl->width_hint * tb->termwidth)) {
+			/* nothing to truncate */
+			if (cl->width == 0 || width == 0)
+				continue;
+
+			trunc_flag = scols_column_is_trunc(cl)
+				    || (scols_column_is_wrap(cl) && !scols_column_is_customwrap(cl));
+
+			switch (stage) {
+			/* #1 stage - trunc relative with TRUNC flag */
+			case 1:
+				if (!trunc_flag)		/* ignore: missing flag */
+					break;
+				if (cl->width_hint <= 0 || cl->width_hint >= 1)	/* ignore: no relative */
+					break;
+				if (cl->width < (size_t) (cl->width_hint * tb->termwidth)) /* ignore: smaller than expected width */
+					break;
+
+				DBG(TAB, ul_debugobj(tb, "     reducing (relative with flag)"));
 				cl->width--;
 				width--;
-			}
-
-			/* truncate column with absolute size */
-			if (cl->width_hint > 1 && cl->width > 0 && width > 0 &&
-			    !trunc_only) {
-				cl->width--;
-				width--;
-			}
-		}
-		if (org == width) {
-			if (trunc_only)
-				trunc_only = 0;
-			else
 				break;
+
+			/* #2 stage - trunc all with TRUNC flag */
+			case 2:
+				if (!trunc_flag)		/* ignore: missing flag */
+					break;
+
+				DBG(TAB, ul_debugobj(tb, "     reducing (all with flag)"));
+				cl->width--;
+				width--;
+				break;
+
+			/* #3 stage - trunc relative without flag */
+			case 3:
+				if (cl->width_hint <= 0 || cl->width_hint >= 1)	/* ignore: no relative */
+					break;
+
+				DBG(TAB, ul_debugobj(tb, "     reducing (relative without flag)"));
+				cl->width--;
+				width--;
+				break;
+			}
 		}
+
+		/* the current stage is without effect, go to the next */
+		if (org_width == width)
+			stage++;
 	}
 
 	/* ignore last column(s) or force last column to be truncated if
@@ -1291,7 +1325,7 @@ static int recount_widths(struct libscols_table *tb, struct libscols_buffer *buf
 				width -= r;
 			} else {
 				cl->flags |= SCOLS_FL_HIDDEN;
-				width -= cl->width + 1;		/* +1 means separator between columns */
+				width -= cl->width + colsepsz;
 			}
 		}
 	}
@@ -1341,7 +1375,9 @@ static int initialize_printing(struct libscols_table *tb, struct libscols_buffer
 	DBG(TAB, ul_debugobj(tb, "initialize printing"));
 
 	if (!tb->symbols) {
-		scols_table_set_default_symbols(tb);
+		rc = scols_table_set_default_symbols(tb);
+		if (rc)
+			goto err;
 		tb->priv_symbols = 1;
 	} else
 		tb->priv_symbols = 0;
@@ -1476,7 +1512,7 @@ done:
 /**
  * scols_table_print_range_to_string:
  * @tb: table
- * @start: first printed line or NULL to print from the beggin of the table
+ * @start: first printed line or NULL to print from the beginning of the table
  * @end: last printed line or NULL to print all from start.
  * @data: pointer to the beginning of a memory area to print to
  *
@@ -1485,12 +1521,12 @@ done:
  *
  * Returns: 0, a negative value in case of an error.
  */
+#ifdef HAVE_OPEN_MEMSTREAM
 int scols_table_print_range_to_string(	struct libscols_table *tb,
 					struct libscols_line *start,
 					struct libscols_line *end,
 					char **data)
 {
-#ifdef HAVE_OPEN_MEMSTREAM
 	FILE *stream, *old_stream;
 	size_t sz;
 	int rc;
@@ -1512,10 +1548,17 @@ int scols_table_print_range_to_string(	struct libscols_table *tb,
 	scols_table_set_stream(tb, old_stream);
 
 	return rc;
-#else
-	return -ENOSYS;
-#endif
 }
+#else
+int scols_table_print_range_to_string(
+			struct libscols_table *tb __attribute__((__unused__)),
+			struct libscols_line *start __attribute__((__unused__)),
+			struct libscols_line *end __attribute__((__unused__)),
+			char **data __attribute__((__unused__)))
+{
+	return -ENOSYS;
+}
+#endif
 
 static int __scols_print_table(struct libscols_table *tb, int *is_empty)
 {

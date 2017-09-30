@@ -29,9 +29,9 @@ extern "C" {
 #include <mntent.h>
 #include <sys/types.h>
 
-#define LIBMOUNT_VERSION   "2.29.2"
+#define LIBMOUNT_VERSION   "2.30.2"
 #define LIBMOUNT_MAJOR_VERSION   2
-#define LIBMOUNT_MINOR_VERSION   29
+#define LIBMOUNT_MINOR_VERSION   30
 #define LIBMOUNT_PATCH_VERSION   2
 
 /**
@@ -184,6 +184,72 @@ enum {
  * detected overlapping loop device that cannot be re-used
  */
 #define MNT_ERR_LOOPOVERLAP 5007
+
+
+/*
+ * Overall return codes -- based on mount(8) and umount(8) return codes.
+ * See mnt_context_get_excode() for more details.
+ */
+
+/**
+ * MNT_EX_SUCCESS:
+ *
+ * [u]mount(8) exit code: no errors
+ */
+#define MNT_EX_SUCCESS	0
+
+/**
+ * MNT_EX_USAGE:
+ *
+ * [u]mount(8) exit code: incorrect invocation or permission
+ */
+#define MNT_EX_USAGE	1
+
+/**
+ * MNT_EX_SYSERR:
+ *
+ * [u]mount(8) exit code: out of memory, cannot fork, ...
+ */
+
+#define MNT_EX_SYSERR	2
+
+/**
+ * MNT_EX_SOFTWARE:
+ *
+ * [u]mount(8) exit code: internal mount bug or wrong version
+ */
+#define MNT_EX_SOFTWARE	4
+
+/**
+ * MNT_EX_USER:
+ *
+ * [u]mount(8) exit code: user interrupt
+ */
+#define MNT_EX_USER	8
+
+/**
+ * MNT_EX_FILEIO:
+ *
+ * [u]mount(8) exit code: problems writing, locking, ... mtab/fstab
+ */
+#define MNT_EX_FILEIO	16
+
+/**
+ * MNT_EX_FAIL:
+ *
+ * [u]mount(8) exit code: mount failure
+ */
+#define MNT_EX_FAIL	32
+
+/**
+ * MNT_EX_SOMEOK:
+ *
+ * [u]mount(8) exit code: some mount succeeded; usually when executed with
+ * --all options. Never returned by libmount.
+ */
+#define MNT_EX_SOMEOK	64
+
+
 
 #ifndef __GNUC_PREREQ
 # if defined __GNUC__ && defined __GNUC_MINOR__
@@ -610,6 +676,7 @@ extern int mnt_context_set_optsmode(struct libmnt_context *cxt, int mode);
 extern int mnt_context_disable_canonicalize(struct libmnt_context *cxt, int disable);
 extern int mnt_context_enable_lazy(struct libmnt_context *cxt, int enable);
 extern int mnt_context_enable_rdonly_umount(struct libmnt_context *cxt, int enable);
+extern int mnt_context_enable_rwonly_mount(struct libmnt_context *cxt, int enable);
 extern int mnt_context_disable_helpers(struct libmnt_context *cxt, int disable);
 extern int mnt_context_enable_sloppy(struct libmnt_context *cxt, int enable);
 extern int mnt_context_enable_fake(struct libmnt_context *cxt, int enable);
@@ -625,6 +692,8 @@ extern int mnt_context_get_optsmode(struct libmnt_context *cxt);
 extern int mnt_context_is_lazy(struct libmnt_context *cxt)
 			__ul_attribute__((nonnull));
 extern int mnt_context_is_rdonly_umount(struct libmnt_context *cxt)
+			__ul_attribute__((nonnull));
+extern int mnt_context_is_rwonly_mount(struct libmnt_context *cxt)
 			__ul_attribute__((nonnull));
 extern int mnt_context_is_sloppy(struct libmnt_context *cxt)
 			__ul_attribute__((nonnull));
@@ -643,6 +712,8 @@ extern int mnt_context_is_nohelpers(struct libmnt_context *cxt)
 extern int mnt_context_is_nocanonicalize(struct libmnt_context *cxt)
 			__ul_attribute__((nonnull));
 extern int mnt_context_is_swapmatch(struct libmnt_context *cxt)
+			__ul_attribute__((nonnull));
+extern int mnt_context_forced_rdonly(struct libmnt_context *cxt)
 			__ul_attribute__((nonnull));
 
 extern int mnt_context_is_fork(struct libmnt_context *cxt)
@@ -724,7 +795,12 @@ extern int mnt_context_syscall_called(struct libmnt_context *cxt);
 extern int mnt_context_get_syscall_errno(struct libmnt_context *cxt);
 
 extern int mnt_context_strerror(struct libmnt_context *cxt, char *buf,
-				size_t bufsiz);
+				size_t bufsiz)
+				__ul_attribute__((deprecated));
+
+extern int mnt_context_get_excode(struct libmnt_context *cxt,
+                        int rc, char *buf, size_t bufsz);
+
 
 /* context_mount.c */
 extern int mnt_context_mount(struct libmnt_context *cxt);
@@ -774,6 +850,7 @@ extern int mnt_context_set_syscall_status(struct libmnt_context *cxt, int status
 #define MNT_MS_OFFSET   (1 << 14)
 #define MNT_MS_SIZELIMIT (1 << 15)
 #define MNT_MS_ENCRYPTION (1 << 16)
+#define MNT_MS_XFSTABCOMM (1 << 17)
 
 /*
  * mount(2) MS_* masks (MNT_MAP_LINUX map)

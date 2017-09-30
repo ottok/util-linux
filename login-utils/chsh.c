@@ -57,6 +57,11 @@
 # include "auth.h"
 #endif
 
+#ifdef HAVE_LIBREADLINE
+# define _FUNCTION_DEF
+# include <readline/readline.h>
+#endif
+
 struct sinfo {
 	char *username;
 	char *shell;
@@ -129,11 +134,11 @@ static int get_shell_list(const char *shell_name)
 static void parse_argv(int argc, char **argv, struct sinfo *pinfo)
 {
 	static const struct option long_options[] = {
-		{"shell", required_argument, 0, 's'},
-		{"list-shells", no_argument, 0, 'l'},
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'v'},
-		{NULL, no_argument, 0, '0'},
+		{"shell",       required_argument, NULL, 's'},
+		{"list-shells", no_argument,       NULL, 'l'},
+		{"help",        no_argument,       NULL, 'h'},
+		{"version",     no_argument,       NULL, 'v'},
+		{NULL, 0, NULL, 0},
 	};
 	int c;
 
@@ -154,7 +159,7 @@ static void parse_argv(int argc, char **argv, struct sinfo *pinfo)
 			pinfo->shell = optarg;
 			break;
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 	/* done parsing arguments.  check for a username. */
@@ -173,14 +178,18 @@ static char *ask_new_shell(char *question, char *oldshell)
 {
 	int len;
 	char *ans = NULL;
+#ifndef HAVE_LIBREADLINE
 	size_t dummy = 0;
-	ssize_t sz;
+#endif
 
 	if (!oldshell)
 		oldshell = "";
 	printf("%s [%s]: ", question, oldshell);
-	sz = getline(&ans, &dummy, stdin);
-	if (sz == -1)
+#ifdef HAVE_LIBREADLINE
+	if ((ans = readline(NULL)) == NULL)
+#else
+	if (getline(&ans, &dummy, stdin) < 0)
+#endif
 		return NULL;
 	/* remove the newline at the end of ans. */
 	ltrim_whitespace((unsigned char *) ans);
@@ -227,7 +236,7 @@ int main(int argc, char **argv)
 	char *oldshell;
 	int nullshell = 0;
 	const uid_t uid = getuid();
-	struct sinfo info = { 0 };
+	struct sinfo info = { NULL };
 	struct passwd *pw;
 
 	sanitize_env();

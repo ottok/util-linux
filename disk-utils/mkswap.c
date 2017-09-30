@@ -104,7 +104,7 @@ static void set_signature(const struct mkswap_control *ctl)
 	char *sp = (char *) ctl->signature_page;
 
 	assert(sp);
-	strncpy(sp + ctl->pagesize - SWAP_SIGNATURE_SZ, SWAP_SIGNATURE, SWAP_SIGNATURE_SZ);
+	memcpy(sp + ctl->pagesize - SWAP_SIGNATURE_SZ, SWAP_SIGNATURE, SWAP_SIGNATURE_SZ);
 }
 
 static void set_uuid_and_label(const struct mkswap_control *ctl)
@@ -352,15 +352,15 @@ int main(int argc, char **argv)
 	uuid_t uuid_dat;
 #endif
 	static const struct option longopts[] = {
-		{ "check",       no_argument,       0, 'c' },
-		{ "force",       no_argument,       0, 'f' },
-		{ "pagesize",    required_argument, 0, 'p' },
-		{ "label",       required_argument, 0, 'L' },
-		{ "swapversion", required_argument, 0, 'v' },
-		{ "uuid",        required_argument, 0, 'U' },
-		{ "version",     no_argument,       0, 'V' },
-		{ "help",        no_argument,       0, 'h' },
-		{ NULL,          0, 0, 0 }
+		{ "check",       no_argument,       NULL, 'c' },
+		{ "force",       no_argument,       NULL, 'f' },
+		{ "pagesize",    required_argument, NULL, 'p' },
+		{ "label",       required_argument, NULL, 'L' },
+		{ "swapversion", required_argument, NULL, 'v' },
+		{ "uuid",        required_argument, NULL, 'U' },
+		{ "version",     no_argument,       NULL, 'V' },
+		{ "help",        no_argument,       NULL, 'h' },
+		{ NULL,          0, NULL, 0 }
 	};
 
 	setlocale(LC_ALL, "");
@@ -402,7 +402,7 @@ int main(int argc, char **argv)
 		case 'h':
 			usage(stdout);
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

@@ -21,14 +21,14 @@ AC_PREFIX_DEFAULT([/usr])
 
 dnl version details from <major>.<minor>[-<suffix>]
 PACKAGE_VERSION_MAJOR=$(echo $PACKAGE_VERSION | awk -F. '{print $1}')
-PACKAGE_VERSION_MINOR=$(echo $PACKAGE_VERSION | awk -F. '{print $2}' \
-					      | awk -F- '{print $1}')
+PACKAGE_VERSION_MINOR=$(echo $PACKAGE_VERSION | awk -F. '{
+                                                   sub("-.*","",$2); print $2}')
 PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
-                     sub("-.*","",$3); print $3 ~ /^@<:@[0-9]@:>@+$/ ? $3 : 0}')
+                     sub("-.*","",$3); print $3 ~ /^@<:@0-9@:>@+$/ ? $3 : 0}')
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="22-Feb-2017"
+LIBBLKID_DATE="21-Sep-2017"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -99,6 +99,7 @@ AC_SUBST([usrlib_execdir])
 AM_PROG_CC_C_O
 AC_PROG_MKDIR_P
 AC_PROG_CC_STDC
+AC_PROG_YACC
 AC_CANONICAL_HOST
 AC_C_CONST
 AC_C_VOLATILE
@@ -153,7 +154,6 @@ PKG_PROG_PKG_CONFIG
 GTK_DOC_CHECK([1.10])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
 
-
 linux_os=no
 bsd_os=no
 AS_CASE([${host_os}],
@@ -184,6 +184,7 @@ UL_SET_ARCH([HPPA], [hppa*|parisc*])
 
 AC_SYS_LARGEFILE
 AC_HEADER_ASSERT
+AC_STRUCT_TIMEZONE
 
 dnl Don't forget to maintain alternatively allowed versions in autogen.sh!
 AM_GNU_GETTEXT_VERSION([0.18.3])
@@ -207,6 +208,8 @@ AC_CHECK_HEADERS([ \
 	fcntl.h \
 	getopt.h \
 	inttypes.h \
+	lastlog.h \
+	libutil.h \
 	linux/btrfs.h \
 	linux/cdrom.h \
 	linux/falloc.h \
@@ -257,6 +260,7 @@ AC_CHECK_HEADERS([ \
 	unistd.h \
 	shadow.h \
 	utmp.h \
+	utmpx.h \
 ])
 
 AC_CHECK_HEADERS([linux/gsmmux.h ], [], [],
@@ -273,6 +277,8 @@ AC_CHECK_HEADERS([security/pam_misc.h],
 #endif
 ])
 
+AC_CHECK_HEADERS([linux/blkzoned.h])
+
 AC_CHECK_HEADERS([security/openpam.h], [], [], [
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
@@ -285,6 +291,8 @@ AC_CHECK_HEADERS([langinfo.h],
 
 dnl Convert some ac_cv_header_* variables to have_*
 dnl
+have_linux_version_h=$ac_cv_header_linux_version_h
+have_linux_blkzoned_h=$ac_cv_header_linux_blkzoned_h
 have_linux_btrfs_h=$ac_cv_header_linux_btrfs_h
 have_linux_raw_h=$ac_cv_header_linux_raw_h
 have_linux_securebits_h=$ac_cv_header_linux_securebits_h
@@ -294,7 +302,12 @@ have_security_pam_misc_h=$ac_cv_header_security_pam_misc_h
 have_security_openpam_h=$ac_cv_header_security_openpam_h
 have_shadow_h=$ac_cv_header_shadow_h
 have_sys_signalfd_h=$ac_cv_header_sys_signalfd_h
-have_utmp_h=$ac_cv_header_utmp_h
+have_utmpx_h=$ac_cv_header_utmpx_h
+
+AS_CASE([$linux_os:$have_linux_version_h],
+  [yes:no],
+    [AC_MSG_ERROR([kernel headers required on Linux])]
+)
 
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <time.h>
@@ -376,12 +389,14 @@ AC_CHECK_FUNCS([ \
 	__secure_getenv \
 	err \
 	errx \
+	explicit_bzero \
 	fsync \
 	utimensat \
 	getdomainname \
 	getdtablesize \
 	getexecname \
 	getmntinfo \
+	getrandom \
 	getrlimit \
 	getsgnam \
 	inotify_init \
@@ -411,7 +426,7 @@ AC_CHECK_FUNCS([ \
 	strnlen \
 	sysconf \
 	sysinfo \
-	updwtmp \
+	timegm \
 	usleep \
 	warn \
 	warnx \
@@ -424,8 +439,10 @@ AC_CHECK_FUNCS([futimens], [have_futimens=yes])
 AC_CHECK_FUNCS([inotify_init1], [have_inotify_init1=yes])
 AC_CHECK_FUNCS([open_memstream], [have_open_memstream=yes],[have_open_memstream=no])
 AC_CHECK_FUNCS([reboot], [have_reboot=yes],[have_reboot=no])
+AC_CHECK_FUNCS([updwtmpx updwtmpx], [have_gnu_utmpx=yes], [have_gnu_utmpx=no])
 
 AM_CONDITIONAL([HAVE_OPENAT], [test "x$have_openat" = xyes])
+
 
 AC_CHECK_FUNCS([isnan], [],
 	[AC_CHECK_LIB([m], [isnan], [MATH_LIBS="-lm"])]
@@ -782,12 +799,17 @@ AC_ARG_WITH([ncursesw],
   [], [with_ncursesw=auto]
 )
 have_ncursesw=no
+have_ncursesw_header=no
 AS_IF([test "x$with_ncursesw" != xno], [
   UL_NCURSES_CHECK([ncursesw])
   AS_IF([test "x$have_ncursesw" = xyes], [
-    AC_DEFINE([HAVE_LIBNCURSESW], [1], [Define if ncursesw library available])
+    AC_CHECK_HEADERS([ncursesw/ncurses.h], [have_ncursesw_header=yes])
+    AC_CHECK_HEADERS([ncursesw/term.h])
+    AS_IF([test "x$have_ncursesw_header" = xno], [have_ncursesw=no])
+  ])
+  AS_IF([test "x$have_ncursesw" = xyes], [
     CURSES_LIB_NAME="ncursesw"
-    AC_CHECK_HEADERS([ncursesw/ncurses.h ncurses.h])
+    AC_DEFINE([HAVE_LIBNCURSESW], [1], [Define if ncursesw library available])
   ])
 ])
 AS_CASE([$with_ncursesw:$have_ncursesw],
@@ -800,16 +822,20 @@ AC_ARG_WITH([ncurses],
   [], [with_ncurses=auto]
 )
 have_ncurses=no
-
+have_ncurses_header=no
 AS_CASE([$with_ncurses:$build_widechar],
   [yes:yes], [AC_MSG_ERROR([wide-char support enabled, but non-wide ncurses selects])])
 
 AS_IF([test "x$have_ncursesw" = xno -a "x$with_ncurses" != xno ], [
   UL_NCURSES_CHECK([ncurses])
   AS_IF([test "x$have_ncurses" = xyes], [
-    AC_DEFINE([HAVE_LIBNCURSES], [1], [Define if ncurses library available])
+    AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h], [have_ncurses_header=yes])
+    AC_CHECK_HEADERS([ncurses/term.h term.h])
+    AS_IF([test "x$have_ncurses_header" = xno], [have_ncurses=no])
+  ])
+  AS_IF([test "x$have_ncurses" = xyes], [
     CURSES_LIB_NAME="ncurses"
-    AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h])
+    AC_DEFINE([HAVE_LIBNCURSES], [1], [Define if ncurses library available])
   ])
 ])
 AS_CASE([$with_ncurses:$have_ncurses],
@@ -1190,6 +1216,34 @@ AS_IF([test "x$build_fallocate" = xyes], [
   AC_MSG_RESULT([no])])
 ])
 
+AS_IF([test "x$build_fallocate" = xyes], [
+  dnl check for valid posix_fallocate() function
+  AC_MSG_CHECKING([for valid posix_fallocate() function])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_LINUX_FALLOC_H
+# include <linux/falloc.h>
+#endif
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+]],[[
+   long ret;
+   ret = posix_fallocate(0, 0xfffffffful, 0xfffffffful);
+   if (ret != 0) {
+      return 1;
+   }
+   ]])],[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE([HAVE_POSIX_FALLOCATE], [1], [Have valid posix_fallocate() function])],[
+  AC_MSG_RESULT([no])])
+])
+
 
 AC_ARG_ENABLE([unshare],
   AS_HELP_STRING([--disable-unshare], [do not build unshare]),
@@ -1250,7 +1304,8 @@ AC_ARG_ENABLE([agetty],
   [], [UL_DEFAULT_ENABLE([agetty], [check])]
 )
 UL_BUILD_INIT([agetty])
-UL_REQUIRES_HAVE([agetty], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([agetty], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([agetty], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_AGETTY], [test "x$build_agetty" = xyes])
 AS_IF([test "x$have_futimens" = xyes -a "x$have_inotify_init1" = xyes ], [
   AC_DEFINE([AGETTY_RELOAD], [1], [Enable agetty --reload feature])
@@ -1371,7 +1426,8 @@ AC_ARG_ENABLE([lslogins],
 UL_BUILD_INIT([lslogins])
 UL_REQUIRES_BUILD([lslogins], [libsmartcols])
 UL_REQUIRES_HAVE([lslogins], [shadow_h], [shadow.h header])
-UL_REQUIRES_HAVE([lslogins], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([lslogins], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([lslogins], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_LSLOGINS], [test "x$build_lslogins" = xyes])
 
 
@@ -1480,8 +1536,28 @@ UL_BUILD_INIT([flock], [check])
 UL_REQUIRES_HAVE([flock], [timer], [timer_create function])
 AM_CONDITIONAL([BUILD_FLOCK], [test "x$build_flock" = xyes])
 
+
+AC_ARG_ENABLE([lsmem],
+  AS_HELP_STRING([--disable-lsmem], [do not build lsmem]),
+  [], [UL_DEFAULT_ENABLE([lsmem], [check])]
+)
+UL_BUILD_INIT([lsmem])
+UL_REQUIRES_LINUX([lsmem])
+UL_REQUIRES_BUILD([lsmem], [libsmartcols])
+AM_CONDITIONAL([BUILD_LSMEM], [test "x$build_lsmem" = xyes])
+
+
+AC_ARG_ENABLE([chmem],
+  AS_HELP_STRING([--disable-chmem], [do not build chmem]),
+  [], [UL_DEFAULT_ENABLE([chmem], [check])]
+)
+UL_BUILD_INIT([chmem])
+UL_REQUIRES_LINUX([chmem])
+AM_CONDITIONAL([BUILD_CHMEM], [test "x$build_chmem" = xyes])
+
 UL_BUILD_INIT([ipcmk], [yes])
 AM_CONDITIONAL([BUILD_IPCMK], [test "x$build_ipcmk" = xyes])
+
 
 AC_ARG_ENABLE([ipcrm],
   AS_HELP_STRING([--disable-ipcrm], [do not build ipcrm]),
@@ -1530,6 +1606,11 @@ dnl earlier than 2.x.
 UL_REQUIRES_HAVE([ctrlaltdel], [reboot], [reboot function])
 AM_CONDITIONAL([BUILD_CTRLALTDEL], [test "x$build_ctrlaltdel" = xyes])
 
+UL_BUILD_INIT([fincore], [check])
+UL_REQUIRES_LINUX([fincore])
+UL_REQUIRES_BUILD([fincore], [libsmartcols])
+AM_CONDITIONAL([BUILD_FINCORE], [test "x$build_fincore" = xyes])
+
 UL_BUILD_INIT([fsfreeze], [check])
 UL_REQUIRES_LINUX([fsfreeze])
 AM_CONDITIONAL([BUILD_FSFREEZE], [test "x$build_fsfreeze" = xyes])
@@ -1537,6 +1618,11 @@ AM_CONDITIONAL([BUILD_FSFREEZE], [test "x$build_fsfreeze" = xyes])
 UL_BUILD_INIT([blkdiscard], [check])
 UL_REQUIRES_LINUX([blkdiscard])
 AM_CONDITIONAL([BUILD_BLKDISCARD], [test "x$build_blkdiscard" = xyes])
+
+UL_BUILD_INIT([blkzone], [check])
+UL_REQUIRES_LINUX([blkzone])
+UL_REQUIRES_HAVE([blkzone], [linux_blkzoned_h], [linux/blkzoned.h header])
+AM_CONDITIONAL([BUILD_BLKZONE], [test "x$build_blkzone" = xyes])
 
 UL_BUILD_INIT([ldattach], [check])
 UL_REQUIRES_LINUX([ldattach])
@@ -1566,7 +1652,8 @@ AM_CONDITIONAL([BUILD_COLCRT], [test "x$build_colcrt" = xyes])
 UL_BUILD_INIT([colrm], [yes])
 AM_CONDITIONAL([BUILD_COLRM], [test "x$build_colrm" = xyes])
 
-UL_BUILD_INIT([column], [yes])
+UL_BUILD_INIT([column], [check])
+UL_REQUIRES_BUILD([column], [libsmartcols])
 AM_CONDITIONAL([BUILD_COLUMN], [test "x$build_column" = xyes])
 
 UL_BUILD_INIT([hexdump], [yes])
@@ -1574,9 +1661,6 @@ AM_CONDITIONAL([BUILD_HEXDUMP], [test "x$build_hexdump" = xyes])
 
 UL_BUILD_INIT([rev], [yes])
 AM_CONDITIONAL([BUILD_REV], [test "x$build_rev" = xyes])
-
-UL_BUILD_INIT([tailf], [yes])
-AM_CONDITIONAL([BUILD_TAILF], [test "x$build_tailf" = xyes])
 
 
 AC_ARG_ENABLE([tunelp],
@@ -1602,7 +1686,8 @@ AC_ARG_ENABLE([last],
   [], [UL_DEFAULT_ENABLE([last], [check])]
 )
 UL_BUILD_INIT([last])
-UL_REQUIRES_HAVE([last], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([last], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([last], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_LAST], [test "x$build_last" = xyes])
 
 
@@ -1611,7 +1696,8 @@ AC_ARG_ENABLE([utmpdump],
   [], [UL_DEFAULT_ENABLE([utmpdump], [check])]
 )
 UL_BUILD_INIT([utmpdump])
-UL_REQUIRES_HAVE([utmpdump], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([utmpdump], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([utmpdump], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_UTMPDUMP], [test "x$build_utmpdump" = xyes])
 
 
@@ -1730,7 +1816,8 @@ AC_ARG_ENABLE([login],
 UL_BUILD_INIT([login])
 UL_REQUIRES_HAVE([login], [security_pam_appl_h], [PAM header file])
 UL_REQUIRES_HAVE([login], [security_pam_misc_h, security_openpam_h], [PAM conversation functions])
-UL_REQUIRES_HAVE([login], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([login], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([login], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_LOGIN], [test "x$build_login" = xyes])
 
 AC_ARG_ENABLE([login-chown-vcs],
@@ -1775,7 +1862,8 @@ AC_ARG_ENABLE([su],
 )
 UL_BUILD_INIT([su])
 UL_REQUIRES_HAVE([su], [security_pam_appl_h], [PAM header file])
-UL_REQUIRES_HAVE([su], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([su], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([su], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_SU], [test "x$build_su" = xyes])
 
 
@@ -1785,7 +1873,8 @@ AC_ARG_ENABLE([runuser],
 )
 UL_BUILD_INIT([runuser])
 UL_REQUIRES_HAVE([runuser], [security_pam_appl_h], [PAM header file])
-UL_REQUIRES_HAVE([runuser], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([runuser], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([runuser], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_RUNUSER], [test "x$build_runuser" = xyes])
 
 
@@ -1794,7 +1883,7 @@ AC_ARG_ENABLE([ul],
   [], [UL_DEFAULT_ENABLE([ul], [check])]
 )
 UL_BUILD_INIT([ul])
-UL_REQUIRES_HAVE([ul], [ncursesw, tinfo, ncurses], [ncursesw, ncurses or tinfo libraries])
+UL_REQUIRES_HAVE([ul], [ncursesw, ncurses], [ncursesw or ncurses libraries])
 AM_CONDITIONAL([BUILD_UL], [test "x$build_ul" = xyes])
 
 
@@ -1803,7 +1892,7 @@ AC_ARG_ENABLE([more],
   [], [UL_DEFAULT_ENABLE([more], [check])]
 )
 UL_BUILD_INIT([more])
-UL_REQUIRES_HAVE([more], [ncursesw, tinfo, ncurses, termcap], [ncursesw, ncurses, tinfo or termcap libraries])
+UL_REQUIRES_HAVE([more], [ncursesw, ncurses], [ncursesw or ncurses libraries])
 AM_CONDITIONAL([BUILD_MORE], [test "x$build_more" = xyes])
 
 
@@ -1890,7 +1979,7 @@ AC_ARG_ENABLE([wall],
   [], [UL_DEFAULT_ENABLE([wall], [check])]
 )
 UL_BUILD_INIT([wall])
-UL_REQUIRES_HAVE([wall], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([wall], [utmpx_h], [utmpx.h header])
 AM_CONDITIONAL([BUILD_WALL], [test "x$build_wall" = xyes])
 
 
@@ -1899,7 +1988,8 @@ AC_ARG_ENABLE([write],
   [], [UL_DEFAULT_ENABLE([write], [no])]
 )
 UL_BUILD_INIT([write])
-UL_REQUIRES_HAVE([write], [utmp_h], [utmp.h header])
+UL_REQUIRES_HAVE([write], [utmpx_h], [utmpx.h header])
+UL_REQUIRES_HAVE([write], [gnu_utmpx], [GNU utmpx fucntions])
 AM_CONDITIONAL([BUILD_WRITE], [test "x$build_write" = xyes])
 
 

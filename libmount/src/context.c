@@ -33,6 +33,7 @@
 
 #include "mountP.h"
 #include "fileutils.h"
+#include "strutils.h"
 
 #include <sys/wait.h>
 
@@ -172,8 +173,10 @@ int mnt_reset_context(struct libmnt_context *cxt)
 	cxt->flags |= (fl & MNT_FL_FORCE);
 	cxt->flags |= (fl & MNT_FL_NOCANONICALIZE);
 	cxt->flags |= (fl & MNT_FL_RDONLY_UMOUNT);
+	cxt->flags |= (fl & MNT_FL_RWONLY_MOUNT);
 	cxt->flags |= (fl & MNT_FL_NOSWAPMATCH);
 	cxt->flags |= (fl & MNT_FL_TABPATHS_CHECKED);
+
 	return 0;
 }
 
@@ -475,6 +478,54 @@ int mnt_context_enable_rdonly_umount(struct libmnt_context *cxt, int enable)
 int mnt_context_is_rdonly_umount(struct libmnt_context *cxt)
 {
 	return cxt->flags & MNT_FL_RDONLY_UMOUNT ? 1 : 0;
+}
+
+/**
+ * mnt_context_enable_rwonly_mount:
+ * @cxt: mount context
+ * @enable: TRUE or FALSE
+ *
+ * Force read-write mount; if enabled libmount will never try MS_RDONLY
+ * after failed mount(2) EROFS. (See mount(8) man page, option -w).
+ *
+ * Since: 2.30
+ *
+ * Returns: 0 on success, negative number in case of error.
+ */
+int mnt_context_enable_rwonly_mount(struct libmnt_context *cxt, int enable)
+{
+	return set_flag(cxt, MNT_FL_RWONLY_MOUNT, enable);
+}
+
+/**
+ * mnt_context_is_rwonly_mount
+ * @cxt: mount context
+ *
+ * See also mnt_context_enable_rwonly_mount() and mount(8) man page,
+ * option -w.
+ *
+ * Since: 2.30
+ *
+ * Returns: 1 if only read-write mount is allowed.
+ */
+int mnt_context_is_rwonly_mount(struct libmnt_context *cxt)
+{
+	return cxt->flags & MNT_FL_RWONLY_MOUNT ? 1 : 0;
+}
+
+/**
+ * mnt_context_forced_rdonly:
+ * @cxt: mount context
+ *
+ * See also mnt_context_enable_rwonly_mount().
+ *
+ * Since: 2.30
+ *
+ * Returns: 1 if mounted read-only on write-protected device.
+ */
+int mnt_context_forced_rdonly(struct libmnt_context *cxt)
+{
+	return cxt->flags & MNT_FL_FORCED_RDONLY ? 1 : 0;
 }
 
 /**
@@ -1531,7 +1582,7 @@ int mnt_context_prepare_srcpath(struct libmnt_context *cxt)
 	return 0;
 }
 
-/* create a mountpoint if x-mount.mkdir[=<mode>] specified */
+/* create a mountpoint if X-mount.mkdir[=<mode>] specified */
 static int mkdir_target(const char *tgt, struct libmnt_fs *fs)
 {
 	char *mstr = NULL;
@@ -1543,8 +1594,12 @@ static int mkdir_target(const char *tgt, struct libmnt_fs *fs)
 	assert(tgt);
 	assert(fs);
 
-	if (mnt_optstr_get_option(fs->user_optstr, "x-mount.mkdir", &mstr, &mstr_sz) != 0)
+	if (mnt_optstr_get_option(fs->user_optstr, "X-mount.mkdir", &mstr, &mstr_sz) != 0 &&
+	    mnt_optstr_get_option(fs->user_optstr, "x-mount.mkdir", &mstr, &mstr_sz) != 0)   	/* obsolete */
 		return 0;
+
+	DBG(CXT, ul_debug("mkdir %s (%s) wanted", tgt, mstr));
+
 	if (mnt_stat_mountpoint(tgt, &st) == 0)
 		return 0;
 
@@ -1591,7 +1646,8 @@ int mnt_context_prepare_target(struct libmnt_context *cxt)
 	/* mkdir target */
 	if (cxt->action == MNT_ACT_MOUNT
 	    && !mnt_context_is_restricted(cxt)
-	    && cxt->user_mountflags & MNT_MS_XCOMMENT) {
+	    && (cxt->user_mountflags & MNT_MS_XCOMMENT ||
+		cxt->user_mountflags & MNT_MS_XFSTABCOMM)) {
 
 		rc = mkdir_target(tgt, cxt->fs);
 		if (rc)
@@ -1997,8 +2053,10 @@ int mnt_context_apply_fstab(struct libmnt_context *cxt)
 	if (!cxt || !cxt->fs)
 		return -EINVAL;
 
-	if (mnt_context_tab_applied(cxt))	/* already applied */
+	if (mnt_context_tab_applied(cxt)) {	/* already applied */
+		DBG(CXT, ul_debugobj(cxt, "fstab already applied -- skip"));
 		return 0;
+	}
 
 	if (mnt_context_is_restricted(cxt)) {
 		DBG(CXT, ul_debugobj(cxt, "force fstab usage for non-root users!"));
@@ -2211,7 +2269,7 @@ int mnt_context_set_syscall_status(struct libmnt_context *cxt, int status)
  * @buf: buffer
  * @bufsiz: size of the buffer
  *
- * Not implemented yet.
+ * Not implemented, deprecated in favor or mnt_context_get_excode().
  *
  * Returns: 0 or negative number in case of error.
  */
@@ -2222,6 +2280,102 @@ int mnt_context_strerror(struct libmnt_context *cxt __attribute__((__unused__)),
 	/* TODO: based on cxt->syscall_errno or cxt->helper_status */
 	return 0;
 }
+
+
+int mnt_context_get_generic_excode(int rc, char *buf, size_t bufsz, char *fmt, ...)
+{
+	va_list va;
+
+	if (rc == 0)
+		return MNT_EX_SUCCESS;
+
+	va_start(va, fmt);
+
+	/* we need to support "%m" */
+	errno = rc < 0 ? -rc : rc;
+
+	if (buf)
+		vsnprintf(buf, bufsz, fmt, va);
+
+	switch (errno) {
+	case EINVAL:
+	case EPERM:
+		rc = MNT_EX_USAGE;
+		break;
+	case ENOMEM:
+		rc = MNT_EX_SYSERR;
+		break;
+	default:
+		rc = MNT_EX_FAIL;
+		break;
+	}
+	va_end(va);
+	return rc;
+}
+
+/**
+ * mnt_context_get_excode:
+ * @cxt: context
+ * @rc: return code of the previous operation
+ * @buf: buffer to print error message (optional)
+ * @bufsz: size of the buffer
+ *
+ * This function analyzes context, [u]mount syscall and external helper status
+ * and @mntrc and generates unified return code (see MNT_EX_*) as expected
+ * from mount(8) or umount(8).
+ *
+ * If the external helper (e.g. /sbin/mount.type) has been executed than it
+ * returns status from wait() of the helper. It's not libmount fail if helper
+ * returns some crazy undocumented codes...  See mnt_context_helper_executed()
+ * and mnt_context_get_helper_status(). Note that mount(8) and umount(8) utils
+ * always return code from helper without extra care about it.
+ *
+ * If the argument @buf is not NULL then error message is generated (if
+ * anything failed).
+ *
+ * The @mntrc is usually return code from mnt_context_mount(),
+ * mnt_context_umount(), or 'mntrc' as returned by mnt_context_next_mount().
+ *
+ * Since: 2.30
+ *
+ * Returns: MNT_EX_* codes.
+ */
+int mnt_context_get_excode(
+			struct libmnt_context *cxt,
+			int rc,
+			char *buf,
+			size_t bufsz)
+{
+	if (buf) {
+		*buf = '\0'; /* for sure */
+
+		if (!cxt->enabled_textdomain) {
+			bindtextdomain(LIBMOUNT_TEXTDOMAIN, LOCALEDIR);
+			cxt->enabled_textdomain = 1;
+		}
+	}
+
+	switch (cxt->action) {
+	case MNT_ACT_MOUNT:
+		rc = mnt_context_get_mount_excode(cxt, rc, buf, bufsz);
+		break;
+	case MNT_ACT_UMOUNT:
+		rc = mnt_context_get_umount_excode(cxt, rc, buf, bufsz);
+		break;
+	default:
+		if (rc)
+			rc = mnt_context_get_generic_excode(rc, buf, bufsz,
+				_("operation failed: %m"));
+		else
+			rc = MNT_EX_SUCCESS;
+		break;
+	}
+
+	DBG(CXT, ul_debugobj(cxt, "excode: rc=%d message=\"%s\"", rc,
+				buf ? buf : "<no-message>"));
+	return rc;
+}
+
 
 /**
  * mnt_context_init_helper
@@ -2296,14 +2450,23 @@ int mnt_context_helper_setopt(struct libmnt_context *cxt, int c, char *arg)
 int mnt_context_is_fs_mounted(struct libmnt_context *cxt,
 			      struct libmnt_fs *fs, int *mounted)
 {
-	struct libmnt_table *mtab;
+	struct libmnt_table *mtab, *orig;
 	int rc;
 
 	if (!cxt || !fs || !mounted)
 		return -EINVAL;
 
+	orig = cxt->mtab;
 	rc = mnt_context_get_mtab(cxt, &mtab);
-	if (rc)
+	if (rc == -ENOENT && mnt_fs_streq_target(fs, "/proc") &&
+	    (!cxt->mtab_path || startswith(cxt->mtab_path, "/proc/"))) {
+		if (!orig) {
+			mnt_unref_table(cxt->mtab);
+			cxt->mtab = NULL;
+		}
+		*mounted = 0;
+		return 0;	/* /proc not mounted */
+	} else if (rc)
 		return rc;
 
 	*mounted = mnt_table_is_fs_mounted(mtab, fs);
@@ -2409,7 +2572,7 @@ int mnt_context_wait_for_children(struct libmnt_context *cxt,
 
 #ifdef TEST_PROGRAM
 
-struct libmnt_lock *lock;
+static struct libmnt_lock *lock;
 
 static void lock_fallback(void)
 {

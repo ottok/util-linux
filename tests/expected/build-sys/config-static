@@ -1,7 +1,9 @@
 blkid:  libblkid libuuid 
 cfdisk:  libblkid libfdisk libmount libncursesw librt libsmartcols libtinfo libuuid 
+column:  libsmartcols 
 eject:  libblkid libmount librt libuuid 
 fdisk:  libblkid libfdisk libreadline libsmartcols libtinfo libuuid 
+fincore:  libsmartcols 
 findfs:  libblkid libuuid 
 findmnt:  libblkid libmount librt libsmartcols libudev libuuid 
 fsck:  libblkid libmount librt libuuid 
@@ -17,6 +19,7 @@ lscpu:  libsmartcols
 lsipc:  libsmartcols 
 lslocks:  libblkid libmount librt libsmartcols libuuid 
 lslogins:  libsmartcols libsystemd 
+lsmem:  libsmartcols 
 lsns:  libsmartcols 
 mkswap:  libblkid libuuid 
 mount:  libblkid libmount librt libuuid 
@@ -38,16 +41,17 @@ addpart:
 agetty:  
 blkdiscard:  librt 
 blkid.static: STATIC
+blkzone:  
 blockdev:  
-cal:  libncursesw libtinfo 
+cal:  libtinfo 
 chcpu:  
-chfn:  libpam libpam_misc libpthread libuser 
+chfn:  libpam libpam_misc libpthread libreadline libuser 
+chmem:  
 chrt:  
-chsh:  libpam libpam_misc libpthread libuser 
+chsh:  libpam libpam_misc libpthread libreadline libuser 
 col:  
 colcrt:  
 colrm:  
-column:  
 ctrlaltdel:  
 delpart:  
 dmesg:  librt libtinfo 
@@ -60,7 +64,7 @@ fsck.minix:
 fsfreeze:  
 getopt:  
 hexdump:  libtinfo 
-hwclock:  
+hwclock:  libm 
 ionice:  
 ipcmk:  
 ipcrm:  
@@ -104,7 +108,6 @@ sfdisk.static: STATIC
 su:  libpam libpam_misc 
 sulogin:  rypt 
 switch_root:  
-tailf:  
 taskset:  
 ul:  libtinfo 
 umount.static: STATIC

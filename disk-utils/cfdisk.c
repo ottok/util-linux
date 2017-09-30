@@ -37,7 +37,7 @@
 # include <slcurses.h>
 #elif defined(HAVE_SLANG_SLCURSES_H)
 # include <slang/slcurses.h>
-#elif defined(HAVE_NCURSESW_NCURSES_H) && defined(HAVE_WIDECHAR)
+#elif defined(HAVE_NCURSESW_NCURSES_H)
 # include <ncursesw/ncurses.h>
 #elif defined(HAVE_NCURSES_H)
 # include <ncurses.h>
@@ -56,6 +56,7 @@
 #include "strutils.h"
 #include "xalloc.h"
 #include "mbsalign.h"
+#include "mbsedit.h"
 #include "colors.h"
 #include "debug.h"
 #include "list.h"
@@ -106,6 +107,10 @@ static const char *default_disks[] = {
 #ifndef KEY_DELETE
 # define KEY_DELETE	'\177'
 #endif
+#ifndef KEY_DC
+# define KEY_DC		0423
+#endif
+
 
 /* colors */
 enum {
@@ -145,8 +150,8 @@ static int ui_resize;
 
 /* ncurses LINES and COLS may be actual variables or *macros*, but we need
  * something portable and writable */
-size_t ui_lines;
-size_t ui_cols;
+static size_t ui_lines;
+static size_t ui_cols;
 
 /* menu item */
 struct cfdisk_menuitem {
@@ -240,7 +245,7 @@ struct cfdisk {
 /*
  * let's use include/debug.h stuff for cfdisk too
  */
-UL_DEBUG_DEFINE_MASK(cfdisk);
+static UL_DEBUG_DEFINE_MASK(cfdisk);
 UL_DEBUG_DEFINE_MASKNAMES(cfdisk) = UL_DEBUG_EMPTY_MASKNAMES;
 
 #define CFDISK_DEBUG_INIT	(1 << 1)
@@ -1044,9 +1049,10 @@ static void ui_draw_menuitem(struct cfdisk *cf,
 			     struct cfdisk_menuitem *d,
 			     size_t idx)
 {
-	char buf[80 * MB_CUR_MAX], *ptr = buf;
+	char *buf, *ptr;
 	const char *name;
 	size_t width;
+	const size_t buf_sz = 80 * MB_CUR_MAX;
 	int ln, cl, vert = cf->menu->vertical;
 
 	if (!menuitem_on_page(cf, idx))
@@ -1054,6 +1060,7 @@ static void ui_draw_menuitem(struct cfdisk *cf,
 	ln = menuitem_get_line(cf, idx);
 	cl = menuitem_get_column(cf, idx);
 
+	ptr = buf = xmalloc(buf_sz);
 	/* string width */
 	if (vert) {
 		width = cf->menu->width + MENU_V_SPADDING;
@@ -1063,7 +1070,7 @@ static void ui_draw_menuitem(struct cfdisk *cf,
 		width = MENU_H_SPADDING + cf->menu->width + MENU_H_SPADDING;
 
 	name = _(d->name);
-	mbsalign(name, ptr, sizeof(buf), &width,
+	mbsalign(name, ptr, buf_sz, &width,
 			vert ? MBS_ALIGN_LEFT : MBS_ALIGN_CENTER,
 			0);
 
@@ -1082,6 +1089,7 @@ static void ui_draw_menuitem(struct cfdisk *cf,
 		mvprintw(ln, cl, "%s", buf);
 	else
 		mvprintw(ln, cl, "%s%s%s", MENU_H_PRESTR, buf, MENU_H_POSTSTR);
+	free(buf);
 
 	if (cf->menu->idx == idx) {
 		standend();
@@ -1463,7 +1471,7 @@ static int ui_menu_move(struct cfdisk *cf, int key)
 	assert(cf);
 	assert(cf->menu);
 
-	if (key == ERR)
+	if (key == (int) ERR)
 		return 0;	/* ignore errors */
 
 	m = cf->menu;
@@ -1522,14 +1530,14 @@ static int ui_menu_move(struct cfdisk *cf, int key)
 		return 0;
 	}
 
-	DBG(MENU, ul_debug(" no memu move key"));
+	DBG(MENU, ul_debug(" no menu move key"));
 	return 1;
 }
 
 /* but don't call me from ui_run(), this is for pop-up menus only */
 static void ui_menu_resize(struct cfdisk *cf)
 {
-	DBG(MENU, ul_debug("memu resize/refresh"));
+	DBG(MENU, ul_debug("menu resize/refresh"));
 	resize();
 	ui_clean_menu(cf);
 	menu_refresh_size(cf);
@@ -1702,9 +1710,11 @@ static int ui_refresh(struct cfdisk *cf)
 static ssize_t ui_get_string(const char *prompt,
 			     const char *hint, char *buf, size_t len)
 {
-	size_t cells = 0;
-	ssize_t i = 0, rc = -1;
 	int ln = MENU_START_LINE, cl = 1;
+	ssize_t rc = -1;
+	struct mbs_editor *edit;
+
+	DBG(UI, ul_debug("ui get string"));
 
 	assert(buf);
 	assert(len);
@@ -1720,30 +1730,33 @@ static ssize_t ui_get_string(const char *prompt,
 		cl += mbs_safe_width(prompt);
 	}
 
-	/* default value */
-	if (*buf) {
-		i = strlen(buf);
-		cells = mbs_safe_width(buf);
-		mvaddstr(ln, cl, buf);
-	}
+	edit = mbs_new_edit(buf, len, ui_cols - cl);
+	if (!edit)
+		goto done;
+
+	mbs_edit_goto(edit, MBS_EDIT_END);
 
 	if (hint)
 		ui_hint(hint);
 	else
 		ui_clean_hint();
 
-	move(ln, cl + cells);
 	curs_set(1);
-	refresh();
 
 	while (1) {
+		wint_t c;	/* we have fallback in widechar.h */
+
+		move(ln, cl);
+		clrtoeol();
+		mvaddstr(ln, cl, edit->buf);
+		move(ln, cl + edit->cursor_cells);
+		refresh();
+
 #if !defined(HAVE_SLCURSES_H) && !defined(HAVE_SLANG_SLCURSES_H) && \
     defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
-		wint_t c;
 		if (get_wch(&c) == ERR) {
 #else
-		int c;
-		if ((c = getch()) == ERR) {
+		if ((c = getch()) == (wint_t) ERR) {
 #endif
 			if (ui_resize) {
 				resize();
@@ -1754,72 +1767,56 @@ static ssize_t ui_get_string(const char *prompt,
 			else
 				goto done;
 		}
+
+		DBG(UI, ul_debug("ui get string: key=%lc", c));
+
 		if (c == '\r' || c == '\n' || c == KEY_ENTER)
 			break;
+
+		rc = 1;
 
 		switch (c) {
 		case KEY_ESC:
 			rc = -CFDISK_ERR_ESC;
 			goto done;
-		case KEY_LEFT:		/* TODO: implement full buffer editor */
+		case KEY_LEFT:
+			rc = mbs_edit_goto(edit, MBS_EDIT_LEFT);
+			break;
 		case KEY_RIGHT:
+			rc = mbs_edit_goto(edit, MBS_EDIT_RIGHT);
+			break;
 		case KEY_END:
+			rc = mbs_edit_goto(edit, MBS_EDIT_END);
+			break;
 		case KEY_HOME:
+			rc = mbs_edit_goto(edit, MBS_EDIT_HOME);
+			break;
 		case KEY_UP:
 		case KEY_DOWN:
-			beep();
 			break;
-		case KEY_DELETE:
+		case KEY_DC:
+			rc = mbs_edit_delete(edit);
+			break;
 		case '\b':
+		case KEY_DELETE:
 		case KEY_BACKSPACE:
-			if (i > 0) {
-				cells--;
-				i = mbs_truncate(buf, &cells);
-				if (i < 0)
-					goto done;
-				mvaddch(ln, cl + cells, ' ');
-				move(ln, cl + cells);
-			} else
-				beep();
+			rc = mbs_edit_backspace(edit);
 			break;
-
 		default:
-#if defined(HAVE_LIBNCURSESW) && defined(HAVE_WIDECHAR)
-			if (i + 1 < (ssize_t) len && iswprint(c)) {
-				wchar_t wc = (wchar_t) c;
-				char s[MB_CUR_MAX + 1];
-				int sz = wctomb(s, wc);
-
-				if (sz > 0 && sz + i < (ssize_t) len) {
-					s[sz] = '\0';
-					mvaddnstr(ln, cl + cells, s, sz);
-					memcpy(buf + i, s, sz);
-					i += sz;
-					buf[i] = '\0';
-					cells += wcwidth(wc);
-				} else
-					beep();
-			}
-#else
-			if (i + 1 < (ssize_t) len && isprint(c)) {
-				mvaddch(ln, cl + cells, c);
-				buf[i++] = c;
-				buf[i] = '\0';
-				cells++;
-			}
-#endif
-			else
-				beep();
+			rc = mbs_edit_insert(edit, c);
+			break;
 		}
-		refresh();
+		if (rc == 1)
+			beep();
 	}
 
-	rc = i;		/* success */
+	rc = strlen(edit->buf);		/* success */
 done:
 	move(ln, 0);
 	clrtoeol();
 	curs_set(0);
 	refresh();
+	mbs_free_edit(edit);
 
 	return rc;
 }
@@ -2096,6 +2093,8 @@ static int ui_create_label(struct cfdisk *cf)
 
 
 	do {
+		int key;
+
 		if (refresh_menu) {
 			ui_draw_menu(cf);
 			ui_hint(_("Select a type to create a new label or press 'L' to load script file."));
@@ -2103,7 +2102,7 @@ static int ui_create_label(struct cfdisk *cf)
 			refresh_menu = 0;
 		}
 
-		int key = getch();
+		key = getch();
 
 		if (ui_resize)
 			ui_menu_resize(cf);
@@ -2168,7 +2167,10 @@ static int ui_help(void)
 		N_("Note: All of the commands can be entered with either upper or lower"),
 		N_("case letters (except for Write)."),
 		"  ",
-		N_("Use lsblk(8) or partx(8) to see more details about the device.")
+		N_("Use lsblk(8) or partx(8) to see more details about the device."),
+		"  ",
+		"  ",
+		"Copyright (C) 2014-2017 Karel Zak <kzak@redhat.com>"
 	};
 
 	erase();
@@ -2502,6 +2504,7 @@ static int ui_run(struct cfdisk *cf)
 				ui_table_goto(cf, (int) cf->lines_idx - cf->page_sz);
 				break;
 			}
+			/* fallthrough */
 		case KEY_HOME:
 			ui_table_goto(cf, 0);
 			break;
@@ -2510,6 +2513,7 @@ static int ui_run(struct cfdisk *cf)
 				ui_table_goto(cf, cf->lines_idx + cf->page_sz);
 				break;
 			}
+			/* fallthrough */
 		case KEY_END:
 			ui_table_goto(cf, (int) cf->nlines - 1);
 			break;
@@ -2574,7 +2578,7 @@ int main(int argc, char *argv[])
 		{ "help",    no_argument,       NULL, 'h' },
 		{ "version", no_argument,       NULL, 'V' },
 		{ "zero",    no_argument,	NULL, 'z' },
-		{ NULL, 0, 0, 0 },
+		{ NULL, 0, NULL, 0 },
 	};
 
 	setlocale(LC_ALL, "");
@@ -2599,6 +2603,8 @@ int main(int argc, char *argv[])
 		case 'z':
 			cf->zero_start = 1;
 			break;
+		default:
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 

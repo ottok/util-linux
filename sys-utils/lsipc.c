@@ -335,7 +335,8 @@ static struct libscols_table *new_table(struct lsipc_control *ctl)
 	struct libscols_table *table = scols_new_table();
 
 	if (!table)
-		errx(EXIT_FAILURE, _("failed to initialize output table"));
+		err(EXIT_FAILURE, _("failed to allocate output table"));
+
 	if (ctl->noheadings)
 		scols_table_enable_noheadings(table, 1);
 
@@ -466,7 +467,7 @@ static void global_set_data(struct libscols_table *tb, const char *resource,
 
 	ln = scols_table_new_line(tb, NULL);
 	if (!ln)
-		err_oom();
+		err(EXIT_FAILURE, _("failed to allocate output line"));
 
 	for (n = 0; n < ncolumns; n++) {
 		int rc = 0;
@@ -500,7 +501,7 @@ static void global_set_data(struct libscols_table *tb, const char *resource,
 		}
 
 		if (rc != 0)
-			err(EXIT_FAILURE, _("failed to set data"));
+			err(EXIT_FAILURE, _("failed to add output data"));
 	}
 }
 
@@ -538,7 +539,10 @@ static void do_sem(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 	}
 	for (semdsp = semds;  semdsp->next != NULL || id > -1; semdsp = semdsp->next) {
 		size_t n;
+
 		ln = scols_table_new_line(tb, NULL);
+		if (!ln)
+			err(EXIT_FAILURE, _("failed to allocate output line"));
 
 		for (n = 0; n < ncolumns; n++) {
 			int rc = 0;
@@ -622,7 +626,7 @@ static void do_sem(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 				break;
 			}
 			if (rc != 0)
-				err(EXIT_FAILURE, _("failed to set data"));
+				err(EXIT_FAILURE, _("failed to add output data"));
 			arg = NULL;
 		}
 
@@ -638,6 +642,9 @@ static void do_sem(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 			for (i = 0; i < semds->sem_nsems; i++) {
 				struct sem_elem *e = &semds->elements[i];
 				struct libscols_line *sln = scols_table_new_line(sub, NULL);
+
+				if (!sln)
+					err(EXIT_FAILURE, _("failed to allocate output line"));
 
 				/* SEMNUM */
 				xasprintf(&arg, "%zu", i);
@@ -727,6 +734,9 @@ static void do_msg(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 	for (msgdsp = msgds; msgdsp->next != NULL || id > -1 ; msgdsp = msgdsp->next) {
 		size_t n;
 		ln = scols_table_new_line(tb, NULL);
+
+		if (!ln)
+			err(EXIT_FAILURE, _("failed to allocate output line"));
 
 		/* no need to call getpwuid() for the same user */
 		if (!(pw && pw->pw_uid == msgdsp->msg_perm.uid))
@@ -885,8 +895,9 @@ static void do_shm(int id, struct lsipc_control *ctl, struct libscols_table *tb)
 	for (shmdsp = shmds; shmdsp->next != NULL || id > -1 ; shmdsp = shmdsp->next) {
 		size_t n;
 		ln = scols_table_new_line(tb, NULL);
+
 		if (!ln)
-			err_oom();
+			err(EXIT_FAILURE, _("failed to allocate output line"));
 
 		for (n = 0; n < ncolumns; n++) {
 			int rc = 0;
@@ -1081,27 +1092,26 @@ int main(int argc, char *argv[])
 	};
 
 	static const struct option longopts[] = {
-		{ "bytes",          no_argument,        0, 'b' },
-		{ "creator",        no_argument,	0, 'c' },
-		{ "export",         no_argument,	0, 'e' },
-		{ "global",         no_argument,	0, 'g' },
-		{ "help",           no_argument,	0, 'h' },
-		{ "id",             required_argument,	0, 'i' },
-		{ "json",           no_argument,	0, 'J' },
-		{ "list",           no_argument,        0, 'l' },
-		{ "newline",        no_argument,	0, 'n' },
-		{ "noheadings",     no_argument,	0, OPT_NOHEAD },
-		{ "notruncate",     no_argument,	0, OPT_NOTRUNC },
-		{ "numeric-perms",  no_argument,	0, 'P' },
-		{ "output",         required_argument,	0, 'o' },
-		{ "pid",            no_argument,	0, 'p' },
-		{ "queues",         no_argument,	0, 'q' },
-		{ "raw",            no_argument,	0, 'r' },
-		{ "semaphores",     no_argument,	0, 's' },
-		{ "shmems",         no_argument,	0, 'm' },
-		{ "time",           no_argument,	0, 't' },
-		{ "time-format",    required_argument,	0, OPT_TIME_FMT },
-		{ "version",        no_argument,	0, 'V' },
+		{ "bytes",          no_argument,        NULL, 'b' },
+		{ "creator",        no_argument,	NULL, 'c' },
+		{ "export",         no_argument,	NULL, 'e' },
+		{ "global",         no_argument,	NULL, 'g' },
+		{ "help",           no_argument,	NULL, 'h' },
+		{ "id",             required_argument,	NULL, 'i' },
+		{ "json",           no_argument,	NULL, 'J' },
+		{ "list",           no_argument,        NULL, 'l' },
+		{ "newline",        no_argument,	NULL, 'n' },
+		{ "noheadings",     no_argument,	NULL, OPT_NOHEAD },
+		{ "notruncate",     no_argument,	NULL, OPT_NOTRUNC },
+		{ "numeric-perms",  no_argument,	NULL, 'P' },
+		{ "output",         required_argument,	NULL, 'o' },
+		{ "queues",         no_argument,	NULL, 'q' },
+		{ "raw",            no_argument,	NULL, 'r' },
+		{ "semaphores",     no_argument,	NULL, 's' },
+		{ "shmems",         no_argument,	NULL, 'm' },
+		{ "time",           no_argument,	NULL, 't' },
+		{ "time-format",    required_argument,	NULL, OPT_TIME_FMT },
+		{ "version",        no_argument,	NULL, 'V' },
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1123,7 +1133,7 @@ int main(int argc, char *argv[])
 
 	scols_init_debug(0);
 
-	while ((opt = getopt_long(argc, argv, "bceghi:Jlmno:PqrstuV", longopts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "bceghi:Jlmno:PqrstV", longopts, NULL)) != -1) {
 
 		err_exclusive_options(opt, longopts, excl, excl_st);
 

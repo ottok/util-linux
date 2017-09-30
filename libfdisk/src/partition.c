@@ -70,6 +70,8 @@ void fdisk_reset_partition(struct fdisk_partition *pa)
 	free(pa->fstype);
 	free(pa->fsuuid);
 	free(pa->fslabel);
+	free(pa->start_chs);
+	free(pa->end_chs);
 
 	memset(pa, 0, sizeof(*pa));
 	pa->refcount = ref;
@@ -702,11 +704,14 @@ int fdisk_partition_is_wholedisk(struct fdisk_partition *pa)
  * @cxt: context
  * @n: returns partition number
  *
- * If partno-follow-default (see fdisk_partition_partno_follow_default())
- * enabled then returns next expected partno, otherwise use Ask API to ask user
- * for the next partno.
+ * If @pa specified and partno-follow-default (see fdisk_partition_partno_follow_default())
+ * enabled then returns next expected partno or -ERANGE on error.
  *
- * Returns: 0 on success, <0 on error
+ * If @pa is NULL, or @pa does not specify any sepamntic for the next partno
+ * then use Ask API to ask user for the next partno. In this case returns 1 if
+ * no free partition avaialble.
+ *
+ * Returns: 0 on success, <0 on error, or 1 for non-free partno by Ask API.
  */
 int fdisk_partition_next_partno(
 		struct fdisk_partition *pa,
@@ -733,7 +738,8 @@ int fdisk_partition_next_partno(
 
 		DBG(PART, ul_debugobj(pa, "next partno (specified=%zu)", pa->partno));
 
-		if (pa->partno >= cxt->label->nparts_max)
+		if (pa->partno >= cxt->label->nparts_max ||
+		    fdisk_is_partition_used(cxt, pa->partno))
 			return -ERANGE;
 		*n = pa->partno;
 	} else
@@ -1242,6 +1248,10 @@ int fdisk_set_partition(struct fdisk_context *cxt, size_t partno,
 
 	if (pa->resize || fdisk_partition_has_start(pa) || fdisk_partition_has_size(pa)) {
 		xpa = __copy_partition(pa);
+		if (!xpa) {
+			rc = -ENOMEM;
+			goto done;
+		}
 		xpa->movestart = 0;
 		xpa->resize = 0;
 		FDISK_INIT_UNDEF(xpa->size);
@@ -1304,6 +1314,21 @@ int fdisk_wipe_partition(struct fdisk_context *cxt, size_t partno, int enable)
 	return rc < 0 ? rc : 0;
 }
 
+/**
+ * fdisk_partition_has_wipe:
+ * @cxt: fdisk context
+ * @pa: partition
+ *
+ * Since: 2.30
+ *
+ * Returns: 1 if the area specified by @pa will be wiped by write command, or 0.
+ */
+int fdisk_partition_has_wipe(struct fdisk_context *cxt, struct fdisk_partition *pa)
+{
+	return fdisk_has_wipe_area(cxt, fdisk_partition_get_start(pa),
+					fdisk_partition_get_size(pa));
+}
+
 
 /**
  * fdisk_add_partition:
@@ -1313,6 +1338,18 @@ int fdisk_wipe_partition(struct fdisk_context *cxt, size_t partno, int enable)
  *
  * If @pa is not specified or any @pa item is missing the libfdisk will ask by
  * fdisk_ask_ API.
+ *
+ * The @pa template is is important for non-interactive partitioning,
+ * especially for MBR where is necessary to differentiate between
+ * primary/logical; this is done by start offset or/and partno.
+ * The rules for MBR:
+ *
+ *   A) template specifies start within extended partition: add logical
+ *   B) template specifies start out of extended partition: add primary
+ *   C) template specifies start (or default), partno < 4: add primary
+ *   D) template specifies default start, partno >= 4: add logical
+ *
+ * otherwise MBR driver uses Ask-API to get missing information.
  *
  * Adds a new partition to disklabel.
  *

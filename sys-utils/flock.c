@@ -214,12 +214,10 @@ int main(int argc, char *argv[])
 		case 'V':
 			printf(UTIL_LINUX_VERSION);
 			exit(EX_OK);
+		case 'h':
+			usage(0);
 		default:
-			/* optopt will be set if this was an unrecognized
-			 * option, i.e.  *not* 'h' or '?
-			 */
-			usage(optopt ? EX_USAGE : 0);
-			break;
+			errtryhelp(EX_USAGE);
 		}
 	}
 
@@ -241,7 +239,7 @@ int main(int argc, char *argv[])
 				cmd_argv[0] = _PATH_BSHELL;
 			cmd_argv[1] = "-c";
 			cmd_argv[2] = argv[optind + 2];
-			cmd_argv[3] = 0;
+			cmd_argv[3] = NULL;
 		} else {
 			cmd_argv = &argv[optind + 1];
 		}

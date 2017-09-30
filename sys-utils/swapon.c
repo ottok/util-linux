@@ -89,7 +89,7 @@ enum {
 	COL_UUID,
 	COL_LABEL
 };
-struct colinfo infos[] = {
+static struct colinfo infos[] = {
 	[COL_PATH]     = { "NAME",	0.20, 0, N_("device file or partition path") },
 	[COL_TYPE]     = { "TYPE",	0.20, SCOLS_FL_TRUNC, N_("type of the device")},
 	[COL_SIZE]     = { "SIZE",	0.20, SCOLS_FL_RIGHT, N_("size of the swap area")},
@@ -173,7 +173,8 @@ static void add_scols_line(const struct swapon_ctl *ctl, struct libscols_table *
 
 	line = scols_table_new_line(table, NULL);
 	if (!line)
-		err(EXIT_FAILURE, _("failed to initialize output line"));
+		err(EXIT_FAILURE, _("failed to allocate output line"));
+
 	data = mnt_fs_get_source(fs);
 	if (access(data, R_OK) == 0)
 		pr = get_swap_prober(data);
@@ -219,8 +220,8 @@ static void add_scols_line(const struct swapon_ctl *ctl, struct libscols_table *
 			break;
 		}
 
-		if (str)
-			scols_line_refer_data(line, i, str);
+		if (str && scols_line_refer_data(line, i, str))
+			err(EXIT_FAILURE, _("failed to add output data"));
 	}
 	if (pr)
 		blkid_free_probe(pr);
@@ -277,7 +278,7 @@ static int show_table(struct swapon_ctl *ctl)
 
 	table = scols_new_table();
 	if (!table)
-		err(EXIT_FAILURE, _("failed to initialize output table"));
+		err(EXIT_FAILURE, _("failed to allocate output table"));
 
 	scols_table_enable_raw(table, ctl->raw);
 	scols_table_enable_noheadings(table, ctl->no_heading);
@@ -286,7 +287,7 @@ static int show_table(struct swapon_ctl *ctl)
 		struct colinfo *col = get_column_info(ctl, i);
 
 		if (!scols_table_new_column(table, col->name, col->whint, col->flags))
-			err(EXIT_FAILURE, _("failed to initialize output column"));
+			err(EXIT_FAILURE, _("failed to allocate output column"));
 	}
 
 	while (mnt_table_next_fs(st, itr, &fs) == 0)
@@ -693,7 +694,7 @@ static int parse_options(struct swap_prop *props, const char *options)
 	assert(props);
 	assert(options);
 
-	if (mnt_optstr_get_option(options, "nofail", NULL, 0) == 0)
+	if (mnt_optstr_get_option(options, "nofail", NULL, NULL) == 0)
 		props->no_fail = 1;
 
 	if (mnt_optstr_get_option(options, "discard", &arg, &argsz) == 0) {
@@ -845,24 +846,24 @@ int main(int argc, char *argv[])
 	};
 
 	static const struct option long_opts[] = {
-		{ "priority", 1, 0, 'p' },
-		{ "discard",  2, 0, 'd' },
-		{ "ifexists", 0, 0, 'e' },
-		{ "options",  2, 0, 'o' },
-		{ "summary",  0, 0, 's' },
-		{ "fixpgsz",  0, 0, 'f' },
-		{ "all",      0, 0, 'a' },
-		{ "help",     0, 0, 'h' },
-		{ "verbose",  0, 0, 'v' },
-		{ "version",  0, 0, 'V' },
-		{ "show",     2, 0, SHOW_OPTION },
-		{ "noheadings", 0, 0, NOHEADINGS_OPTION },
-		{ "raw",      0, 0, RAW_OPTION },
-		{ "bytes",    0, 0, BYTES_OPTION },
-		{ NULL, 0, 0, 0 }
+		{ "priority",   required_argument, NULL, 'p'               },
+		{ "discard",    optional_argument, NULL, 'd'               },
+		{ "ifexists",   no_argument,       NULL, 'e'               },
+		{ "options",    optional_argument, NULL, 'o'               },
+		{ "summary",    no_argument,       NULL, 's'               },
+		{ "fixpgsz",    no_argument,       NULL, 'f'               },
+		{ "all",        no_argument,       NULL, 'a'               },
+		{ "help",       no_argument,       NULL, 'h'               },
+		{ "verbose",    no_argument,       NULL, 'v'               },
+		{ "version",    no_argument,       NULL, 'V'               },
+		{ "show",       optional_argument, NULL, SHOW_OPTION       },
+		{ "noheadings", no_argument,       NULL, NOHEADINGS_OPTION },
+		{ "raw",        no_argument,       NULL, RAW_OPTION        },
+		{ "bytes",      no_argument,       NULL, BYTES_OPTION      },
+		{ NULL, 0, NULL, 0 }
 	};
 
-	static const ul_excl_t excl[] = {       /* rows and cols in in ASCII order */
+	static const ul_excl_t excl[] = {       /* rows and cols in ASCII order */
 		{ 'a','o','s', SHOW_OPTION },
 		{ 'a','o', BYTES_OPTION },
 		{ 'a','o', NOHEADINGS_OPTION },
@@ -960,9 +961,8 @@ int main(int argc, char *argv[])
 			return EXIT_SUCCESS;
 		case 0:
 			break;
-		case '?':
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 	argv += optind;

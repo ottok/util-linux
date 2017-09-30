@@ -182,6 +182,7 @@ int fdisk_assign_device(struct fdisk_context *cxt,
 			const char *fname, int readonly);
 int fdisk_deassign_device(struct fdisk_context *cxt, int nosync);
 int fdisk_is_readonly(struct fdisk_context *cxt);
+int fdisk_is_regfile(struct fdisk_context *cxt);
 
 int fdisk_enable_details(struct fdisk_context *cxt, int enable);
 int fdisk_is_details(struct fdisk_context *cxt);
@@ -192,6 +193,7 @@ int fdisk_is_listonly(struct fdisk_context *cxt);
 int fdisk_enable_wipe(struct fdisk_context *cxt, int enable);
 int fdisk_has_wipe(struct fdisk_context *cxt);
 const char *fdisk_get_collision(struct fdisk_context *cxt);
+int fdisk_is_ptcollision(struct fdisk_context *cxt);
 
 int fdisk_set_unit(struct fdisk_context *cxt, const char *str);
 const char *fdisk_get_unit(struct fdisk_context *cxt, int n);
@@ -264,7 +266,7 @@ extern int fdisk_field_is_number(const struct fdisk_field *field);
 /* label.c */
 
 /**
- * fdisk_fieldtype
+ * fdisk_fieldtype:
  *
  * Types of fdisk_field. The fields describe a partition.
  */
@@ -314,7 +316,7 @@ extern int fdisk_locate_disklabel(struct fdisk_context *cxt, int n,
 				  size_t *size);
 
 /**
- * fdisk_labelitem_gen
+ * fdisk_labelitem_gen:
  *
  * Generic disklabel items
  */
@@ -438,6 +440,9 @@ extern int fdisk_partition_end_is_default(struct fdisk_partition *pa);
 
 extern int fdisk_reorder_partitions(struct fdisk_context *cxt);
 
+extern int fdisk_partition_has_wipe(struct fdisk_context *cxt, struct fdisk_partition *pa);
+
+
 /* table.c */
 extern struct fdisk_table *fdisk_new_table(void);
 extern int fdisk_reset_table(struct fdisk_table *tb);
@@ -522,6 +527,11 @@ extern int fdisk_sun_set_ilfact(struct fdisk_context *cxt);
 extern int fdisk_sun_set_rspeed(struct fdisk_context *cxt);
 extern int fdisk_sun_set_pcylcount(struct fdisk_context *cxt);
 
+/**
+ * fdisk_labelitem_sun:
+ *
+ * SUN specific label items.
+ */
 enum fdisk_labelitem_sun {
 	SUN_LABELITEM_LABELID = __FDISK_NLABELITEMS,
 	SUN_LABELITEM_VTOCID,
@@ -537,6 +547,11 @@ extern int fdisk_bsd_edit_disklabel(struct fdisk_context *cxt);
 extern int fdisk_bsd_write_bootstrap(struct fdisk_context *cxt);
 extern int fdisk_bsd_link_partition(struct fdisk_context *cxt);
 
+/**
+ * fdisk_labelitem_bsd:
+ *
+ * BSD specific label items.
+ */
 enum fdisk_labelitem_bsd {
 	/* specific */
 	BSD_LABELITEM_TYPE = __FDISK_NLABELITEMS,
@@ -561,6 +576,11 @@ enum fdisk_labelitem_bsd {
 extern int fdisk_sgi_set_bootfile(struct fdisk_context *cxt);
 extern int fdisk_sgi_create_info(struct fdisk_context *cxt);
 
+/**
+ * fdisk_labelitem_sgi:
+ *
+ * SGI specific label items.
+ */
 enum fdisk_labelitem_sgi {
 	SGI_LABELITEM_PCYLCOUNT = __FDISK_NLABELITEMS,
 	SGI_LABELITEM_SPARECYL,
@@ -620,6 +640,11 @@ extern int fdisk_gpt_set_npartitions(struct fdisk_context *cxt, uint32_t entries
 extern int fdisk_gpt_get_partition_attrs(struct fdisk_context *cxt, size_t partnum, uint64_t *attrs);
 extern int fdisk_gpt_set_partition_attrs(struct fdisk_context *cxt, size_t partnum, uint64_t attrs);
 
+/**
+ * fdisk_labelitem_gpt:
+ *
+ * GPT specific label items.
+ */
 enum fdisk_labelitem_gpt {
 	/* generic */
 	GPT_LABELITEM_ID = FDISK_LABELITEM_ID,		/* GPT disklabel UUID (!= partition UUID) */
@@ -642,6 +667,7 @@ const char *fdisk_script_get_header(struct fdisk_script *dp, const char *name);
 int fdisk_script_set_header(struct fdisk_script *dp, const char *name, const char *data);
 struct fdisk_table *fdisk_script_get_table(struct fdisk_script *dp);
 int fdisk_script_get_nlines(struct fdisk_script *dp);
+int fdisk_script_has_force_label(struct fdisk_script *dp);
 
 int fdisk_script_set_userdata(struct fdisk_script *dp, void *data);
 void *fdisk_script_get_userdata(struct fdisk_script *dp);
