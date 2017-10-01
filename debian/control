@@ -17,6 +17,7 @@ Build-Depends: bc <!stage1 !nocheck>,
                po-debconf,
                socat <!stage1 !nocheck>,
                systemd [linux-any] <!stage1>,
+               bison,
                zlib1g-dev
 Section: base
 Priority: required
