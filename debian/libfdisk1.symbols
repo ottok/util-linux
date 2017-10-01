@@ -3,6 +3,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  FDISK_2.27@FDISK_2.27 2.26.2
  FDISK_2.28@FDISK_2.28 2.28~rc1
  FDISK_2.29@FDISK_2.29 2.29~rc2
+ FDISK_2.30@FDISK_2.30 2.30.2
  fdisk_add_partition@FDISK_2.26 2.26.2
  fdisk_align_lba@FDISK_2.26 2.26.2
  fdisk_align_lba_in_range@FDISK_2.26 2.26.2
@@ -101,7 +102,9 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_is_labeltype@FDISK_2.26 2.26.2
  fdisk_is_listonly@FDISK_2.26 2.26.2
  fdisk_is_partition_used@FDISK_2.26 2.26.2
+ fdisk_is_ptcollision@FDISK_2.30 2.30.2
  fdisk_is_readonly@FDISK_2.26 2.26.2
+ fdisk_is_regfile@FDISK_2.30 2.30.2
  fdisk_iter_get_direction@FDISK_2.26 2.26.2
  fdisk_label_get_field@FDISK_2.26 2.26.2
  fdisk_label_get_field_by_name@FDISK_2.26 2.26.2
@@ -159,6 +162,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_partition_has_partno@FDISK_2.26 2.26.2
  fdisk_partition_has_size@FDISK_2.26 2.26.2
  fdisk_partition_has_start@FDISK_2.26 2.26.2
+ fdisk_partition_has_wipe@FDISK_2.30 2.30.2
  fdisk_partition_is_bootable@FDISK_2.26 2.26.2
  fdisk_partition_is_container@FDISK_2.26 2.26.2
  fdisk_partition_is_freespace@FDISK_2.26 2.26.2
@@ -211,6 +215,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_script_get_nlines@FDISK_2.26 2.26.2
  fdisk_script_get_table@FDISK_2.26 2.26.2
  fdisk_script_get_userdata@FDISK_2.27 2.27~rc1
+ fdisk_script_has_force_label@FDISK_2.30 2.30.2
  fdisk_script_read_context@FDISK_2.26 2.26.2
  fdisk_script_read_file@FDISK_2.26 2.26.2
  fdisk_script_read_line@FDISK_2.26 2.26.2

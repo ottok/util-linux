@@ -3,7 +3,9 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  SMARTCOLS_2.27@SMARTCOLS_2.27 2.27~rc1
  SMARTCOLS_2.28@SMARTCOLS_2.28 2.28~rc1
  SMARTCOLS_2.29@SMARTCOLS_2.29 2.29~rc2
+ SMARTCOLS_2.30@SMARTCOLS_2.30 2.30.2
  scols_cell_copy_content@SMARTCOLS_2.25 2.25
+ scols_cell_get_alignment@SMARTCOLS_2.30 2.30.2
  scols_cell_get_color@SMARTCOLS_2.25 2.25
  scols_cell_get_data@SMARTCOLS_2.25 2.25
  scols_cell_get_flags@SMARTCOLS_2.28 2.28~rc1
@@ -53,6 +55,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  scols_line_get_parent@SMARTCOLS_2.25 2.25
  scols_line_get_userdata@SMARTCOLS_2.25 2.25
  scols_line_has_children@SMARTCOLS_2.25 2.25
+ scols_line_is_ancestor@SMARTCOLS_2.30 2.30.2
  scols_line_next_child@SMARTCOLS_2.25 2.25
  scols_line_refer_column_data@SMARTCOLS_2.28 2.28~rc1
  scols_line_refer_data@SMARTCOLS_2.25 2.25
@@ -76,6 +79,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  scols_reset_cell@SMARTCOLS_2.25 2.25
  scols_reset_iter@SMARTCOLS_2.25 2.25
  scols_sort_table@SMARTCOLS_2.25 2.25
+ scols_sort_table_by_tree@SMARTCOLS_2.30 2.30.2
  scols_symbols_set_branch@SMARTCOLS_2.25 2.25
  scols_symbols_set_cell_padding@SMARTCOLS_2.29 2.29~rc2
  scols_symbols_set_right@SMARTCOLS_2.25 2.25
@@ -115,6 +119,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  scols_table_is_nowrap@SMARTCOLS_2.29 2.29~rc2
  scols_table_is_raw@SMARTCOLS_2.25 2.25
  scols_table_is_tree@SMARTCOLS_2.25 2.25
+ scols_table_move_column@SMARTCOLS_2.30 2.30.2
  scols_table_new_column@SMARTCOLS_2.25 2.25
  scols_table_new_line@SMARTCOLS_2.25 2.25
  scols_table_next_column@SMARTCOLS_2.25 2.25
