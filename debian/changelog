@@ -1,8 +1,25 @@
-util-linux (2.30.2-1) UNRELEASED; urgency=medium
+util-linux (2.30.2-0.1) unstable; urgency=medium
 
-  * New upstream version 2.30.2
+  * Non-maintainer upload.
+  * New upstream version 2.30.2 (Closes: #877932)
+    - fstab(5): mention how tabs are escaped (Closes: #580047)
+    - fstrim: prefer earlier mounted filesystems (Closes: #864806)
+    - lib/pager: don't use pager if command not available (Closes: #852605)
+    - lscpu: use libsmartcols to print summary too (Closes: #811488)
+  * Disable pristine-tar.
+    It's currently not possible to generate pristine tarballs for util-linux
+    with pristine-tar.
+    See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=869191
+  * Update symbols file for libblkid1, libfdisk1, libmount1 and libsmartcols1
+  * Add bison to Build-Depends
+  * Drop d/p/man-page-tweaks-cleanup-my_dev_t.h-ancient-stuff.patch.
+    No longer useful, as it adds a reference to the deprecated SysV init
+    script and a no longer existing README file.
+  * Drop d/p/Disable-the-fallback-clause-in-hwclock-when-dev-rtc-.patch.
+    Fixed upstream.
+  * Refresh remaining patches
 
- -- Michael Biebl <biebl@debian.org>  Sun, 01 Oct 2017 00:43:58 +0200
+ -- Michael Biebl <biebl@debian.org>  Mon, 09 Oct 2017 18:40:15 +0200
 
 util-linux (2.29.2-5) unstable; urgency=medium
 
