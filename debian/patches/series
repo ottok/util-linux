@@ -1,3 +1,2 @@
 Multiarch-support-in-util-linux-build.patch
-Disable-the-fallback-clause-in-hwclock-when-dev-rtc-.patch
 verbose-tests.patch
