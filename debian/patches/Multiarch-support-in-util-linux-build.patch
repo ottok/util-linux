@@ -5,15 +5,6 @@ Subject: Multiarch support in util-linux build
 Addresses-Debian-Bug: 631175
 Signed-off-by: LaMont Jones <lamont@debian.org>
 
-Conflicts:
-	debian/control
-	debian/libblkid-dev.files
-	debian/libblkid1.files
-	debian/libmount-dev.files
-	debian/libmount1.files
-	debian/libuuid1.files
-	debian/rules
-	debian/uuid-dev.files
 ---
  Makefile.am          | 1 +
  configure.ac         | 4 ++--
@@ -22,11 +13,11 @@ Conflicts:
  libuuid/uuid.pc.in   | 1 +
  5 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 0bfc27f..590654c 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -123,6 +123,7 @@ edit_cmd = sed \
+Index: util-linux/Makefile.am
+===================================================================
+--- util-linux.orig/Makefile.am	2017-10-09 18:30:20.682258233 +0200
++++ util-linux/Makefile.am	2017-10-09 18:30:20.674258100 +0200
+@@ -123,6 +123,7 @@
  	 -e 's|@usrlib_execdir[@]|$(usrlib_execdir)|g' \
  	 -e 's|@usrbin_execdir[@]|$(usrbin_execdir)|g' \
  	 -e 's|@usrsbin_execdir[@]|$(usrsbin_execdir)|g' \
@@ -34,11 +25,11 @@ index 0bfc27f..590654c 100644
  	 -e 's|@VERSION[@]|$(VERSION)|g' \
  	 -e 's|@ADJTIME_PATH[@]|$(ADJTIME_PATH)|g' \
  	 -e 's|@LIBUUID_VERSION[@]|$(LIBUUID_VERSION)|g' \
-diff --git a/configure.ac b/configure.ac
-index eda741b..0688617 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -82,7 +82,6 @@ AS_CASE([$prefix:$localstatedir],
+Index: util-linux/configure.ac
+===================================================================
+--- util-linux.orig/configure.ac	2017-10-09 18:30:20.682258233 +0200
++++ util-linux/configure.ac	2017-10-09 18:30:20.674258100 +0200
+@@ -80,7 +80,6 @@
  )
  AC_SUBST([localstatedir])
  
@@ -46,7 +37,7 @@ index eda741b..0688617 100644
  # The original default values of {bin,sbin,lib}dir
  usrbin_execdir='${exec_prefix}/bin'
  AC_SUBST([usrbin_execdir])
-@@ -93,9 +92,10 @@ AC_SUBST([usrsbin_execdir])
+@@ -91,9 +90,10 @@
  AS_CASE([$libdir],
   ['${exec_prefix}/'* | '${prefix}/'* | /usr/* | "${prefix}"/* ],
     [usrlib_execdir=$libdir],
@@ -58,10 +49,10 @@ index eda741b..0688617 100644
  
  
  AM_PROG_CC_C_O
-diff --git a/libblkid/blkid.pc.in b/libblkid/blkid.pc.in
-index 40ec8a9..b89b136 100644
---- a/libblkid/blkid.pc.in
-+++ b/libblkid/blkid.pc.in
+Index: util-linux/libblkid/blkid.pc.in
+===================================================================
+--- util-linux.orig/libblkid/blkid.pc.in	2017-10-09 18:30:20.682258233 +0200
++++ util-linux/libblkid/blkid.pc.in	2017-10-09 18:30:20.674258100 +0200
 @@ -1,5 +1,6 @@
  prefix=@prefix@
  exec_prefix=@exec_prefix@
@@ -69,10 +60,10 @@ index 40ec8a9..b89b136 100644
  libdir=@usrlib_execdir@
  includedir=@includedir@
  
-diff --git a/libmount/mount.pc.in b/libmount/mount.pc.in
-index 2c32797..b775b14 100644
---- a/libmount/mount.pc.in
-+++ b/libmount/mount.pc.in
+Index: util-linux/libmount/mount.pc.in
+===================================================================
+--- util-linux.orig/libmount/mount.pc.in	2017-10-09 18:30:20.682258233 +0200
++++ util-linux/libmount/mount.pc.in	2017-10-09 18:30:20.678258166 +0200
 @@ -1,5 +1,6 @@
  prefix=@prefix@
  exec_prefix=@exec_prefix@
@@ -80,10 +71,10 @@ index 2c32797..b775b14 100644
  libdir=@usrlib_execdir@
  includedir=@includedir@
  
-diff --git a/libuuid/uuid.pc.in b/libuuid/uuid.pc.in
-index 875de19..a12d432 100644
---- a/libuuid/uuid.pc.in
-+++ b/libuuid/uuid.pc.in
+Index: util-linux/libuuid/uuid.pc.in
+===================================================================
+--- util-linux.orig/libuuid/uuid.pc.in	2017-10-09 18:30:20.682258233 +0200
++++ util-linux/libuuid/uuid.pc.in	2017-10-09 18:30:20.678258166 +0200
 @@ -1,5 +1,6 @@
  prefix=@prefix@
  exec_prefix=@exec_prefix@
