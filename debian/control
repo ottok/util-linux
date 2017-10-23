@@ -414,3 +414,26 @@ Description: tool for enabling and disabling wireless devices
  rfkill is a simple tool for accessing the Linux rfkill device interface,
  which is used to enable and disable wireless networking devices, typically
  WLAN, Bluetooth and mobile broadband.
+
+Package: eject
+Architecture: linux-any
+Section: utils
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: foreign
+Description: ejects CDs and operates CD-Changers under Linux
+ This program will eject CD-ROMs (assuming your drive supports the CDROMEJECT
+ ioctl). It also allows setting the autoeject feature.
+ .
+ On supported ATAPI/IDE multi-disc CD-ROM changers, it allows changing
+ the active disc.
+ .
+ You can also use eject to properly disconnect external mass-storage
+ devices like digital cameras or portable music players.
+
+Package: eject-udeb
+Architecture: linux-any
+Section: debian-installer
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Package-Type: udeb
+XB-Installer-Menu-Item: 96000
+Description: ejects CDs from d-i menu
