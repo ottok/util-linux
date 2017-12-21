@@ -369,3 +369,19 @@ Multi-Arch: foreign
 Description: tool to run a program with different Linux privilege settings
  This package provides the setpriv command which allows the user to set or
  query various Linux privilege settings that are inherited across execve.
+
+Package: rfkill
+Architecture: any
+Build-Profiles: <!stage1>
+Section: utils
+Priority: important
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Multi-Arch: foreign
+Description: tool for enabling and disabling wireless devices
+ rfkill is a simple tool for accessing the Linux rfkill device interface,
+ which is used to enable and disable wireless networking devices, typically
+ WLAN, Bluetooth and mobile broadband.
+ .
+ rfkill uses /dev/rfkill, which is present in Linux kernel 2.6.31 and later.
+
