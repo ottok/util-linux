@@ -2,8 +2,19 @@ util-linux (2.31.1-0.1) UNRELEASED; urgency=medium
 
   * Non-maintainer upload.
   * New upstream release.
+  * Bump debhelper compat to 11
+  * debian/rules: Stop setting --localstatedir=/run
+    - upstream uses runstatedir and dh compat 11 sets it automagically.
+  * Ship new uuidparse command in uuid-runtime package
+  * Take over the rfkill package
+    - Priority bumped to important.
+  * Drop Multiarch-support-in-util-linux-build.patch
+  * Bump Standards-Version to 4.1.2
+  * Downgrade all lib* packages to Priority: optional
+  * Update blkid,fdisk,smartcols,uuid symbols files
+  * Bump dependency version is shlibs files
 
- -- Andreas Henriksson <andreas@fatal.se>  Thu, 21 Dec 2017 15:44:38 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 21 Dec 2017 16:29:03 +0100
 
 util-linux (2.30.2-0.1) unstable; urgency=medium
 
