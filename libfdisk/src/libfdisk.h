@@ -34,11 +34,11 @@ extern "C" {
  *
  * Library version string
  */
-#define LIBFDISK_VERSION   "2.30.2"
+#define LIBFDISK_VERSION   "2.31.1"
 
 #define LIBFDISK_MAJOR_VERSION   2
-#define LIBFDISK_MINOR_VERSION   30
-#define LIBFDISK_PATCH_VERSION   2
+#define LIBFDISK_MINOR_VERSION   31
+#define LIBFDISK_PATCH_VERSION   1
 
 /**
  * fdisk_context:
@@ -181,8 +181,14 @@ int fdisk_is_labeltype(struct fdisk_context *cxt, enum fdisk_labeltype id);
 int fdisk_assign_device(struct fdisk_context *cxt,
 			const char *fname, int readonly);
 int fdisk_deassign_device(struct fdisk_context *cxt, int nosync);
+int fdisk_reassign_device(struct fdisk_context *cxt);
+
 int fdisk_is_readonly(struct fdisk_context *cxt);
 int fdisk_is_regfile(struct fdisk_context *cxt);
+int fdisk_device_is_used(struct fdisk_context *cxt);
+
+int fdisk_disable_dialogs(struct fdisk_context *cxt, int disable);
+int fdisk_has_dialogs(struct fdisk_context *cxt);
 
 int fdisk_enable_details(struct fdisk_context *cxt, int enable);
 int fdisk_is_details(struct fdisk_context *cxt);
@@ -388,7 +394,7 @@ extern int fdisk_partition_is_freespace(struct fdisk_partition *pa);
 
 int fdisk_partition_set_start(struct fdisk_partition *pa, uint64_t off);
 int fdisk_partition_unset_start(struct fdisk_partition *pa);
-uint64_t fdisk_partition_get_start(struct fdisk_partition *pa);
+fdisk_sector_t fdisk_partition_get_start(struct fdisk_partition *pa);
 int fdisk_partition_has_start(struct fdisk_partition *pa);
 int fdisk_partition_cmp_start(struct fdisk_partition *a,
 			      struct fdisk_partition *b);
@@ -397,7 +403,7 @@ int fdisk_partition_start_is_default(struct fdisk_partition *pa);
 
 int fdisk_partition_set_size(struct fdisk_partition *pa, uint64_t sz);
 int fdisk_partition_unset_size(struct fdisk_partition *pa);
-uint64_t fdisk_partition_get_size(struct fdisk_partition *pa);
+fdisk_sector_t fdisk_partition_get_size(struct fdisk_partition *pa);
 int fdisk_partition_has_size(struct fdisk_partition *pa);
 int fdisk_partition_size_explicit(struct fdisk_partition *pa, int enable);
 
@@ -456,6 +462,7 @@ extern int fdisk_table_remove_partition(struct fdisk_table *tb, struct fdisk_par
 extern int fdisk_get_partitions(struct fdisk_context *cxt, struct fdisk_table **tb);
 extern int fdisk_get_freespaces(struct fdisk_context *cxt, struct fdisk_table **tb);
 
+
 extern int fdisk_table_wrong_order(struct fdisk_table *tb);
 extern int fdisk_table_sort_partitions(struct fdisk_table *tb,
 			int (*cmp)(struct fdisk_partition *,
@@ -496,10 +503,14 @@ int fdisk_save_user_geometry(struct fdisk_context *cxt,
 int fdisk_save_user_sector_size(struct fdisk_context *cxt,
 				unsigned int phy,
 				unsigned int log);
+
+int fdisk_save_user_grain(struct fdisk_context *cxt, unsigned long grain);
+
 int fdisk_has_user_device_properties(struct fdisk_context *cxt);
 int fdisk_reset_alignment(struct fdisk_context *cxt);
 int fdisk_reset_device_properties(struct fdisk_context *cxt);
 int fdisk_reread_partition_table(struct fdisk_context *cxt);
+int fdisk_reread_changes(struct fdisk_context *cxt, struct fdisk_table *org);
 
 /* iter.c */
 enum {

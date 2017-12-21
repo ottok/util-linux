@@ -954,9 +954,6 @@ read_hypervisor(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 								== XEN_FEATURES_PVH_MASK)
 					desc->virtype = VIRT_PARA;
 				fclose(fd);
-			} else {
-				err(EXIT_FAILURE, _("failed to read from: %s"),
-						_PATH_SYS_HYP_FEATURES);
 			}
 		}
 	} else if (read_hypervisor_powerpc(desc) > 0) {}
@@ -1430,37 +1427,36 @@ read_nodes(struct lscpu_desc *desc)
 	int i = 0;
 	DIR *dir;
 	struct dirent *d;
-	char *path;
+	const char *path;
+
+	desc->nnodes = 0;
 
 	/* number of NUMA node */
-	path = path_strdup(_PATH_SYS_NODE);
-	dir = opendir(path);
-	free(path);
-
-	while (dir && (d = readdir(dir))) {
+	if (!(path = path_get(_PATH_SYS_NODE)))
+		return;
+	if (!(dir = opendir(path)))
+		return;
+	while ((d = readdir(dir))) {
 		if (is_node_dirent(d))
 			desc->nnodes++;
 	}
 
 	if (!desc->nnodes) {
-		if (dir)
-			closedir(dir);
+		closedir(dir);
 		return;
 	}
 
 	desc->nodemaps = xcalloc(desc->nnodes, sizeof(cpu_set_t *));
 	desc->idx2nodenum = xmalloc(desc->nnodes * sizeof(int));
 
-	if (dir) {
-		rewinddir(dir);
-		while ((d = readdir(dir)) && i < desc->nnodes) {
-			if (is_node_dirent(d))
-				desc->idx2nodenum[i++] = strtol_or_err(((d->d_name) + 4),
-							_("Failed to extract the node number"));
-		}
-		closedir(dir);
-		qsort(desc->idx2nodenum, desc->nnodes, sizeof(int), nodecmp);
+	rewinddir(dir);
+	while ((d = readdir(dir)) && i < desc->nnodes) {
+		if (is_node_dirent(d))
+			desc->idx2nodenum[i++] = strtol_or_err(((d->d_name) + 4),
+						_("Failed to extract the node number"));
 	}
+	closedir(dir);
+	qsort(desc->idx2nodenum, desc->nnodes, sizeof(int), nodecmp);
 
 	/* information about how nodes share different CPUs */
 	for (i = 0; i < desc->nnodes; i++)
@@ -2044,8 +2040,9 @@ print_summary(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 	scols_unref_table(tb);
 }
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	size_t i;
 
 	fputs(USAGE_HEADER, out);
@@ -2065,17 +2062,15 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(_(" -x, --hex               print hexadecimal masks rather than lists of CPUs\n"), out);
 	fputs(_(" -y, --physical          print physical instead of logical IDs\n"), out);
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(25));
 
-	fprintf(out, _("\nAvailable columns:\n"));
-
+	fputs(USAGE_COLUMNS, out);
 	for (i = 0; i < ARRAY_SIZE(coldescs); i++)
 		fprintf(out, " %13s  %s\n", coldescs[i].name, _(coldescs[i].help));
 
-	fprintf(out, USAGE_MAN_TAIL("lscpu(1)"));
+	printf(USAGE_MAN_TAIL("lscpu(1)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -2131,7 +2126,7 @@ int main(int argc, char *argv[])
 			cpu_modifier_specified = 1;
 			break;
 		case 'h':
-			usage(stdout);
+			usage();
 		case 'J':
 			mod->json = 1;
 			break;
@@ -2149,7 +2144,8 @@ int main(int argc, char *argv[])
 			mod->mode = c == 'p' ? OUTPUT_PARSABLE : OUTPUT_READABLE;
 			break;
 		case 's':
-			path_set_prefix(optarg);
+			if(path_set_prefix(optarg))
+				err(EXIT_FAILURE, _("invalid argument to %s"), "--sysroot");
 			mod->system = SYSTEM_SNAPSHOT;
 			break;
 		case 'x':
@@ -2174,8 +2170,10 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (argc != optind)
-		usage(stderr);
+	if (argc != optind) {
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	/* set default cpu display mode if none was specified */
 	if (!mod->online && !mod->offline) {

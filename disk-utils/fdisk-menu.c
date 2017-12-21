@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "c.h"
+#include "rpmatch.h"
 #include "fdisk.h"
 #include "pt-sun.h"
 #include "pt-mbr.h"
@@ -423,11 +424,24 @@ int process_fdisk_menu(struct fdisk_context **cxt0)
 		prompt = _("Command (m for help): ");
 
 	fputc('\n',stdout);
-	rc = get_user_reply(cxt, prompt, buf, sizeof(buf));
-	if (rc)
-		return rc;
+	rc = get_user_reply(prompt, buf, sizeof(buf));
 
-	key = buf[0];
+	if (rc == -ECANCELED) {
+		/* Map ^C and ^D in main menu to 'q' */
+		if (is_interactive
+		    && fdisk_label_is_changed(fdisk_get_label(cxt, NULL))) {
+			rc = get_user_reply(
+				_("\nDo you really want to quit? "),
+				buf, sizeof(buf));
+			if (rc || !rpmatch(buf))
+				return 0;
+		}
+		key = 'q';
+	} else if (rc) {
+		return rc;
+	} else
+		key = buf[0];
+
 	ent = get_fdisk_menu_entry(cxt, key, &menu);
 	if (!ent) {
 		fdisk_warnx(cxt, _("%c: unknown command"), key);
@@ -465,9 +479,15 @@ static int script_read(struct fdisk_context *cxt)
 		fdisk_warn(cxt, _("Cannot open %s"), filename);
 	else if (!sc)
 		fdisk_warnx(cxt, _("Failed to parse script file %s"), filename);
-	else if (fdisk_apply_script(cxt, sc) != 0)
+	else if (fdisk_apply_script(cxt, sc) != 0) {
 		fdisk_warnx(cxt, _("Failed to apply script %s"), filename);
-	else
+		fdisk_warnx(cxt, _("Resetting fdisk!"));
+		rc = fdisk_reassign_device(cxt);
+                if (rc == 0 && !fdisk_has_label(cxt)) {
+                        fdisk_info(cxt, _("Device does not contain a recognized partition table."));
+                        fdisk_create_disklabel(cxt, NULL);
+		}
+	} else
 		fdisk_info(cxt, _("Script successfully applied."));
 
 	fdisk_unref_script(sc);
@@ -576,7 +596,11 @@ static int generic_menu_cb(struct fdisk_context **cxt0,
 		if (fdisk_get_parent(cxt))
 			break; /* nested PT, don't leave */
 		fdisk_info(cxt, _("The partition table has been altered."));
-		rc = fdisk_reread_partition_table(cxt);
+
+		if (device_is_used)
+			rc = fdisk_reread_changes(cxt, original_layout);
+		else
+			rc = fdisk_reread_partition_table(cxt);
 		if (!rc)
 			rc = fdisk_deassign_device(cxt, 0);
 		/* fallthrough */

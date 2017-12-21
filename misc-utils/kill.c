@@ -296,8 +296,9 @@ static int arg_to_signum(char *arg, int maskbit)
 	return signame_to_signum(arg);
 }
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] <pid>|<name>...\n"), program_invocation_short_name);
 
@@ -317,11 +318,10 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(_("     --verbose          print pids that will be signaled\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
-	fprintf(out, USAGE_MAN_TAIL("kill(1)"));
+	printf(USAGE_HELP_OPTIONS(24));
+	printf(USAGE_MAN_TAIL("kill(1)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static char **parse_arguments(int argc, char **argv, struct kill_control *ctl)
@@ -345,7 +345,7 @@ static char **parse_arguments(int argc, char **argv, struct kill_control *ctl)
 			exit(EXIT_SUCCESS);
 		}
 		if (!strcmp(arg, "-h") || !strcmp(arg, "--help"))
-			usage(stdout);
+			usage();
 		if (!strcmp(arg, "--verbose")) {
 			ctl->verbose = 1;
 			continue;

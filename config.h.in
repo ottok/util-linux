@@ -140,6 +140,9 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
+/* Define to 1 if you have the `getusershell' function. */
+#undef HAVE_GETUSERSHELL
+
 /* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
 
@@ -206,7 +209,7 @@
 /* Define if libsystemd is available */
 #undef HAVE_LIBSYSTEMD
 
-/* Define if libtinfo available. */
+/* Define if libtinfo or libtinfow available. */
 #undef HAVE_LIBTINFO
 
 /* Define to 1 if you have the `udev' library (-ludev). */
@@ -616,6 +619,9 @@
 /* Define to 1 if you want to use uuid daemon. */
 #undef HAVE_UUIDD
 
+/* Define to 1 if you have the `vwarnx' function. */
+#undef HAVE_VWARNX
+
 /* Define to 1 if you have the `warn' function. */
 #undef HAVE_WARN
 
@@ -657,6 +663,9 @@
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
+
+/* "Multi-arch triplet for whereis library search path" */
+#undef MULTIARCHTRIPLET
 
 /* Define to 1 if assertions should be disabled. */
 #undef NDEBUG

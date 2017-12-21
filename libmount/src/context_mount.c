@@ -597,10 +597,10 @@ static int exec_helper(struct libmnt_context *cxt)
 		int i = 0;
 
 		if (setgid(getgid()) < 0)
-			exit(EXIT_FAILURE);
+			_exit(EXIT_FAILURE);
 
 		if (setuid(getuid()) < 0)
-			exit(EXIT_FAILURE);
+			_exit(EXIT_FAILURE);
 
 		type = mnt_fs_get_fstype(cxt->fs);
 
@@ -632,7 +632,7 @@ static int exec_helper(struct libmnt_context *cxt)
 							i, args[i]));
 		DBG_FLUSH;
 		execv(cxt->helper, (char * const *) args);
-		exit(EXIT_FAILURE);
+		_exit(EXIT_FAILURE);
 	}
 	default:
 	{
@@ -1042,7 +1042,7 @@ int mnt_context_finalize_mount(struct libmnt_context *cxt)
 
 	rc = mnt_context_prepare_update(cxt);
 	if (!rc)
-		rc = mnt_context_update_tabs(cxt);;
+		rc = mnt_context_update_tabs(cxt);
 	return rc;
 }
 
@@ -1244,7 +1244,7 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 	if (mnt_context_is_child(cxt)) {
 		DBG(CXT, ul_debugobj(cxt, "next-mount: child exit [rc=%d]", rc));
 		DBG_FLUSH;
-		exit(rc);
+		_exit(rc);
 	}
 	return 0;
 }
@@ -1379,6 +1379,10 @@ int mnt_context_get_mount_excode(
 			if (buf)
 				snprintf(buf, bufsz, _("overlapping loop device exists for %s"), src);
 			return MNT_EX_FAIL;
+		case -MNT_ERR_LOCK:
+			if (buf)
+				snprintf(buf, bufsz, _("locking failed"));
+			return MNT_EX_FILEIO;
 		default:
 			return mnt_context_get_generic_excode(rc, buf, bufsz, _("mount failed: %m"));
 		}
@@ -1388,7 +1392,12 @@ int mnt_context_get_mount_excode(
 		 * mount(2) syscall success, but something else failed
 		 * (probably error in mtab processing).
 		 */
-		if (rc < 0)
+		if (rc == -MNT_ERR_LOCK) {
+			if (buf)
+				snprintf(buf, bufsz, _("filesystem was mounted, but failed to update userspace mount table"));
+			return MNT_EX_FILEIO;
+
+		} else if (rc < 0)
 			return mnt_context_get_generic_excode(rc, buf, bufsz,
 				_("filesystem was mounted, but any subsequent operation failed: %m"));
 
@@ -1525,13 +1534,13 @@ int mnt_context_get_mount_excode(
 			return MNT_EX_SUCCESS;
 		if (!buf)
 			break;
-		if (stat(src, &st))
+		if (src && stat(src, &st))
 			snprintf(buf, bufsz, _("%s is not a block device, and stat(2) fails?"), src);
-		else if (S_ISBLK(st.st_mode))
+		else if (src && S_ISBLK(st.st_mode))
 			snprintf(buf, bufsz,
 				_("the kernel does not recognize %s as a block device; "
 				  "maybe \"modprobe driver\" is necessary"), src);
-		else if (S_ISREG(st.st_mode))
+		else if (src && S_ISREG(st.st_mode))
 			snprintf(buf, bufsz, _("%s is not a block device; try \"-o loop\""), src);
 		else
 			snprintf(buf, bufsz, _("%s is not a block device"), src);
@@ -1568,6 +1577,15 @@ int mnt_context_get_mount_excode(
 		if (buf)
 			snprintf(buf, bufsz, _("no medium found on %s"), src);
 		break;
+
+	case EBADMSG:
+		/* Bad CRC for classic filesystems (e.g. extN or XFS) */
+		if (buf && src && stat(src, &st) == 0
+		    && (S_ISBLK(st.st_mode) || S_ISREG(st.st_mode))) {
+			snprintf(buf, bufsz, _("cannot mount; probably corrupted filesystem on %s"), src);
+			break;
+		}
+		/* fallthrough */
 
 	default:
 		if (buf) {

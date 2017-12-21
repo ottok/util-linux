@@ -29,10 +29,10 @@ extern "C" {
 #include <mntent.h>
 #include <sys/types.h>
 
-#define LIBMOUNT_VERSION   "2.30.2"
+#define LIBMOUNT_VERSION   "2.31.1"
 #define LIBMOUNT_MAJOR_VERSION   2
-#define LIBMOUNT_MINOR_VERSION   30
-#define LIBMOUNT_PATCH_VERSION   2
+#define LIBMOUNT_MINOR_VERSION   31
+#define LIBMOUNT_PATCH_VERSION   1
 
 /**
  * libmnt_cache:
@@ -184,6 +184,12 @@ enum {
  * detected overlapping loop device that cannot be re-used
  */
 #define MNT_ERR_LOOPOVERLAP 5007
+/**
+ * MNT_ERR_LOCK:
+ *
+ * failed to lock mtab/utab or so.
+ */
+#define MNT_ERR_LOCK         5008
 
 
 /*
@@ -230,7 +236,7 @@ enum {
 /**
  * MNT_EX_FILEIO:
  *
- * [u]mount(8) exit code: problems writing, locking, ... mtab/fstab
+ * [u]mount(8) exit code: problems writing, locking, ... mtab/utab
  */
 #define MNT_EX_FILEIO	16
 

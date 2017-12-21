@@ -96,6 +96,11 @@ struct wh_dirlist {
 static const char *bindirs[] = {
 	"/usr/bin",
 	"/usr/sbin",
+#if defined(MULTIARCHTRIPLET)
+	"/lib/" MULTIARCHTRIPLET,
+	"/usr/lib/" MULTIARCHTRIPLET,
+	"/usr/local/lib/" MULTIARCHTRIPLET,
+#endif
 	"/usr/lib",
 	"/usr/lib64",
 	"/bin",
@@ -183,8 +188,10 @@ static const char *whereis_type_to_name(int type)
 	}
 }
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
+
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [-BMS <dir>... -f] <name>\n"), program_invocation_short_name);
 
@@ -201,9 +208,11 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(_(" -f         terminate <dirs> argument list\n"), out);
 	fputs(_(" -u         search for unusual entries\n"), out);
 	fputs(_(" -l         output effective lookup paths\n"), out);
-	fprintf(out, USAGE_MAN_TAIL("whereis(1)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	fputs(USAGE_SEPARATOR, out);
+	printf(USAGE_HELP_OPTIONS(16));
+	printf(USAGE_MAN_TAIL("whereis(1)"));
+	exit(EXIT_SUCCESS);
 }
 
 static void dirlist_add_dir(struct wh_dirlist **ls0, int type, const char *dir)
@@ -502,8 +511,18 @@ int main(int argc, char **argv)
 	textdomain(PACKAGE);
 	atexit(close_stdout);
 
-	if (argc == 1)
-		usage(stderr);
+	if (argc <= 1) {
+		warnx(_("not enough arguments"));
+		errtryhelp(EXIT_FAILURE);
+	} else {
+		/* first arg may be one of our standard longopts */
+		if (!strcmp(argv[1], "--help"))
+			usage();
+		if (!strcmp(argv[1], "--version")) {
+			printf(UTIL_LINUX_VERSION);
+			exit(EXIT_SUCCESS);
+		}
+	}
 
 	whereis_init_debug();
 
@@ -547,8 +566,10 @@ int main(int argc, char **argv)
 				opt_f_missing = 0;
 				break;
 			case 'B':
-				if (*(arg + 1))
-					usage(stderr);
+				if (*(arg + 1)) {
+					warnx(_("bad usage"));
+					errtryhelp(EXIT_FAILURE);
+				}
 				i++;
 				free_dirlist(&ls, BIN_DIR);
 				construct_dirlist_from_argv(
@@ -556,8 +577,10 @@ int main(int argc, char **argv)
 				opt_f_missing = 1;
 				break;
 			case 'M':
-				if (*(arg + 1))
-					usage(stderr);
+				if (*(arg + 1)) {
+					warnx(_("bad usage"));
+					errtryhelp(EXIT_FAILURE);
+				}
 				i++;
 				free_dirlist(&ls, MAN_DIR);
 				construct_dirlist_from_argv(
@@ -565,8 +588,10 @@ int main(int argc, char **argv)
 				opt_f_missing = 1;
 				break;
 			case 'S':
-				if (*(arg + 1))
-					usage(stderr);
+				if (*(arg + 1)) {
+					warnx(_("bad usage"));
+					errtryhelp(EXIT_FAILURE);
+				}
 				i++;
 				free_dirlist(&ls, SRC_DIR);
 				construct_dirlist_from_argv(
@@ -604,9 +629,10 @@ int main(int argc, char **argv)
 				printf(UTIL_LINUX_VERSION);
 				return EXIT_SUCCESS;
 			case 'h':
-				usage(stdout);
+				usage();
 			default:
-				usage(stderr);
+				warnx(_("bad usage"));
+				errtryhelp(EXIT_FAILURE);
 			}
 
 			if (arg_i < i)		/* moved to the next argv[] item */

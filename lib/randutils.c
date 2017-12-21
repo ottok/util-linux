@@ -109,13 +109,10 @@ void random_get_bytes(void *buf, size_t nbytes)
 		       n -= x;
 		       cp += x;
 		       lose_counter = 0;
-		} else if (errno == ENOSYS) {	/* kernel without getrandom() */
+		} else if (errno == ENOSYS)	/* kernel without getrandom() */
 			break;
-		} else {
-			if (lose_counter++ > 16) /* entropy problem? */
-				break;
-			continue;
-		}
+		else if (lose_counter++ > 16)	/* entropy problem? */
+			break;
 	}
 
 	if (errno == ENOSYS)
@@ -192,6 +189,8 @@ const char *random_tell_source(void)
 }
 
 #ifdef TEST_PROGRAM_RANDUTILS
+#include <inttypes.h>
+
 int main(int argc, char *argv[])
 {
 	size_t i, n;
@@ -204,7 +203,7 @@ int main(int argc, char *argv[])
 	printf("Multiple random calls:\n");
 	for (i = 0; i < n; i++) {
 		random_get_bytes(&v, sizeof(v));
-		printf("#%02zu: %25ju\n", i, v);
+		printf("#%02zu: %25"PRIu64"\n", i, v);
 	}
 
 
@@ -217,7 +216,7 @@ int main(int argc, char *argv[])
 	random_get_bytes(buf, bufsz);
 	for (i = 0; i < n; i++) {
 		vp = (int64_t *) (buf + (i * sizeof(*vp)));
-		printf("#%02zu: %25ju\n", i, *vp);
+		printf("#%02zu: %25"PRIu64"\n", i, *vp);
 	}
 
 	return EXIT_SUCCESS;

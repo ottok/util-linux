@@ -238,9 +238,9 @@ static void bind_ns_files_from_child(pid_t *child, int fds[2])
 	}
 }
 
-static void usage(int status)
+static void __attribute__((__noreturn__)) usage(void)
 {
-	FILE *out = status == EXIT_SUCCESS ? stdout : stderr;
+	FILE *out = stdout;
 
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [<program> [<argument>...]]\n"),
@@ -265,11 +265,10 @@ static void usage(int status)
 	fputs(_(" -s, --setgroups allow|deny  control the setgroups syscall in user namespaces\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
-	fprintf(out, USAGE_MAN_TAIL("unshare(1)"));
+	printf(USAGE_HELP_OPTIONS(27));
+	printf(USAGE_MAN_TAIL("unshare(1)"));
 
-	exit(status);
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -308,7 +307,7 @@ int main(int argc, char *argv[])
 	int status;
 	unsigned long propagation = UNSHARE_PROPAGATION_DEFAULT;
 	uid_t real_euid = geteuid();
-	gid_t real_egid = getegid();;
+	gid_t real_egid = getegid();
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -321,7 +320,7 @@ int main(int argc, char *argv[])
 			forkit = 1;
 			break;
 		case 'h':
-			usage(EXIT_SUCCESS);
+			usage();
 		case 'V':
 			printf(UTIL_LINUX_VERSION);
 			return EXIT_SUCCESS;

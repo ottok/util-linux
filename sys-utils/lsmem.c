@@ -248,15 +248,14 @@ static void print_summary(struct lsmem *lsmem)
 static int memory_block_get_node(char *name)
 {
 	struct dirent *de;
-	char *path;
+	const char *path;
 	DIR *dir;
 	int node;
 
-	path = path_strdup(_PATH_SYS_MEMORY"/%s", name);
-	dir = opendir(path);
-	free(path);
-	if (!dir)
-		err(EXIT_FAILURE, _("Failed to open %s"), path);
+	path = path_get(_PATH_SYS_MEMORY"/%s", name);
+	if (!path || !(dir= opendir(path)))
+		err(EXIT_FAILURE, _("Failed to open %s"), path ? path : name);
+
 	node = -1;
 	while ((de = readdir(dir)) != NULL) {
 		if (strncmp("node", de->d_name, 4))
@@ -348,14 +347,16 @@ static int memory_block_filter(const struct dirent *de)
 
 static void read_basic_info(struct lsmem *lsmem)
 {
-	char *dir;
+	const char *dir;
 
 	if (!path_exist(_PATH_SYS_MEMORY_BLOCK_SIZE))
 		errx(EXIT_FAILURE, _("This system does not support memory blocks"));
 
-	dir = path_strdup(_PATH_SYS_MEMORY);
+	dir = path_get(_PATH_SYS_MEMORY);
+	if (!dir)
+		err(EXIT_FAILURE, _("Failed to read %s"), _PATH_SYS_MEMORY);
+
 	lsmem->ndirs = scandir(dir, &lsmem->dirs, memory_block_filter, versionsort);
-	free(dir);
 	if (lsmem->ndirs <= 0)
 		err(EXIT_FAILURE, _("Failed to read %s"), _PATH_SYS_MEMORY);
 
@@ -363,8 +364,9 @@ static void read_basic_info(struct lsmem *lsmem)
 		lsmem->have_nodes = 1;
 }
 
-static void __attribute__((__noreturn__)) lsmem_usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	unsigned int i;
 
 	fputs(USAGE_HEADER, out);
@@ -385,15 +387,13 @@ static void __attribute__((__noreturn__)) lsmem_usage(FILE *out)
 	fputs(_("     --summary[=when] print summary information (never,always or only)\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(22));
 
-	fputs(_("\nAvailable columns:\n"), out);
-
+	fputs(USAGE_COLUMNS, out);
 	for (i = 0; i < ARRAY_SIZE(coldescs); i++)
-		fprintf(out, " %10s  %s\n", coldescs[i].name, coldescs[i].help);
+		fprintf(out, " %10s  %s\n", coldescs[i].name, _(coldescs[i].help));
 
-	fprintf(out, USAGE_MAN_TAIL("lsmem(1)"));
+	printf(USAGE_MAN_TAIL("lsmem(1)"));
 
 	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
 }
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 			lsmem->bytes = 1;
 			break;
 		case 'h':
-			lsmem_usage(stdout);
+			usage();
 			break;
 		case 'J':
 			lsmem->json = 1;
@@ -471,7 +471,8 @@ int main(int argc, char **argv)
 			lsmem->want_summary = 0;
 			break;
 		case 's':
-			path_set_prefix(optarg);
+			if(path_set_prefix(optarg))
+				err(EXIT_FAILURE, _("invalid argument to %s"), "--sysroot");
 			break;
 		case 'V':
 			printf(UTIL_LINUX_VERSION);
@@ -494,8 +495,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (argc != optind)
-		lsmem_usage(stderr);
+	if (argc != optind) {
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	if (lsmem->want_table + lsmem->want_summary == 0)
 		errx(EXIT_FAILURE, _("options --{raw,json,pairs} and --summary=only are mutually exclusive"));

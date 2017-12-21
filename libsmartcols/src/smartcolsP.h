@@ -146,7 +146,8 @@ struct libscols_table {
 	size_t	ncols;		/* number of columns */
 	size_t  ntreecols;	/* number of columns with SCOLS_FL_TREE */
 	size_t	nlines;		/* number of lines */
-	size_t	termwidth;	/* terminal width */
+	size_t	termwidth;	/* terminal width (number of columns) */
+	size_t  termheight;	/* terminal height  (number of lines) */
 	size_t  termreduce;	/* extra blank space */
 	int	termforce;	/* SCOLS_TERMFORCE_* */
 	FILE	*out;		/* output stream */
@@ -163,15 +164,20 @@ struct libscols_table {
 	int	indent_last_sep;/* last printed has been line separator */
 	int	format;		/* SCOLS_FMT_* */
 
+	size_t	termlines_used;	/* printed line counter */
+	size_t	header_next;	/* where repeat header */
+
 	/* flags */
 	unsigned int	ascii		:1,	/* don't use unicode */
 			colors_wanted	:1,	/* enable colors */
 			is_term		:1,	/* isatty() */
 			padding_debug	:1,	/* output visible padding chars */
 			maxout		:1,	/* maximize output */
+			header_repeat   :1,     /* print header after libscols_table->termheight */
 			header_printed  :1,	/* header already printed */
 			priv_symbols	:1,	/* default private symbols */
 			no_headings	:1,	/* don't print header */
+			no_encode	:1,	/* don't care about control and non-printable chars */
 			no_linesep	:1,	/* don't print line separator */
 			no_wrap		:1;	/* never wrap lines */
 };

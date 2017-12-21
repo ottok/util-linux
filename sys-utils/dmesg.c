@@ -255,8 +255,9 @@ static int set_level_color(int log_level, const char *mesg, size_t mesgsz)
 	return id >= 0 ? 0 : -1;
 }
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	size_t i;
 
 	fputs(USAGE_HEADER, out);
@@ -294,8 +295,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 		"                               [delta|reltime|ctime|notime|iso]\n"
 		"Suspending/resume will make ctime and iso timestamps inaccurate.\n"), out);
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(29));
 	fputs(_("\nSupported log facilities:\n"), out);
 	for (i = 0; i < ARRAY_SIZE(level_names); i++)
 		fprintf(out, " %7s - %s\n",
@@ -307,9 +307,9 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 		fprintf(out, " %7s - %s\n",
 			level_names[i].name,
 			_(level_names[i].help));
-	fputs(USAGE_SEPARATOR, out);
-	fprintf(out, USAGE_MAN_TAIL("dmesg(1)"));
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+
+	printf(USAGE_MAN_TAIL("dmesg(1)"));
+	exit(EXIT_SUCCESS);
 }
 
 /*
@@ -1319,7 +1319,7 @@ int main(int argc, char *argv[])
 			ctl.pager = 1;
 			break;
 		case 'h':
-			usage(stdout);
+			usage();
 			break;
 		case 'k':
 			ctl.fltr_fac = 1;
@@ -1383,11 +1383,11 @@ int main(int argc, char *argv[])
 			errtryhelp(EXIT_FAILURE);
 		}
 	}
-	argc -= optind;
-	argv += optind;
 
-	if (argc > 1)
-		usage(stderr);
+	if (argc != optind) {
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	if ((is_timefmt(&ctl, RELTIME) ||
 	     is_timefmt(&ctl, CTIME)   ||

@@ -25,8 +25,9 @@
 #include "nls.h"
 #include "closestream.h"
 
-static void __attribute__ ((__noreturn__)) usage(FILE * out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(
 		" %s [options] <program> [arguments ...]\n"),
@@ -39,11 +40,10 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 	fputs(_(" -c, --ctty     set the controlling terminal to the current one\n"), out);
 	fputs(_(" -w, --wait     wait program to exit, and use the same return\n"), out);
 
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(16));
 
-	fprintf(out, USAGE_MAN_TAIL("setsid(1)"));
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	printf(USAGE_MAN_TAIL("setsid(1)"));
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -78,13 +78,15 @@ int main(int argc, char **argv)
 			status = 1;
 			break;
 		case 'h':
-			usage(stdout);
+			usage();
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
 
-	if (argc - optind < 1)
-		usage(stderr);
+	if (argc - optind < 1) {
+		warnx(_("no command specified"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	if (getpgrp() == getpid()) {
 		pid = fork();

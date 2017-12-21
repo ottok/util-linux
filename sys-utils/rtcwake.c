@@ -88,8 +88,9 @@ struct rtcwake_control {
 		     dryrun:1;		/* do not set alarm, suspend system, etc */
 };
 
-static void __attribute__((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 	fprintf(out,
 	      _(" %s [options]\n"), program_invocation_short_name);
@@ -113,13 +114,10 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
 	fputs(_(" -u, --utc                RTC uses UTC\n"), out);
 	fputs(_(" -v, --verbose            verbose messages\n"), out);
 
-	printf(USAGE_SEPARATOR);
-	printf(USAGE_HELP);
-	printf(USAGE_VERSION);
-
+	fputs(USAGE_SEPARATOR, out);
+	printf(USAGE_HELP_OPTIONS(26));
 	printf(USAGE_MAN_TAIL("rtcwake(8)"));
-
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static int is_wakeup_enabled(const char *devname)
@@ -496,9 +494,9 @@ int main(int argc, char **argv)
 			printf(UTIL_LINUX_VERSION);
 			exit(EXIT_SUCCESS);
 		case 'h':
-			usage(stdout);
+			usage();
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
@@ -534,7 +532,7 @@ int main(int argc, char **argv)
 			if (alarm < ctl.sys_time)
 				errx(EXIT_FAILURE, _("time doesn't go backward to %s"),
 						ctime(&alarm));
-			alarm += ctl.sys_time - ctl.rtc_time;
+			alarm -= ctl.sys_time - ctl.rtc_time;
 		} else
 			alarm = ctl.rtc_time + seconds + 1;
 
