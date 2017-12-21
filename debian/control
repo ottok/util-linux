@@ -23,7 +23,7 @@ Section: base
 Priority: required
 Maintainer: LaMont Jones <lamont@debian.org>
 Uploaders: Adam Conrad <adconrad@0c3.net>
-Standards-Version: 4.1.0
+Standards-Version: 4.1.2
 Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/
 Vcs-Git: git://anonscm.debian.org/collab-maint/pkg-util-linux.git
 
