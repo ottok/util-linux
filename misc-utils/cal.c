@@ -244,7 +244,7 @@ static int week_number(int day, int month, int32_t year, const struct cal_contro
 static int week_to_day(const struct cal_control *ctl);
 static int center_str(const char *src, char *dest, size_t dest_size, size_t width);
 static void center(const char *str, size_t len, int separate);
-static void __attribute__((__noreturn__)) usage(FILE *out);
+static void __attribute__((__noreturn__)) usage(void);
 
 int main(int argc, char **argv)
 {
@@ -394,7 +394,7 @@ int main(int argc, char **argv)
 			printf(UTIL_LINUX_VERSION);
 			return EXIT_SUCCESS;
 		case 'h':
-			usage(stdout);
+			usage();
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
@@ -431,7 +431,7 @@ int main(int argc, char **argv)
 		ctl.req.day = strtos32_or_err(*argv++, _("illegal day value"));
 		if (ctl.req.day < 1 || DAYS_IN_MONTH < ctl.req.day)
 			errx(EXIT_FAILURE, _("illegal day value: use 1-%d"), DAYS_IN_MONTH);
-		/* FALLTHROUGH */
+		/* fallthrough */
 	case 2:
 		if (isdigit(**argv))
 			ctl.req.month = strtos32_or_err(*argv++, _("illegal month value: use 1-12"));
@@ -443,7 +443,7 @@ int main(int argc, char **argv)
 		}
 		if (ctl.req.month < 1 || MONTHS_IN_YEAR < ctl.req.month)
 			errx(EXIT_FAILURE, _("illegal month value: use 1-12"));
-		/* FALLTHROUGH */
+		/* fallthrough */
 	case 1:
 		ctl.req.year = strtos32_or_err(*argv++, _("illegal year value"));
 		if (ctl.req.year < SMALLEST_YEAR)
@@ -470,7 +470,8 @@ int main(int argc, char **argv)
 			ctl.req.month = local_time->tm_mon + 1;
 		break;
 	default:
-		usage(stderr);
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
 	}
 
 	if (0 < ctl.req.week) {
@@ -987,8 +988,9 @@ static void center(const char *str, size_t len, int separate)
 	}
 }
 
-static void __attribute__ ((__noreturn__)) usage(FILE * out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [[[day] month] year]\n"), program_invocation_short_name);
 	fprintf(out, _(" %s [options] <timestamp|monthname>\n"), program_invocation_short_name);
@@ -1013,9 +1015,8 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 	        "                         %s\n", USAGE_COLORS_DEFAULT);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
-	fprintf(out, USAGE_MAN_TAIL("cal(1)"));
+	printf(USAGE_HELP_OPTIONS(23));
+	printf(USAGE_MAN_TAIL("cal(1)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }

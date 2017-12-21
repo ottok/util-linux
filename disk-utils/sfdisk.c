@@ -48,7 +48,6 @@
 #include "blkdev.h"
 #include "all-io.h"
 #include "rpmatch.h"
-#include "loopdev.h"
 #include "optutils.h"
 
 #include "libfdisk.h"
@@ -1392,31 +1391,6 @@ static size_t last_pt_partno(struct sfdisk *sf)
 	return partno;
 }
 
-#ifdef BLKRRPART
-static int is_device_used(struct sfdisk *sf)
-{
-	struct stat st;
-	int fd;
-
-	assert(sf);
-	assert(sf->cxt);
-
-	fd = fdisk_get_devfd(sf->cxt);
-	if (fd < 0)
-		return 0;
-
-	if (fstat(fd, &st) == 0 && S_ISBLK(st.st_mode)
-	    && major(st.st_rdev) != LOOPDEV_MAJOR)
-		return ioctl(fd, BLKRRPART) != 0;
-	return 0;
-}
-#else
-static int is_device_used(struct sfdisk *sf __attribute__((__unused__)))
-{
-	return 0;
-}
-#endif
-
 #ifdef HAVE_LIBREADLINE
 static char *sfdisk_fgets(struct fdisk_script *dp,
 			  char *buf, size_t bufsz, FILE *f)
@@ -1629,7 +1603,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	if (!sf->noact && !sf->noreread) {
 		if (!sf->quiet)
 			fputs(_("Checking that no-one is using this disk right now ..."), stdout);
-		if (is_device_used(sf)) {
+		if (fdisk_device_is_used(sf->cxt)) {
 			if (!sf->quiet)
 				fputs(_(" FAILED\n\n"), stdout);
 
@@ -1792,7 +1766,7 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	} while (1);
 
 	/* create empty disk label if label, but no partition specified */
-	if (rc == SFDISK_DONE_EOF && created == 0
+	if ((rc == SFDISK_DONE_EOF || rc == SFDISK_DONE_WRITE) && created == 0
 	    && fdisk_script_has_force_label(dp) == 1
 	    && fdisk_table_get_nents(tb) == 0
 	    && fdisk_script_get_header(dp, "label")) {
@@ -1839,8 +1813,9 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	return rc;
 }
 
-static void __attribute__ ((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 
 	fprintf(out,
@@ -1850,7 +1825,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_("Display or manipulate a disk partition table.\n"), out);
 
-	fputs(_("\nCommands:\n"), out);
+	fputs(USAGE_COMMANDS, out);
 	fputs(_(" -A, --activate <dev> [<part> ...] list or set bootable MBR partitions\n"), out);
 	fputs(_(" -d, --dump <dev>                  dump partition table (usable for later input)\n"), out);
 	fputs(_(" -J, --json <dev>                  dump partition table in JSON format\n"), out);
@@ -1900,13 +1875,13 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(_(" -u, --unit S              deprecated, only sector unit is supported\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(_(" -v, --version  output version information and exit\n"), out);
+	printf( " -h, --help                %s\n", USAGE_OPTSTR_HELP);
+	printf( " -v, --version             %s\n", USAGE_OPTSTR_VERSION);
 
 	list_available_columns(out);
 
-	fprintf(out, USAGE_MAN_TAIL("sfdisk(8)"));
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	printf(USAGE_MAN_TAIL("sfdisk(8)"));
+	exit(EXIT_SUCCESS);
 }
 
 
@@ -2042,7 +2017,7 @@ int main(int argc, char *argv[])
 			sf->act = ACT_SHOW_GEOM;
 			break;
 		case 'h':
-			usage(stdout);
+			usage();
 			break;
 		case 'l':
 			sf->act = ACT_LIST;

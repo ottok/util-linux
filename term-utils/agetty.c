@@ -298,6 +298,7 @@ static void open_tty(char *tty, struct termios *tp, struct options *op);
 static void termio_init(struct options *op, struct termios *tp);
 static void reset_vc (const struct options *op, struct termios *tp);
 static void auto_baud(struct termios *tp);
+static void list_speeds(void);
 static void output_special_char (unsigned char c, struct options *op,
 		struct termios *tp, FILE *fp);
 static void do_prompt(struct options *op, struct termios *tp);
@@ -308,7 +309,7 @@ static void termio_final(struct options *op,
 			 struct termios *tp, struct chardata *cp);
 static int caps_lock(char *s);
 static speed_t bcode(char *s);
-static void usage(FILE * out) __attribute__((__noreturn__));
+static void usage(void) __attribute__((__noreturn__));
 static void log_err(const char *, ...) __attribute__((__noreturn__))
 			       __attribute__((__format__(printf, 1, 2)));
 static void log_warn (const char *, ...)
@@ -317,6 +318,7 @@ static ssize_t append(char *dest, size_t len, const char  *sep, const char *src)
 static void check_username (const char* nm);
 static void login_options_to_argv(char *argv[], int *argc, char *str, char *username);
 static void reload_agettys(void);
+static void print_issue_file(struct options *op, struct termios *tp);
 
 /* Fake hostname for ut_host specified on command line. */
 static char *fakehost;
@@ -452,7 +454,9 @@ int main(int argc, char **argv)
 		username = options.autolog;
 	}
 
-	if ((options.flags & F_NOPROMPT) == 0) {
+	if (options.flags & F_NOPROMPT) {	/* --skip-login */
+		print_issue_file(&options, &termios);
+	} else {				/* regular (auto)login */
 		if (options.autolog) {
 			/* Autologin prompt */
 			do_prompt(&options, &termios);
@@ -613,6 +617,50 @@ static void login_options_to_argv(char *argv[], int *argc,
 	*argc = i;
 }
 
+static void output_version(void)
+{
+	static const char *features[] = {
+#ifdef DEBUGGING
+		"debug",
+#endif
+#ifdef CRTSCTS
+		"flow control",
+#endif
+#ifdef KDGKBLED
+		"hints",
+#endif
+#ifdef ISSUE
+		"issue",
+#endif
+#ifdef KDGKBMODE
+		"keyboard mode",
+#endif
+#ifdef USE_PLYMOUTH_SUPPORT
+		"plymouth",
+#endif
+#ifdef AGETTY_RELOAD
+		"reload",
+#endif
+#ifdef USE_SYSLOG
+		"syslog",
+#endif
+#ifdef HAVE_WIDECHAR
+		"widechar",
+#endif
+		NULL
+	};
+	unsigned int i;
+
+	printf( _("%s from %s"), program_invocation_short_name, PACKAGE_STRING);
+	fputs(" (", stdout);
+	for (i = 0; features[i]; i++) {
+		if (0 < i)
+			fputs(", ", stdout);
+		printf("%s", features[i]);
+	}
+	fputs(")\n", stdout);
+}
+
 #define is_speed(str) (strlen((str)) == strspn((str), "0123456789,"))
 
 /* Parse command-line arguments. */
@@ -629,6 +677,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 		ERASE_CHARS_OPTION,
 		KILL_CHARS_OPTION,
 		RELOAD_OPTION,
+		LIST_SPEEDS_OPTION,
 	};
 	const struct option longopts[] = {
 		{  "8bits",	     no_argument,	 NULL,  '8'  },
@@ -646,6 +695,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 		{  "login-program",  required_argument,  NULL,  'l'  },
 		{  "local-line",     optional_argument,	 NULL,  'L'  },
 		{  "extract-baud",   no_argument,	 NULL,  'm'  },
+		{  "list-speeds",    no_argument,	 NULL,	LIST_SPEEDS_OPTION },
 		{  "skip-login",     no_argument,	 NULL,  'n'  },
 		{  "nonewline",	     no_argument,	 NULL,  'N'  },
 		{  "login-options",  required_argument,  NULL,  'o'  },
@@ -781,13 +831,16 @@ static void parse_args(int argc, char **argv, struct options *op)
 		case RELOAD_OPTION:
 			reload_agettys();
 			exit(EXIT_SUCCESS);
+		case LIST_SPEEDS_OPTION:
+			list_speeds();
+			exit(EXIT_SUCCESS);
 		case VERSION_OPTION:
-			printf(UTIL_LINUX_VERSION);
+			output_version();
 			exit(EXIT_SUCCESS);
 		case HELP_OPTION:
-			usage(stdout);
+			usage();
 		default:
-			usage(stderr);
+			errtryhelp(EXIT_FAILURE);
 		}
 	}
 
@@ -795,7 +848,7 @@ static void parse_args(int argc, char **argv, struct options *op)
 
 	if (argc < optind + 1) {
 		log_warn(_("not enough arguments"));
-		usage(stderr);
+		errx(EXIT_FAILURE, _("not enough arguments"));
 	}
 
 	/* Accept "tty", "baudrate tty", and "tty baudrate". */
@@ -803,8 +856,8 @@ static void parse_args(int argc, char **argv, struct options *op)
 		/* Assume BSD style speed. */
 		parse_speeds(op, argv[optind++]);
 		if (argc < optind + 1) {
-			warn(_("not enough arguments"));
-			usage(stderr);
+			log_warn(_("not enough arguments"));
+			errx(EXIT_FAILURE, _("not enough arguments"));
 		}
 		op->tty = argv[optind++];
 	} else {
@@ -825,45 +878,6 @@ static void parse_args(int argc, char **argv, struct options *op)
 
 	if (argc > optind && argv[optind])
 		op->term = argv[optind];
-
-#ifdef DO_DEVFS_FIDDLING
-	/*
-	 * Some devfs junk, following Goswin Brederlow:
-	 *   turn ttyS<n> into tts/<n>
-	 *   turn tty<n> into vc/<n>
-	 * http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=72241
-	 */
-	if (op->tty && strlen(op->tty) < 90) {
-		char dev_name[100];
-		struct stat st;
-
-		if (strncmp(op->tty, "ttyS", 4) == 0) {
-			strcpy(dev_name, "/dev/");
-			strcat(dev_name, op->tty);
-			if (stat(dev_name, &st) < 0) {
-				strcpy(dev_name, "/dev/tts/");
-				strcat(dev_name, op->tty + 4);
-				if (stat(dev_name, &st) == 0) {
-					op->tty = strdup(dev_name + 5);
-					if (!op->tty)
-						log_err(_("failed to allocate memory: %m"));
-				}
-			}
-		} else if (strncmp(op->tty, "tty", 3) == 0) {
-			strcpy(dev_name, "/dev/");
-			strncat(dev_name, op->tty, 90);
-			if (stat(dev_name, &st) < 0) {
-				strcpy(dev_name, "/dev/vc/");
-				strcat(dev_name, op->tty + 3);
-				if (stat(dev_name, &st) == 0) {
-					op->tty = strdup(dev_name + 5);
-					if (!op->tty)
-						log_err(_("failed to allocate memory: %m"));
-				}
-			}
-		}
-	}
-#endif				/* DO_DEVFS_FIDDLING */
 
 	debug("exiting parseargs\n");
 }
@@ -1424,6 +1438,7 @@ static char *xgetdomainname(void)
 #endif
 }
 
+
 static char *read_os_release(struct options *op, const char *varname)
 {
 	int fd = -1;
@@ -1476,6 +1491,11 @@ static char *read_os_release(struct options *op, const char *varname)
 			continue;
 		}
 		p += varsz;
+		p += strspn(p, " \t\n\r");
+
+		if (*p != '=')
+			continue;
+
 		p += strspn(p, " \t\n\r=\"");
 		eol = p + strcspn(p, "\n\r");
 		*eol = '\0';
@@ -1694,9 +1714,8 @@ again:
 				termio_clear(STDOUT_FILENO);
 			goto again;
 		}
-#else
-		getc(stdin);
 #endif
+		getc(stdin);
 	}
 #ifdef KDGKBLED
 	if (!(op->flags & F_NOHINTS) && !op->autolog &&
@@ -2001,12 +2020,12 @@ static void termio_final(struct options *op, struct termios *tp, struct chardata
 	case 1:
 		/* odd parity */
 		tp->c_cflag |= PARODD;
-		/* do not break */
+		/* fallthrough */
 	case 2:
 		/* even parity */
 		tp->c_cflag |= PARENB;
 		tp->c_iflag |= INPCK | ISTRIP;
-		/* do not break */
+		/* fallthrough */
 	case (1 | 2):
 		/* no parity bit */
 		tp->c_cflag &= ~CSIZE;
@@ -2066,8 +2085,10 @@ static speed_t bcode(char *s)
 	return 0;
 }
 
-static void __attribute__ ((__noreturn__)) usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
+
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %1$s [options] <line> [<baud_rate>,...] [<termtype>]\n"
 		       " %1$s [options] <baud_rate>,... <line> [<termtype>]\n"), program_invocation_short_name);
@@ -2108,11 +2129,20 @@ static void __attribute__ ((__noreturn__)) usage(FILE *out)
 	fputs(_("     --delay <number>       sleep seconds before prompt\n"), out);
 	fputs(_("     --nice <number>        run login with this priority\n"), out);
 	fputs(_("     --reload               reload prompts on running agetty instances\n"), out);
-	fputs(_("     --help                 display this help and exit\n"), out);
-	fputs(_("     --version              output version information and exit\n"), out);
-	fprintf(out, USAGE_MAN_TAIL("agetty(8)"));
+	fputs(_("     --list-speeds          display supported baud rates\n"), out);
+	printf( "     --help                 %s\n", USAGE_OPTSTR_HELP);
+	printf( "     --version              %s\n", USAGE_OPTSTR_VERSION);
+	printf(USAGE_MAN_TAIL("agetty(8)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
+}
+
+static void list_speeds(void)
+{
+	const struct Speedtab *sp;
+
+	for (sp = speedtab; sp->speed; sp++)
+		printf("%10ld\n", sp->speed);
 }
 
 /*

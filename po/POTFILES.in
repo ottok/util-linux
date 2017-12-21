@@ -21,7 +21,6 @@ disk-utils/mkfs.cramfs.c
 disk-utils/mkfs.minix.c
 disk-utils/mkswap.c
 disk-utils/partx.c
-disk-utils/partx.h
 disk-utils/raw.c
 disk-utils/resizepart.c
 disk-utils/sfdisk.c
@@ -59,7 +58,7 @@ include/namespace.h
 include/nls.h
 include/optutils.h
 include/pager.h
-include/pamfail.h
+include/partx.h
 include/path.h
 include/pathnames.h
 include/plymouth-ctrl.h
@@ -69,9 +68,11 @@ include/pt-mbr.h
 include/pt-mbr-partnames.h
 include/pt-sgi.h
 include/pt-sun.h
+include/pwdutils.h
 include/randutils.h
 include/rpmatch.h
 include/setproctitle.h
+include/sha1.h
 include/statfs_magic.h
 include/strutils.h
 include/strv.h
@@ -124,6 +125,7 @@ libblkid/src/superblocks/drbd.c
 libblkid/src/superblocks/drbdmanage.c
 libblkid/src/superblocks/drbdproxy_datalog.c
 libblkid/src/superblocks/exfat.c
+libblkid/src/superblocks/exfs.c
 libblkid/src/superblocks/ext.c
 libblkid/src/superblocks/f2fs.c
 libblkid/src/superblocks/gfs.c
@@ -154,6 +156,7 @@ libblkid/src/superblocks/superblocks.c
 libblkid/src/superblocks/superblocks.h
 libblkid/src/superblocks/swap.c
 libblkid/src/superblocks/sysv.c
+libblkid/src/superblocks/ubi.c
 libblkid/src/superblocks/ubifs.c
 libblkid/src/superblocks/udf.c
 libblkid/src/superblocks/ufs.c
@@ -245,8 +248,10 @@ lib/pager.c
 lib/path.c
 lib/plymouth-ctrl.c
 lib/procutils.c
+lib/pwdutils.c
 lib/randutils.c
 lib/setproctitle.c
+lib/sha1.c
 libsmartcols/src/cell.c
 libsmartcols/src/column.c
 libsmartcols/src/init.c
@@ -271,6 +276,7 @@ libuuid/src/gen_uuid.c
 libuuid/src/isnull.c
 libuuid/src/pack.c
 libuuid/src/parse.c
+libuuid/src/predefined.c
 libuuid/src/test_uuid.c
 libuuid/src/unpack.c
 libuuid/src/unparse.c
@@ -327,6 +333,7 @@ misc-utils/rename.c
 misc-utils/test_uuidd.c
 misc-utils/uuidd.c
 misc-utils/uuidgen.c
+misc-utils/uuidparse.c
 misc-utils/whereis.c
 misc-utils/wipefs.c
 schedutils/chrt.c
@@ -354,7 +361,6 @@ sys-utils/ipcutils.c
 sys-utils/ipcutils.h
 sys-utils/ldattach.c
 sys-utils/losetup.c
-sys-utils/lp.h
 sys-utils/lscpu.c
 sys-utils/lscpu-dmi.c
 sys-utils/lscpu.h
@@ -368,6 +374,7 @@ sys-utils/pivot_root.c
 sys-utils/prlimit.c
 sys-utils/readprofile.c
 sys-utils/renice.c
+sys-utils/rfkill.c
 sys-utils/rtcwake.c
 sys-utils/setarch.c
 sys-utils/setpriv.c

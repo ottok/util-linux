@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-#define BLKID_VERSION   "2.30.2"
-#define BLKID_DATE      "21-Sep-2017"
+#define BLKID_VERSION   "2.31.1"
+#define BLKID_DATE      "19-Dec-2017"
 
 /**
  * blkid_dev:
@@ -223,6 +223,8 @@ extern blkid_probe blkid_new_probe_from_filename(const char *filename)
 extern void blkid_free_probe(blkid_probe pr);
 
 extern void blkid_reset_probe(blkid_probe pr);
+extern int blkid_probe_reset_buffers(blkid_probe pr);
+extern int blkid_probe_hide_range(blkid_probe pr, uint64_t off, uint64_t len);
 
 extern int blkid_probe_set_device(blkid_probe pr, int fd,
 	                blkid_loff_t off, blkid_loff_t size)

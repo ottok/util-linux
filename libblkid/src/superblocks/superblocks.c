@@ -109,8 +109,10 @@ static const struct blkid_idinfo *idinfos[] =
 	&lvm1_idinfo,
 	&snapcow_idinfo,
 	&verity_hash_idinfo,
+	&integrity_idinfo,
 	&luks_idinfo,
 	&vmfs_volume_idinfo,
+	&ubi_idinfo,
 
 	/* Filesystems */
 	&vfat_idinfo,
@@ -118,6 +120,7 @@ static const struct blkid_idinfo *idinfos[] =
 	&swap_idinfo,
 	&xfs_idinfo,
 	&xfs_log_idinfo,
+	&exfs_idinfo,
 	&ext4dev_idinfo,
 	&ext4_idinfo,
 	&ext3_idinfo,
@@ -765,7 +768,7 @@ int blkid_probe_set_uuid_as(blkid_probe pr, unsigned char *uuid, const char *nam
 	if (!v)
 		return -ENOMEM;
 
-	v->len = 37;
+	v->len = UUID_STR_LEN;
 	v->data = calloc(1, v->len);
 	if (!v->data)
 		rc = -ENOMEM;

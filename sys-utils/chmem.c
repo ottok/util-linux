@@ -234,8 +234,9 @@ static void parse_parameter(struct chmem_desc *desc, char *param)
 		errx(EXIT_FAILURE, _("Invalid range: %s"), param);
 }
 
-static void __attribute__((__noreturn__)) chmem_usage(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [SIZE|RANGE|BLOCKRANGE]\n"), program_invocation_short_name);
 
@@ -248,12 +249,11 @@ static void __attribute__((__noreturn__)) chmem_usage(FILE *out)
 	fputs(_(" -b, --blocks   use memory blocks\n"), out);
 	fputs(_(" -v, --verbose  verbose output\n"), out);
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(16));
 
-	fprintf(out, USAGE_MAN_TAIL("chmem(8)"));
+	printf(USAGE_MAN_TAIL("chmem(8)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 			desc->use_blocks = 1;
 			break;
 		case 'h':
-			chmem_usage(stdout);
+			usage();
 			break;
 		case 'v':
 			desc->verbose = 1;
@@ -313,8 +313,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if ((argc == 1) || (argc != optind + 1) || (cmd == CMD_NONE))
-		chmem_usage(stderr);
+	if ((argc == 1) || (argc != optind + 1) || (cmd == CMD_NONE)) {
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	parse_parameter(desc, argv[optind]);
 

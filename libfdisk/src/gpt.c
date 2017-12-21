@@ -368,9 +368,10 @@ static struct fdisk_parttype *gpt_partition_parttype(
 		const struct gpt_entry *e)
 {
 	struct fdisk_parttype *t;
-	char str[37];
+	char str[UUID_STR_LEN];
+	struct gpt_guid guid = e->type;
 
-	guid_to_string(&e->type, str);
+	guid_to_string(&guid, str);
 	t = fdisk_label_get_parttype_from_string(cxt->label, str);
 	return t ? : fdisk_new_unknown_parttype(0, str);
 }
@@ -378,7 +379,7 @@ static struct fdisk_parttype *gpt_partition_parttype(
 static void gpt_entry_set_type(struct gpt_entry *e, struct gpt_guid *uuid)
 {
 	e->type = *uuid;
-	DBG(LABEL, gpt_debug_uuid("new type", &(e->type)));
+	DBG(LABEL, gpt_debug_uuid("new type", uuid));
 }
 
 static void gpt_entry_set_name(struct gpt_entry *e, char *str)
@@ -481,9 +482,10 @@ static inline int gpt_sizeof_ents(struct gpt_header *hdr, size_t *sz)
 
 static char *gpt_get_header_id(struct gpt_header *header)
 {
-	char str[37];
+	char str[UUID_STR_LEN];
+	struct gpt_guid guid = header->disk_guid;
 
-	guid_to_string(&header->disk_guid, str);
+	guid_to_string(&guid, str);
 
 	return strdup(str);
 }
@@ -745,13 +747,18 @@ static int gpt_mknew_header(struct fdisk_context *cxt,
 
 	if (cxt->script) {
 		const char *id = fdisk_script_get_header(cxt->script, "label-id");
-		if (id && string_to_guid(id, &header->disk_guid) == 0)
+		struct gpt_guid guid = header->disk_guid;
+		if (id && string_to_guid(id, &guid) == 0)
 			has_id = 1;
+		header->disk_guid = guid;
 	}
 
 	if (!has_id) {
+		struct gpt_guid guid;
+
 		uuid_generate_random((unsigned char *) &header->disk_guid);
-		swap_efi_guid(&header->disk_guid);
+		guid = header->disk_guid;
+		swap_efi_guid(&guid);
 	}
 	return 0;
 }
@@ -1728,8 +1735,9 @@ static int gpt_get_partition(struct fdisk_context *cxt, size_t n,
 {
 	struct fdisk_gpt_label *gpt;
 	struct gpt_entry *e;
-	char u_str[37];
+	char u_str[UUID_STR_LEN];
 	int rc = 0;
+	struct gpt_guid guid;
 
 	assert(cxt);
 	assert(cxt->label);
@@ -1751,7 +1759,8 @@ static int gpt_get_partition(struct fdisk_context *cxt, size_t n,
 	pa->size = gpt_partition_size(e);
 	pa->type = gpt_partition_parttype(cxt, e);
 
-	if (guid_to_string(&e->partition_guid, u_str)) {
+	guid = e->partition_guid;
+	if (guid_to_string(&guid, u_str)) {
 		pa->uuid = strdup(u_str);
 		if (!pa->uuid) {
 			rc = -errno;
@@ -1796,13 +1805,16 @@ static int gpt_set_partition(struct fdisk_context *cxt, size_t n,
 	e = gpt_get_entry(gpt, n);
 
 	if (pa->uuid) {
-		char new_u[37], old_u[37];
+		char new_u[UUID_STR_LEN], old_u[UUID_STR_LEN];
+		struct gpt_guid guid;
 
-		guid_to_string(&e->partition_guid, old_u);
+		guid = e->partition_guid;
+		guid_to_string(&guid, old_u);
 		rc = gpt_entry_set_uuid(e, pa->uuid);
 		if (rc)
 			return rc;
-		guid_to_string(&e->partition_guid, new_u);
+		guid = e->partition_guid;
+		guid_to_string(&guid, new_u);
 		fdisk_info(cxt, _("Partition UUID changed from %s to %s."),
 			old_u, new_u);
 	}
@@ -1916,7 +1928,7 @@ fail:
 static int gpt_write_pmbr(struct fdisk_context *cxt)
 {
 	off_t offset;
-	struct gpt_legacy_mbr *pmbr = NULL;
+	struct gpt_legacy_mbr *pmbr;
 
 	assert(cxt);
 	assert(cxt->firstsector);
@@ -2413,8 +2425,11 @@ static int gpt_add_partition(
 		 * generated for that partition, and every partition is guaranteed
 		 * to have a unique GUID.
 		 */
+		struct gpt_guid guid;
+
 		uuid_generate_random((unsigned char *) &e->partition_guid);
-		swap_efi_guid(&e->partition_guid);
+		guid = e->partition_guid;
+		swap_efi_guid(&guid);
 	}
 
 	if (pa && pa->name && *pa->name)
@@ -2458,8 +2473,9 @@ static int gpt_create_disklabel(struct fdisk_context *cxt)
 {
 	int rc = 0;
 	size_t esz = 0;
-	char str[37];
+	char str[UUID_STR_LEN];
 	struct fdisk_gpt_label *gpt;
+	struct gpt_guid guid;
 
 	assert(cxt);
 	assert(cxt->label);
@@ -2517,7 +2533,8 @@ static int gpt_create_disklabel(struct fdisk_context *cxt)
 	cxt->label->nparts_max = gpt_get_nentries(gpt);
 	cxt->label->nparts_cur = 0;
 
-	guid_to_string(&gpt->pheader->disk_guid, str);
+	guid = gpt->pheader->disk_guid;
+	guid_to_string(&guid, str);
 	fdisk_label_set_changed(cxt->label, 1);
 	fdisk_info(cxt, _("Created a new GPT disklabel (GUID: %s)."), str);
 done:

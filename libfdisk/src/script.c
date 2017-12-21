@@ -418,7 +418,7 @@ int fdisk_script_read_context(struct fdisk_script *dp, struct fdisk_context *cxt
 		rc = fdisk_script_set_header(dp, "unit", "sectors");
 
 	if (!rc && fdisk_is_label(cxt, GPT)) {
-		struct fdisk_labelitem item;
+		struct fdisk_labelitem item = FDISK_LABELITEM_INIT;
 		char buf[64];
 
 		/* first-lba */
@@ -1373,6 +1373,7 @@ struct fdisk_script *fdisk_get_script(struct fdisk_context *cxt)
  * @dp: script
  *
  * Associate context @cxt with script @dp and creates a new empty disklabel.
+ * The script may be later unreference by fdisk_set_script() with NULL as script.
  *
  * Returns: 0 on success, <0 on error.
  */
@@ -1528,7 +1529,7 @@ static int test_apply(struct fdisk_test *ts, int argc, char *argv[])
 {
 	char *devname = argv[1], *scriptname = argv[2];
 	struct fdisk_context *cxt;
-	struct fdisk_script *dp = NULL;
+	struct fdisk_script *dp;
 	struct fdisk_table *tb = NULL;
 	struct fdisk_iter *itr = NULL;
 	struct fdisk_partition *pa = NULL;

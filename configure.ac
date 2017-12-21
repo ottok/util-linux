@@ -28,7 +28,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="21-Sep-2017"
+LIBBLKID_DATE="19-Dec-2017"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -72,13 +72,17 @@ AS_CASE([$exec_prefix:$prefix],
   ]
 )
 
-AS_CASE([$prefix:$localstatedir],
-  [NONE:'${prefix}/var' | /usr:'${prefix}/var'],
-    [localstatedir=/run
-     AC_MSG_NOTICE([  --localstatedir defaults to /run])
-    ]
+
+# default for old versions without $runstatedir
+AS_IF([test x"$runstatedir" = x], [runstatedir='${localstatedir}/run'])
+
+# our default if $localstatedir unchanged
+AS_CASE([$localstatedir:$runstatedir],
+ [NONE:'${localstatedir}/run' | /var:'${localstatedir}/run' | NONE:'/run' ],
+   [runstatedir=/run; AC_MSG_NOTICE([  --runstatedir defaults to /run])]
 )
-AC_SUBST([localstatedir])
+
+AC_SUBST([runstatedir])
 
 
 # The original default values of {bin,sbin,lib}dir
@@ -428,6 +432,7 @@ AC_CHECK_FUNCS([ \
 	sysinfo \
 	timegm \
 	usleep \
+	vwarnx \
 	warn \
 	warnx \
 ])
@@ -440,6 +445,7 @@ AC_CHECK_FUNCS([inotify_init1], [have_inotify_init1=yes])
 AC_CHECK_FUNCS([open_memstream], [have_open_memstream=yes],[have_open_memstream=no])
 AC_CHECK_FUNCS([reboot], [have_reboot=yes],[have_reboot=no])
 AC_CHECK_FUNCS([updwtmpx updwtmpx], [have_gnu_utmpx=yes], [have_gnu_utmpx=no])
+AC_CHECK_FUNCS([getusershell], [have_getusershell=yes],[have_getusershell=no])
 
 AM_CONDITIONAL([HAVE_OPENAT], [test "x$have_openat" = xyes])
 
@@ -805,6 +811,13 @@ AS_IF([test "x$with_ncursesw" != xno], [
   AS_IF([test "x$have_ncursesw" = xyes], [
     AC_CHECK_HEADERS([ncursesw/ncurses.h], [have_ncursesw_header=yes])
     AC_CHECK_HEADERS([ncursesw/term.h])
+
+    # Define HAVE_NCURSES_H only if check for HAVE_NCURSESW_NCURSES_H is
+    # unsuccessful to avoid too many *_H permitations in config.h
+    AS_IF([test "x$have_ncursesw_header" = xno], [
+	   AC_CHECK_HEADERS([ncurses.h], [have_ncursesw_header=yes])
+	   AC_CHECK_HEADERS([term.h])
+    ])
     AS_IF([test "x$have_ncursesw_header" = xno], [have_ncursesw=no])
   ])
   AS_IF([test "x$have_ncursesw" = xyes], [
@@ -829,8 +842,15 @@ AS_CASE([$with_ncurses:$build_widechar],
 AS_IF([test "x$have_ncursesw" = xno -a "x$with_ncurses" != xno ], [
   UL_NCURSES_CHECK([ncurses])
   AS_IF([test "x$have_ncurses" = xyes], [
-    AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h], [have_ncurses_header=yes])
-    AC_CHECK_HEADERS([ncurses/term.h term.h])
+    AC_CHECK_HEADERS([ncurses/ncurses.h], [have_ncurses_header=yes])
+    AC_CHECK_HEADERS([ncurses/term.h])
+
+    # Define HAVE_NCURSES_H only if check for HAVE_NCURSES_NCURSES_H is
+    # unsuccessful to avoid too many *_H permitations in config.h
+    AS_IF([test "x$have_ncurses_header" = xno], [
+	   AC_CHECK_HEADERS([ncurses.h], [have_ncurses_header=yes])
+	   AC_CHECK_HEADERS([term.h])
+    ])
     AS_IF([test "x$have_ncurses_header" = xno], [have_ncurses=no])
   ])
   AS_IF([test "x$have_ncurses" = xyes], [
@@ -885,27 +905,21 @@ AC_ARG_WITH([tinfo], AS_HELP_STRING([--without-tinfo], [compile without libtinfo
   [], [with_tinfo=auto]
 )
 have_tinfo=no
+have_tinfow=no
 AS_IF([test "x$with_tinfo" != xno], [
-  dnl Try pkg-config for libtinfo
-  PKG_CHECK_MODULES(TINFO, [tinfo], [
-    dnl pkg-config success
-    have_tinfo=yes
-    UL_PKG_STATIC([TINFO_LIBS_STATIC], [tinfo])], [
-
-    dnl If pkg-config failed, fall back to classic searching.
-    AC_CHECK_LIB([tinfo], [tgetent], [
-       have_tinfo=yes
-       TINFO_LIBS="-ltinfo"
-       TINFO_LIBS_STATIC="-ltinfo"
-       TINFO_CFLAGS=""])
+  AS_IF([test "x$have_ncursesw" = xyes], [
+    UL_TINFO_CHECK([tinfow])
+  ])
+  AS_IF([test "x$have_tinfow" = xno], [
+    UL_TINFO_CHECK([tinfo])
   ])
 ])
 AC_SUBST([TINFO_LIBS])
 AC_SUBST([TINFO_LIBS_STATIC])
 AC_SUBST([TINFO_CFLAGS])
-AM_CONDITIONAL([HAVE_TINFO], [test "x$have_tinfo" = xyes])
-AS_IF([test "x$have_tinfo" = xyes], [
-  AC_DEFINE(HAVE_LIBTINFO, 1, [Define if libtinfo available.])
+AM_CONDITIONAL([HAVE_TINFO], [test "x$have_tinfo" = xyes -o "x$have_tinfow" = xyes])
+AS_IF([test "x$have_tinfo" = xyes -o "x$have_tinfow" = xyes], [
+  AC_DEFINE(HAVE_LIBTINFO, 1, [Define if libtinfo or libtinfow available.])
 ])
 
 
@@ -1146,6 +1160,11 @@ UL_BUILD_INIT([uuidgen], [check])
 UL_REQUIRES_BUILD([uuidgen], [libuuid])
 AM_CONDITIONAL([BUILD_UUIDGEN], [test "x$build_uuidgen" = xyes])
 
+UL_BUILD_INIT([uuidparse], [check])
+UL_REQUIRES_BUILD([uuidparse], [libuuid])
+UL_REQUIRES_BUILD([uuidparse], [libsmartcols])
+AM_CONDITIONAL([BUILD_UUIDPARSE], [test "x$build_uuidparse" = xyes])
+
 UL_BUILD_INIT([blkid], [check])
 UL_REQUIRES_BUILD([blkid], [libblkid])
 AM_CONDITIONAL([BUILD_BLKID], [test "x$build_blkid" = xyes])
@@ -1156,6 +1175,7 @@ AM_CONDITIONAL([BUILD_FINDFS], [test "x$build_findfs" = xyes])
 
 UL_BUILD_INIT([wipefs], [check])
 UL_REQUIRES_BUILD([wipefs], [libblkid])
+UL_REQUIRES_BUILD([wipefs], [libsmartcols])
 AM_CONDITIONAL([BUILD_WIPEFS], [test "x$build_wipefs" = xyes])
 
 UL_BUILD_INIT([findmnt], [check])
@@ -1483,6 +1503,11 @@ AM_CONDITIONAL([BUILD_MCOOKIE], [test "x$build_mcookie" = xyes])
 UL_BUILD_INIT([namei], [yes])
 AM_CONDITIONAL([BUILD_NAMEI], [test "x$build_namei" = xyes])
 
+matriplet="$($CC -print-multiarch 2>/dev/null || true)"
+if test "x$matriplet" != "x"; then
+  AC_DEFINE_UNQUOTED([MULTIARCHTRIPLET], ["$matriplet"],
+  ["Multi-arch triplet for whereis library search path"])
+fi
 UL_BUILD_INIT([whereis], [yes])
 AM_CONDITIONAL([BUILD_WHEREIS], [test "x$build_whereis" = xyes])
 
@@ -1585,6 +1610,17 @@ AM_CONDITIONAL([BUILD_LSNS], [test "x$build_lsns" = xyes])
 
 UL_BUILD_INIT([renice], [yes])
 AM_CONDITIONAL([BUILD_RENICE], [test "x$build_renice" = xyes])
+
+
+AC_ARG_ENABLE([rfkill],
+  AS_HELP_STRING([--disable-rfkill], [do not build rfkill]),
+  [], [UL_DEFAULT_ENABLE([rfkill], [check])]
+)
+UL_BUILD_INIT([rfkill])
+UL_REQUIRES_LINUX([rfkill])
+UL_REQUIRES_BUILD([rfkill], [libsmartcols])
+AM_CONDITIONAL([BUILD_RFKILL], [test "x$build_rfkill" = xyes])
+
 
 UL_BUILD_INIT([setsid], [yes])
 AM_CONDITIONAL([BUILD_SETSID], [test "x$build_setsid" = xyes])
@@ -1735,14 +1771,6 @@ UL_BUILD_INIT([rename])
 AM_CONDITIONAL([BUILD_RENAME], [test "x$build_rename" = xyes])
 
 
-AC_ARG_ENABLE([reset],
-  AS_HELP_STRING([--enable-reset], [build reset]),
-  [], [UL_DEFAULT_ENABLE([reset], [no])]
-)
-UL_BUILD_INIT([reset])
-AM_CONDITIONAL([BUILD_RESET], [test "x$build_reset" = xyes])
-
-
 AC_ARG_ENABLE([vipw],
   AS_HELP_STRING([--enable-vipw], [build vipw]),
   [], [UL_DEFAULT_ENABLE([vipw], [no])]
@@ -1791,6 +1819,7 @@ AC_ARG_ENABLE([chfn-chsh],
 )
 UL_BUILD_INIT([chfn_chsh])
 UL_REQUIRES_HAVE([chfn_chsh], [shadow_h], [shadow.h header])
+UL_REQUIRES_HAVE([chfn_chsh], [getusershell], [getusershell function])
 
 AS_IF([test "x$enable_chfn_chsh_password" = xyes -o "x$have_user" = xyes], [
   UL_REQUIRES_HAVE([chfn_chsh], [security_pam_appl_h], [PAM header file])
@@ -2278,7 +2307,7 @@ AC_MSG_RESULT([
 	prefix:            ${prefix}
 	exec prefix:       ${exec_prefix}
 
-	localstatedir:     ${localstatedir}
+	runstatedir:       ${runstatedir}
 	bindir:            ${bindir}
 	sbindir:           ${sbindir}
 	libdir:            ${libdir}

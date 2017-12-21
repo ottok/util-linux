@@ -67,6 +67,10 @@
 
 #define MAX_PAGESIZE	(64 * 1024)
 
+#ifndef UUID_STR_LEN
+# define UUID_STR_LEN	37
+#endif
+
 enum {
 	SIG_SWAPSPACE = 1,
 	SIG_SWSUSPEND
@@ -485,7 +489,7 @@ static void swap_get_info(struct swap_device *dev, const char *hdr)
 
 	if (s && *s->uuid) {
 		const unsigned char *u = s->uuid;
-		char str[37];
+		char str[UUID_STR_LEN];
 
 		snprintf(str, sizeof(str),
 			"%02x%02x%02x%02x-"
@@ -501,7 +505,7 @@ static void swap_get_info(struct swap_device *dev, const char *hdr)
 static int swapon_checks(const struct swapon_ctl *ctl, struct swap_device *dev)
 {
 	struct stat st;
-	int fd = -1, sig;
+	int fd, sig;
 	char *hdr = NULL;
 	unsigned long long devsize = 0;
 	int permMask;
@@ -782,9 +786,11 @@ static int swapon_all(struct swapon_ctl *ctl)
 }
 
 
-static void __attribute__ ((__noreturn__)) usage(FILE * out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	size_t i;
+
 	fputs(USAGE_HEADER, out);
 	fprintf(out, _(" %s [options] [<spec>]\n"), program_invocation_short_name);
 
@@ -806,8 +812,7 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 	fputs(_(" -v, --verbose            verbose mode\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(26));
 
 	fputs(_("\nThe <spec> parameter:\n" \
 		" -L <label>             synonym for LABEL=<label>\n"
@@ -824,12 +829,12 @@ static void __attribute__ ((__noreturn__)) usage(FILE * out)
 		" pages   : freed pages are discarded before they are reused\n"
 		"If no policy is selected, both discard types are enabled (default).\n"), out);
 
-	fputs(_("\nAvailable columns (for --show):\n"), out);
+	fputs(USAGE_COLUMNS, out);
 	for (i = 0; i < ARRAY_SIZE(infos); i++)
 		fprintf(out, " %-5s  %s\n", infos[i].name, _(infos[i].help));
 
-	fprintf(out, USAGE_MAN_TAIL("swapon(8)"));
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	printf(USAGE_MAN_TAIL("swapon(8)"));
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -895,7 +900,7 @@ int main(int argc, char *argv[])
 			ctl.all = 1;
 			break;
 		case 'h':		/* help */
-			usage(stdout);
+			usage();
 			break;
 		case 'o':
 			options = optarg;
@@ -980,8 +985,10 @@ int main(int argc, char *argv[])
 		return status;
 	}
 
-	if (ctl.props.no_fail && !ctl.all)
-		usage(stderr);
+	if (ctl.props.no_fail && !ctl.all) {
+		warnx(_("bad usage"));
+		errtryhelp(EXIT_FAILURE);
+	}
 
 	if (ctl.all)
 		status |= swapon_all(&ctl);

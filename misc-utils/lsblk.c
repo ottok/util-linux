@@ -1622,8 +1622,9 @@ static int cmp_u64_cells(struct libscols_cell *a,
 	return *adata == *bdata ? 0 : *adata >= *bdata ? 1 : -1;
 }
 
-static void __attribute__((__noreturn__)) help(FILE *out)
+static void __attribute__((__noreturn__)) usage(void)
 {
+	FILE *out = stdout;
 	size_t i;
 
 	fputs(USAGE_HEADER, out);
@@ -1644,6 +1645,7 @@ static void __attribute__((__noreturn__)) help(FILE *out)
 	fputs(_(" -I, --include <list> show only devices with specified major numbers\n"), out);
 	fputs(_(" -J, --json           use JSON output format\n"), out);
 	fputs(_(" -l, --list           use list format output\n"), out);
+	fputs(_(" -T, --tree           use tree format output\n"), out);
 	fputs(_(" -m, --perms          output info about permissions\n"), out);
 	fputs(_(" -n, --noheadings     don't print headings\n"), out);
 	fputs(_(" -o, --output <list>  output columns\n"), out);
@@ -1656,17 +1658,16 @@ static void __attribute__((__noreturn__)) help(FILE *out)
 	fputs(_(" -t, --topology       output info about topology\n"), out);
 	fputs(_(" -x, --sort <column>  sort output by <column>\n"), out);
 	fputs(USAGE_SEPARATOR, out);
-	fputs(USAGE_HELP, out);
-	fputs(USAGE_VERSION, out);
+	printf(USAGE_HELP_OPTIONS(22));
 
-	fprintf(out, _("\nAvailable columns (for --output):\n"));
+	fprintf(out, USAGE_COLUMNS);
 
 	for (i = 0; i < ARRAY_SIZE(infos); i++)
 		fprintf(out, " %11s  %s\n", infos[i].name, _(infos[i].help));
 
-	fprintf(out, USAGE_MAN_TAIL("lsblk(8)"));
+	printf(USAGE_MAN_TAIL("lsblk(8)"));
 
-	exit(out == stderr ? EXIT_FAILURE : EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static void check_sysdevblock(void)
@@ -1682,6 +1683,7 @@ int main(int argc, char *argv[])
 	int c, status = EXIT_FAILURE;
 	char *outarg = NULL;
 	size_t i;
+	int force_tree = 0;
 
 	static const struct option longopts[] = {
 		{ "all",	no_argument,       NULL, 'a' },
@@ -1707,6 +1709,7 @@ int main(int argc, char *argv[])
 		{ "pairs",      no_argument,       NULL, 'P' },
 		{ "scsi",       no_argument,       NULL, 'S' },
 		{ "sort",	required_argument, NULL, 'x' },
+		{ "tree",       no_argument,       NULL, 'T' },
 		{ "version",    no_argument,       NULL, 'V' },
 		{ NULL, 0, NULL, 0 },
 	};
@@ -1719,7 +1722,7 @@ int main(int argc, char *argv[])
 		{ 'O','f' },
 		{ 'O','m' },
 		{ 'O','t' },
-		{ 'P','l','r' },
+		{ 'P','T', 'l','r' },
 		{ 0 }
 	};
 	int excl_st[ARRAY_SIZE(excl)] = UL_EXCL_STATUS_INIT;
@@ -1734,7 +1737,7 @@ int main(int argc, char *argv[])
 	lsblk_init_debug();
 
 	while((c = getopt_long(argc, argv,
-			       "abdDze:fhJlnmo:OpPiI:rstVSx:", longopts, NULL)) != -1) {
+			       "abdDze:fhJlnmo:OpPiI:rstVSTx:", longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
 
@@ -1763,7 +1766,7 @@ int main(int argc, char *argv[])
 			parse_excludes(optarg);
 			break;
 		case 'h':
-			help(stdout);
+			usage();
 			break;
 		case 'J':
 			lsblk->flags |= LSBLK_JSON;
@@ -1839,6 +1842,9 @@ int main(int argc, char *argv[])
 			add_uniq_column(COL_REV);
 			add_uniq_column(COL_TRANSPORT);
 			break;
+		case 'T':
+			force_tree = 1;
+			break;
 		case 'V':
 			printf(UTIL_LINUX_VERSION);
 			return EXIT_SUCCESS;
@@ -1852,6 +1858,9 @@ int main(int argc, char *argv[])
 			errtryhelp(EXIT_FAILURE);
 		}
 	}
+
+	if (force_tree)
+		lsblk->flags |= LSBLK_TREE;
 
 	check_sysdevblock();
 
