@@ -5,7 +5,6 @@ include /usr/share/dpkg/pkg-info.mk
 
 CONFOPTS += --libdir=/lib/$(DEB_HOST_MULTIARCH)
 CONFOPTS += --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
-CONFOPTS += --localstatedir=/run
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --enable-raw
