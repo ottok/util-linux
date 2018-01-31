@@ -119,12 +119,16 @@ endif
 	dh_gencontrol --remaining-packages
 
 override_dh_installinit:
+	# hwclock works on all Linux architectures, except s390
+	# (and s390x, of course).
+ifeq (linux,$(DEB_HOST_ARCH_OS))
+ifeq (,$(findstring s390,$(DEB_HOST_ARCH)))
 	# install /etc/init.d/hwclock.sh
-	# - update-rc.d manually handled in maintainers scripts as there
-	#   is special per-arch considerations.
-	dh_installinit --name=hwclock.sh --noscripts
+	dh_installinit --name=hwclock.sh --no-start
 	# install /etc/default/hwclock
 	dh_installinit --name=hwclock
+endif
+endif
 	# install uuidd sysvinit script
 	make misc-utils/uuidd.rc
 	ln -s ../misc-utils/uuidd.rc debian/uuid-runtime.uuidd.init

@@ -9,13 +9,4 @@ update-alternatives --install /usr/bin/pager pager /bin/more 50 \
 # alternative on upgrades from Stretch.
 update-alternatives --remove pager /usr/bin/pg
 
-# hwclock works on all Linux architectures, except s390 (and s390x, of course).
-if [ "$(uname -s)" = "Linux" ]; then
-	model=$(uname -m)
-	if [ ${model%x} != "s390" ]; then
-		update-rc.d -f hwclock.sh remove >/dev/null 2>&1 || true
-		update-rc.d hwclock.sh defaults > /dev/null
-	fi
-fi
-
 #DEBHELPER#
