@@ -16,6 +16,22 @@ util-linux (2.31.1-0.1) UNRELEASED; urgency=medium
 
  -- Andreas Henriksson <andreas@fatal.se>  Thu, 21 Dec 2017 16:29:03 +0100
 
+util-linux (2.30.2-0.3) unstable; urgency=medium
+
+  * Fix build on hurd-i386 by restricting fallocate installation into
+    the udeb to linux-any.
+
+ -- Philipp Kern <pkern@debian.org>  Wed, 17 Jan 2018 04:43:45 -0500
+
+util-linux (2.30.2-0.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Ship lsmem in /usr/bin and chmem in /usr/sbin (moved from s390-tools;
+    Closes: #882003).
+  * Ship fallocate in util-linux-udeb (Closes: #882001).
+
+ -- Philipp Kern <pkern@debian.org>  Sun, 14 Jan 2018 11:27:53 -0500
+
 util-linux (2.30.2-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
