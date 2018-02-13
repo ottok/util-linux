@@ -1,1 +1,3 @@
 verbose-tests.patch
+lib-sha1-fix-indention.patch
+lib-sha1-use-proper-WORDS_BIGENDIAN-macro.patch

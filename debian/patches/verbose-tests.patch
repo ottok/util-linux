@@ -8,11 +8,11 @@ Enable verbose tests and print content of failing tests output file.
  tests/functions.sh  | 11 +++++++++++
  2 files changed, 12 insertions(+), 1 deletion(-)
 
-Index: util-linux/tests/Makemodule.am
-===================================================================
---- util-linux.orig/tests/Makemodule.am	2017-10-09 18:31:46.935649099 +0200
-+++ util-linux/tests/Makemodule.am	2017-10-09 18:31:46.931649038 +0200
-@@ -13,7 +13,7 @@
+diff --git a/tests/Makemodule.am b/tests/Makemodule.am
+index 61798c9..7765cd5 100644
+--- a/tests/Makemodule.am
++++ b/tests/Makemodule.am
+@@ -13,7 +13,7 @@ clean-local-tests:
  
  CLEAN_LOCALS += clean-local-tests
  
@@ -21,11 +21,11 @@ Index: util-linux/tests/Makemodule.am
  TS_COMMAND = $(top_srcdir)/tests/run.sh \
  	--srcdir=$(abs_top_srcdir) --builddir=$(abs_top_builddir) \
  	--parallel $(TS_OPTS)
-Index: util-linux/tests/functions.sh
-===================================================================
---- util-linux.orig/tests/functions.sh	2017-10-09 18:31:46.935649099 +0200
-+++ util-linux/tests/functions.sh	2017-10-09 18:31:46.931649038 +0200
-@@ -132,6 +132,17 @@
+diff --git a/tests/functions.sh b/tests/functions.sh
+index b93522c..713350b 100644
+--- a/tests/functions.sh
++++ b/tests/functions.sh
+@@ -132,6 +132,17 @@ function ts_failed_subtest {
  		ts_report " $msg ($1)"
  	fi
  
