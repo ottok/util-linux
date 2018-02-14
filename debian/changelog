@@ -1,3 +1,11 @@
+util-linux (2.31.1-0.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Install fstrim.timer and fstrim.service without enabling it by default
+    (for now), see discussion in #732054 (Closes: #889668)
+
+ -- Laurent Bigonville <bigon@debian.org>  Wed, 14 Feb 2018 10:32:51 +0100
+
 util-linux (2.31.1-0.2) unstable; urgency=medium
 
   * Non-maintainer upload.

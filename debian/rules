@@ -157,6 +157,12 @@ override_dh_makeshlibs:
 override_dh_fixperms:
 	dh_fixperms -i -a -Xusr/bin/wall -Xbin/mount -Xbin/umount
 
+ifeq (linux,$(DEB_HOST_ARCH_OS))
+override_dh_installsystemd:
+	dh_installsystemd -putil-linux --no-enable --no-start fstrim.timer fstrim.service
+	dh_installsystemd --remaining-packages
+endif
+
 override_dh_auto_test:
 ifeq ($(DEB_HOST_ARCH_OS), linux)
 	dh_auto_test --max-parallel=1
