@@ -12,9 +12,9 @@ CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
 CONFOPTS += --enable-partx
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	CONFOPTS += --without-systemd --without-udev
+	CONFOPTS += --without-systemd --without-udev --without-audit
 else
-	CONFOPTS += --with-systemd --with-udev
+	CONFOPTS += --with-systemd --with-udev --with-audit
 endif
 endif
 
