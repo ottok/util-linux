@@ -9,6 +9,7 @@ CONFOPTS += --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --enable-raw
 CONFOPTS += --with-selinux
+CONFOPTS += --with-smack
 CONFOPTS += --enable-partx
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	CONFOPTS += --without-systemd --without-udev
