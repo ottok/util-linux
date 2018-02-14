@@ -1,3 +1,11 @@
+util-linux (2.31.1-0.4) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Cherry-pick cramfs related patches from upstream
+    - this fixes the testsuite failure seen on ppc64el.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Wed, 14 Feb 2018 15:53:19 +0100
+
 util-linux (2.31.1-0.3) unstable; urgency=medium
 
   * Non-maintainer upload.
