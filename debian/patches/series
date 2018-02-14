@@ -1,3 +1,7 @@
 verbose-tests.patch
 lib-sha1-fix-indention.patch
 lib-sha1-use-proper-WORDS_BIGENDIAN-macro.patch
+Revert-fsck.cramfs-Fix-bus-error-on-broken-file-system.patch
+fsck.cramfs-fix-crash-when-superblock-size-is-too-small.patch
+tests-rewrite-fsck-bad-header.patch
+docs-update-AUTHORS-file.patch
