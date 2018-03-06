@@ -1,3 +1,16 @@
+util-linux (2.31.1-0.5) UNRELEASED; urgency=medium
+
+  [ Laurent Bigonville ]
+  * debian/rules: Enable SMACK support for libmount
+  * Enable audit support (Closes: #745771)
+
+  [ Salvatore Bonaccorso ]
+  * bash-completion: (umount) use findmnt, escape a space in paths.
+    (CVE-2018-7738)
+    Fixes "code execution in bash-completion for umount". (Closes: #892179)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Tue, 06 Mar 2018 22:31:39 +0100
+
 util-linux (2.31.1-0.4) unstable; urgency=medium
 
   * Non-maintainer upload.
