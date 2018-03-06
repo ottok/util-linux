@@ -3,6 +3,7 @@ Date: Thu, 16 Nov 2017 16:27:32 +0100
 Subject: bash-completion: (umount) use findmnt, escape a space in paths
 Origin: https://github.com/karelzak/util-linux/commit/75f03badd7ed9f1dd951863d75e756883d3acc55
 Bug-Debian: https://bugs.debian.org/892179
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2018-7738
 
  # mount /dev/sdc1 /mnt/test/foo\ bar
  # umount <tab>
