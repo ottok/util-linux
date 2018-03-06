@@ -5,3 +5,4 @@ Revert-fsck.cramfs-Fix-bus-error-on-broken-file-system.patch
 fsck.cramfs-fix-crash-when-superblock-size-is-too-small.patch
 tests-rewrite-fsck-bad-header.patch
 docs-update-AUTHORS-file.patch
+bash-completion-umount-use-findmnt-escape-a-space-in.patch
