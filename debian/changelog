@@ -1,4 +1,6 @@
-util-linux (2.31.1-0.5) UNRELEASED; urgency=medium
+util-linux (2.31.1-0.5) unstable; urgency=medium
+
+  * Non-maintainer upload.
 
   [ Laurent Bigonville ]
   * debian/rules: Enable SMACK support for libmount
