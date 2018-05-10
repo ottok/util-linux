@@ -1,9 +1,15 @@
-util-linux (2.31.1-0.6) UNRELEASED; urgency=medium
+util-linux (2.32-0.1) unstable; urgency=medium
 
+  * Non-maintainer upload.
   [ Ben Hutchings ]
   * debian/control: Remove mention of minimum kernel version for rfkill
 
- -- Laurent Bigonville <bigon@debian.org>  Thu, 10 May 2018 14:35:11 +0200
+  [ Laurent Bigonville ]
+  * New upstream release.
+    - Drop all the patches merged upstream
+  * debian/libfdisk1.symbols: Add new exported symbols
+
+ -- Laurent Bigonville <bigon@debian.org>  Thu, 10 May 2018 17:22:53 +0200
 
 util-linux (2.31.1-0.5) unstable; urgency=medium
 
