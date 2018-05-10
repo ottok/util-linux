@@ -1,3 +1,10 @@
+util-linux (2.31.1-0.6) UNRELEASED; urgency=medium
+
+  [ Ben Hutchings ]
+  * debian/control: Remove mention of minimum kernel version for rfkill
+
+ -- Laurent Bigonville <bigon@debian.org>  Thu, 10 May 2018 14:35:11 +0200
+
 util-linux (2.31.1-0.5) unstable; urgency=medium
 
   * Non-maintainer upload.
