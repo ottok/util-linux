@@ -5,6 +5,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  FDISK_2.29@FDISK_2.29 2.29~rc2
  FDISK_2.30@FDISK_2.30 2.30.2
  FDISK_2.31@FDISK_2.31 2.31.1
+ FDISK_2.32@FDISK_2.32 2.32
  fdisk_add_partition@FDISK_2.26 2.26.2
  fdisk_align_lba@FDISK_2.26 2.26.2
  fdisk_align_lba_in_range@FDISK_2.26 2.26.2
@@ -114,6 +115,9 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_label_get_field_by_name@FDISK_2.26 2.26.2
  fdisk_label_get_fields_ids@FDISK_2.26 2.26.2
  fdisk_label_get_fields_ids_all@FDISK_2.27 2.27~rc1
+ fdisk_label_get_geomrange_cylinders@FDISK_2.32 2.32
+ fdisk_label_get_geomrange_heads@FDISK_2.32 2.32
+ fdisk_label_get_geomrange_sectors@FDISK_2.32 2.32
  fdisk_label_get_name@FDISK_2.26 2.26.2
  fdisk_label_get_nparttypes@FDISK_2.26 2.26.2
  fdisk_label_get_parttype@FDISK_2.26 2.26.2
