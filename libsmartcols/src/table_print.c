@@ -387,6 +387,8 @@ static int print_pending_data(
 
 	if (!cl->pending_data)
 		return 0;
+	if (!width)
+		return -EINVAL;
 
 	DBG(COL, ul_debugobj(cl, "printing pending data"));
 
@@ -405,7 +407,8 @@ static int print_pending_data(
 	if (bytes == (size_t) -1)
 		goto err;
 
-	step_pending_data(cl, bytes);
+	if (bytes)
+		step_pending_data(cl, bytes);
 
 	if (color)
 		fputs(color, tb->out);
@@ -440,10 +443,6 @@ static int print_data(struct libscols_table *tb,
 
 	assert(tb);
 	assert(cl);
-
-	DBG(TAB, ul_debugobj(tb,
-			" -> data, column=%p, line=%p, cell=%p, buff=%p",
-			cl, ln, ce, buf));
 
 	data = buffer_get_data(buf);
 	if (!data)
@@ -720,7 +719,7 @@ static int print_line(struct libscols_table *tb,
 
 	assert(ln);
 
-	DBG(TAB, ul_debugobj(tb, "printing line, line=%p, buff=%p", ln, buf));
+	DBG(TAB, ul_debugobj(tb, "printing line"));
 
 	/* regular line */
 	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
@@ -1069,6 +1068,8 @@ static int count_column_width(struct libscols_table *tb,
 			size_t len = mbs_safe_width(scols_cell_get_data(&cl->header));
 			cl->width_min = max(cl->width_min, len);
 		}
+		if (!cl->width_min)
+			cl->width_min = 1;
 	}
 
 	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
@@ -1345,6 +1346,10 @@ static int recount_widths(struct libscols_table *tb, struct libscols_buffer *buf
 				width--;
 				break;
 			}
+
+			/* hide zero width columns */
+			if (cl->width == 0)
+				cl->flags |= SCOLS_FL_HIDDEN;
 		}
 
 		/* the current stage is without effect, go to the next */

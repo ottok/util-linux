@@ -84,6 +84,9 @@
 static int hwaudit_fd = -1;
 #endif
 
+UL_DEBUG_DEFINE_MASK(hwclock);
+UL_DEBUG_DEFINE_MASKNAMES(hwclock) = UL_DEBUG_EMPTY_MASKNAMES;
+
 /* The struct that holds our hardware access routines */
 static struct clock_ops *ur;
 
@@ -119,6 +122,23 @@ struct adjtime {
 	 * hardware clock.
 	 */
 };
+
+static void hwclock_init_debug(const char *str)
+{
+	__UL_INIT_DEBUG_FROM_STRING(hwclock, HWCLOCK_DEBUG_, 0, str);
+
+	DBG(INIT, ul_debug("hwclock debug mask: 0x%04x", hwclock_debug_mask));
+	DBG(INIT, ul_debug("hwclock version: %s", PACKAGE_STRING));
+}
+
+/* FOR TESTING ONLY: inject random delays of up to 1000ms */
+static void up_to_1000ms_sleep(void)
+{
+	int usec = random() % 1000000;
+
+	DBG(RANDOM_SLEEP, ul_debug("sleeping ~%d usec", usec));
+	xusleep(usec);
+}
 
 /*
  * time_t to timeval conversion.
@@ -179,7 +199,7 @@ hw_clock_is_utc(const struct hwclock_control *ctl,
 	else
 		/* get info from adjtime file - default is UTC */
 		ret = (adjtime.local_utc != LOCAL);
-	if (ctl->debug)
+	if (ctl->verbose)
 		printf(_("Assuming hardware clock is kept in %s time.\n"),
 		       ret ? _("UTC") : _("local"));
 	return ret;
@@ -236,7 +256,7 @@ static int read_adjtime(const struct hwclock_control *ctl,
 		}
 	}
 
-	if (ctl->debug) {
+	if (ctl->verbose) {
 		printf(_
 		       ("Last drift adjustment done at %ld seconds after 1969\n"),
 		       (long)adjtime_p->last_adj_time);
@@ -268,12 +288,12 @@ static int synchronize_to_clock_tick(const struct hwclock_control *ctl)
 {
 	int rc;
 
-	if (ctl->debug)
+	if (ctl->verbose)
 		printf(_("Waiting for clock tick...\n"));
 
 	rc = ur->synchronize_to_clock_tick(ctl);
 
-	if (ctl->debug) {
+	if (ctl->verbose) {
 		if (rc)
 			printf(_("...synchronization failed\n"));
 		else
@@ -317,14 +337,14 @@ mktime_tz(const struct hwclock_control *ctl, struct tm tm,
 		 * mktime() returns -1).
 		 */
 		valid = 0;
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Invalid values in hardware clock: "
 				 "%4d/%.2d/%.2d %.2d:%.2d:%.2d\n"),
 			       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			       tm.tm_hour, tm.tm_min, tm.tm_sec);
 	} else {
 		valid = 1;
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_
 			       ("Hw clock time : %4d/%.2d/%.2d %.2d:%.2d:%.2d = "
 				"%ld seconds since 1969\n"), tm.tm_year + 1900,
@@ -351,7 +371,7 @@ read_hardware_clock(const struct hwclock_control *ctl,
 	if (err)
 		return err;
 
-	if (ctl->debug)
+	if (ctl->verbose)
 		printf(_
 		       ("Time read from Hardware Clock: %4d/%.2d/%.2d %02d:%02d:%02d\n"),
 		       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
@@ -375,11 +395,11 @@ set_hardware_clock(const struct hwclock_control *ctl, const time_t newtime)
 	 */
 
 	if (ctl->universal)
-		new_broken_time = *gmtime(&newtime);
+		gmtime_r(&newtime, &new_broken_time);
 	else
-		new_broken_time = *localtime(&newtime);
+		localtime_r(&newtime, &new_broken_time);
 
-	if (ctl->debug)
+	if (ctl->verbose)
 		printf(_("Setting Hardware Clock to %.2d:%.2d:%.2d "
 			 "= %ld seconds since 1969\n"),
 		       new_broken_time.tm_hour, new_broken_time.tm_min,
@@ -473,12 +493,7 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 	while (1) {
 		double ticksize;
 
-		/* FOR TESTING ONLY: inject random delays of up to 1000ms */
-		if (ctl->debug >= 10) {
-			int usec = random() % 1000000;
-			printf(_("sleeping ~%d usec\n"), usec);
-			xusleep(usec);
-		}
+		ON_DBG(RANDOM_SLEEP, up_to_1000ms_sleep());
 
 		gettimeofday(&nowsystime, NULL);
 		deltavstarget = time_diff(nowsystime, targetsystime);
@@ -486,7 +501,7 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 		prevsystime = nowsystime;
 
 		if (ticksize < 0) {
-			if (ctl->debug)
+			if (ctl->verbose)
 				printf(_("time jumped backward %.6f seconds "
 					 "to %ld.%06ld - retargeting\n"),
 				       ticksize, nowsystime.tv_sec,
@@ -494,13 +509,11 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 			/* The retarget is handled at the end of the loop. */
 		} else if (deltavstarget < 0) {
 			/* deltavstarget < 0 if current time < target time */
-			if (ctl->debug >= 9)
-				printf(_("%ld.%06ld < %ld.%06ld (%.6f)\n"),
-				       nowsystime.tv_sec,
-				       nowsystime.tv_usec,
-				       targetsystime.tv_sec,
-				       targetsystime.tv_usec,
-				       deltavstarget);
+			DBG(DELTA_VS_TARGET,
+			    ul_debug("%ld.%06ld < %ld.%06ld (%.6f)",
+				     nowsystime.tv_sec, nowsystime.tv_usec,
+				     targetsystime.tv_sec,
+				     targetsystime.tv_usec, deltavstarget));
 			continue;  /* not there yet - keep spinning */
 		} else if (deltavstarget <= target_time_tolerance_secs) {
 			/* Close enough to the target time; done waiting. */
@@ -510,7 +523,7 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 			 * We missed our window.  Increase the tolerance and
 			 * aim for the next opportunity.
 			 */
-			if (ctl->debug)
+			if (ctl->verbose)
 				printf(_("missed it - %ld.%06ld is too far "
 					 "past %ld.%06ld (%.6f > %.6f)\n"),
 				       nowsystime.tv_sec,
@@ -538,7 +551,7 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 		    + (int)(time_diff(nowsystime, refsystime)
 			    - RTC_SET_DELAY_SECS /* don't count this */
 			    + 0.5 /* for rounding */);
-	if (ctl->debug)
+	if (ctl->verbose)
 		printf(_("%ld.%06ld is close enough to %ld.%06ld (%.6f < %.6f)\n"
 			 "Set RTC to %ld (%ld + %d; refsystime = %ld.%06ld)\n"),
 		       nowsystime.tv_sec, nowsystime.tv_usec,
@@ -554,14 +567,11 @@ set_hardware_clock_exact(const struct hwclock_control *ctl,
 static int
 display_time(struct timeval hwctime)
 {
-	char buf[ISO_8601_BUFSIZ];
+	char buf[ISO_BUFSIZ];
 
-	if (strtimeval_iso(&hwctime, ISO_8601_DATE|ISO_8601_TIME|ISO_8601_DOTUSEC|
-				 ISO_8601_TIMEZONE|ISO_8601_SPACE,
-				 buf, sizeof(buf))) {
-		warnx(_("iso-8601 format overflow"));
+	if (strtimeval_iso(&hwctime, ISO_TIMESTAMP_DOT, buf, sizeof(buf)))
 		return EXIT_FAILURE;
-	}
+
 	printf("%s\n", buf);
 	return EXIT_SUCCESS;
 }
@@ -602,21 +612,15 @@ static int
 set_system_clock(const struct hwclock_control *ctl,
 		 const struct timeval newtime)
 {
-	struct tm *broken;
+	struct tm broken;
 	int minuteswest;
 	int rc = 0;
 	const struct timezone tz_utc = { 0 };
 
-	broken = localtime(&newtime.tv_sec);
-#ifdef HAVE_TM_GMTOFF
-	minuteswest = -broken->tm_gmtoff / 60;	/* GNU extension */
-#else
-	minuteswest = timezone / 60;
-	if (broken->tm_isdst)
-		minuteswest -= 60;
-#endif
+	localtime_r(&newtime.tv_sec, &broken);
+	minuteswest = -get_gmtoff(&broken) / 60;
 
-	if (ctl->debug) {
+	if (ctl->verbose) {
 		if (ctl->hctosys && !ctl->universal)
 			printf(_("Calling settimeofday(NULL, %d) to set "
 				 "persistent_clock_is_local.\n"), minuteswest);
@@ -671,17 +675,17 @@ adjust_drift_factor(const struct hwclock_control *ctl,
 		    const struct timeval hclocktime)
 {
 	if (!ctl->update) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Not adjusting drift factor because the "
 				 "--update-drift option was not used.\n"));
 	} else if (adjtime_p->last_calib_time == 0) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Not adjusting drift factor because last "
 				 "calibration time is zero,\n"
 				 "so history is bad and calibration startover "
 				 "is necessary.\n"));
 	} else if ((hclocktime.tv_sec - adjtime_p->last_calib_time) < 4 * 60 * 60) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Not adjusting drift factor because it has "
 				 "been less than four hours since the last "
 				 "calibration.\n"));
@@ -719,14 +723,14 @@ adjust_drift_factor(const struct hwclock_control *ctl,
 
 		drift_factor = adjtime_p->drift_factor + factor_adjust;
 		if (fabs(drift_factor) > MAX_DRIFT) {
-			if (ctl->debug)
+			if (ctl->verbose)
 				printf(_("Clock drift factor was calculated as "
 					 "%f seconds/day.\n"
 					 "It is far too much. Resetting to zero.\n"),
 				       drift_factor);
 			drift_factor = 0;
 		} else {
-			if (ctl->debug)
+			if (ctl->verbose)
 				printf(_("Clock drifted %f seconds in the past "
 					 "%f seconds\nin spite of a drift factor of "
 					 "%f seconds/day.\n"
@@ -770,7 +774,7 @@ calculate_adjustment(const struct hwclock_control *ctl,
 	tdrift_p->tv_sec = (time_t) floor(exact_adjustment);
 	tdrift_p->tv_usec = (exact_adjustment -
 				 (double)tdrift_p->tv_sec) * 1E6;
-	if (ctl->debug) {
+	if (ctl->verbose) {
 		printf(P_("Time since last adjustment is %ld second\n",
 			"Time since last adjustment is %ld seconds\n",
 		       (systime - last_time)),
@@ -799,7 +803,7 @@ static int save_adjtime(const struct hwclock_control *ctl,
 		  adjtime->last_calib_time,
 		  (adjtime->local_utc == LOCAL) ? "LOCAL" : "UTC");
 
-	if (ctl->debug){
+	if (ctl->verbose){
 		printf(_("New %s data:\n%s"),
 		       ctl->adj_file_name, content);
 	}
@@ -845,11 +849,11 @@ do_adjustment(const struct hwclock_control *ctl, struct adjtime *adjtime_p,
 	      const struct timeval read_time)
 {
 	if (adjtime_p->last_adj_time == 0) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Not setting clock because last adjustment time is zero, "
 				 "so history is bad.\n"));
 	} else if (fabs(adjtime_p->drift_factor) > MAX_DRIFT) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("Not setting clock because drift factor %f is far too high.\n"),
 				adjtime_p->drift_factor);
 	} else {
@@ -873,16 +877,16 @@ static void determine_clock_access_method(const struct hwclock_control *ctl)
 		ur = probe_for_rtc_clock(ctl);
 #endif
 	if (ur) {
-		if (ctl->debug)
+		if (ctl->verbose)
 			puts(ur->interface_name);
 
 	} else {
-		if (ctl->debug)
+		if (ctl->verbose)
 			printf(_("No usable clock interface found.\n"));
 		warnx(_("Cannot access the Hardware Clock via "
 			"any known method."));
-		if (!ctl->debug)
-			warnx(_("Use the --debug option to see the "
+		if (!ctl->verbose)
+			warnx(_("Use the --verbose option to see the "
 				"details of our search for an access "
 				"method."));
 		hwclock_exit(ctl, EXIT_FAILURE);
@@ -931,7 +935,7 @@ manipulate_clock(const struct hwclock_control *ctl, const time_t set_time,
 				     hclocktime.tv_sec, &tdrift);
 		hclocktime = time_inc(hclocktime, (double)
 				      -(tdrift.tv_sec + tdrift.tv_usec / 1E6));
-		if (ctl->debug) {
+		if (ctl->verbose) {
 			printf(_ ("Target date:   %ld\n"), set_time);
 			printf(_ ("Predicted RTC: %ld\n"), hclocktime.tv_sec);
 		}
@@ -1086,8 +1090,8 @@ usage(void)
 	       "     --noadjfile      do not use %1$s\n"), _PATH_ADJTIME);
 	printf(_(
 	       "     --adjfile <file> use an alternate file to %1$s\n"), _PATH_ADJTIME);
-	puts(_("     --test           dry run; implies --debug"));
-	puts(_(" -D, --debug          display more details"));
+	puts(_("     --test           dry run; implies --verbose"));
+	puts(_(" -v, --verbose        display more details"));
 	fputs(USAGE_SEPARATOR, stdout);
 	printf(USAGE_HELP_OPTIONS(22));
 	printf(USAGE_MAN_TAIL("hwclock(8)"));
@@ -1134,6 +1138,8 @@ int main(int argc, char **argv)
 		{ "version",      no_argument,       NULL, 'V'            },
 		{ "systohc",      no_argument,       NULL, 'w'            },
 		{ "debug",        no_argument,       NULL, 'D'            },
+		{ "ul-debug",     required_argument, NULL, 'd'            },
+		{ "verbose",      no_argument,       NULL, 'v'            },
 		{ "set",          no_argument,       NULL, OPT_SET        },
 #if defined(__linux__) && defined(__alpha__)
 		{ "getepoch",     no_argument,       NULL, OPT_GETEPOCH   },
@@ -1195,13 +1201,19 @@ int main(int argc, char **argv)
 	atexit(close_stdout);
 
 	while ((c = getopt_long(argc, argv,
-				"hvVDalrsuwf:", longopts, NULL)) != -1) {
+				"hvVDd:alrsuwf:", longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
 
 		switch (c) {
 		case 'D':
-			ctl.debug++;
+			warnx(_("use --verbose, --debug has been deprecated."));
+			break;
+		case 'v':
+			ctl.verbose = 1;
+			break;
+		case 'd':
+			hwclock_init_debug(optarg);
 			break;
 		case 'a':
 			ctl.adjust = 1;
@@ -1254,7 +1266,7 @@ int main(int argc, char **argv)
 			break;
 		case OPT_TEST:
 			ctl.testing = 1;	/* --test */
-			ctl.debug++;
+			ctl.verbose = 1;
 			break;
 		case OPT_DATE:
 			ctl.date_opt = optarg;	/* --date */
@@ -1283,8 +1295,7 @@ int main(int argc, char **argv)
 			ctl.rtc_dev_name = optarg;	/* --rtc */
 			break;
 #endif
-		case 'v':			/* --version */
-		case 'V':
+		case 'V':			/* --version */
 			out_version();
 			return 0;
 		case 'h':			/* --help */
@@ -1333,7 +1344,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	if (ctl.debug) {
+	if (ctl.verbose) {
 		out_version();
 		printf(_("System Time: %ld.%06ld\n"),
 		       startup_time.tv_sec, startup_time.tv_usec);

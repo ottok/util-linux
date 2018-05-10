@@ -57,11 +57,14 @@ UL_DEBUG_DEFINE_MASKNAMES(loopdev) = UL_DEBUG_EMPTY_MASKNAMES;
 #define DBG(m, x)       __UL_DBG(loopdev, LOOPDEV_DEBUG_, m, x)
 #define ON_DBG(m, x)    __UL_DBG_CALL(loopdev, LOOPDEV_DEBUG_, m, x)
 
+#define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(loopdev)
+#include "debugobj.h"
+
 static void loopdev_init_debug(void)
 {
 	if (loopdev_debug_mask)
 		return;
-	__UL_INIT_DEBUG(loopdev, LOOPDEV_DEBUG_, 0, LOOPDEV_DEBUG);
+	__UL_INIT_DEBUG_FROM_ENV(loopdev, LOOPDEV_DEBUG_, 0, LOOPDEV_DEBUG);
 }
 
 /*
@@ -144,7 +147,7 @@ int loopcxt_has_device(struct loopdev_cxt *lc)
  * Note about LOOPDEV_FL_{RDONLY,RDWR} flags. These flags are used for open(2)
  * syscall to open loop device. By default is the device open read-only.
  *
- * The expection is loopcxt_setup_device(), where the device is open read-write
+ * The exception is loopcxt_setup_device(), where the device is open read-write
  * if LO_FLAGS_READ_ONLY flags is not set (see loopcxt_set_flags()).
  *
  * Returns: <0 on error, 0 on success.

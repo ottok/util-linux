@@ -35,7 +35,10 @@
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <linux/fs.h>
+
+#ifdef HAVE_SYS_FS_H
+# include <linux/fs.h>
+#endif
 
 #include "nls.h"
 #include "strutils.h"
@@ -43,7 +46,6 @@
 #include "closestream.h"
 #include "pathnames.h"
 #include "sysfs.h"
-#include "exitcodes.h"
 
 #include <libmount.h>
 
