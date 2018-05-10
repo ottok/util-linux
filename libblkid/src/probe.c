@@ -137,7 +137,7 @@ blkid_probe blkid_new_probe(void)
 	if (!pr)
 		return NULL;
 
-	DBG(LOWPROBE, ul_debug("allocate a new probe %p", pr));
+	DBG(LOWPROBE, ul_debug("allocate a new probe"));
 
 	/* initialize chains */
 	for (i = 0; i < BLKID_NCHAINS; i++) {
@@ -251,7 +251,7 @@ void blkid_free_probe(blkid_probe pr)
 	blkid_probe_reset_values(pr);
 	blkid_free_probe(pr->disk_probe);
 
-	DBG(LOWPROBE, ul_debug("free probe %p", pr));
+	DBG(LOWPROBE, ul_debug("free probe"));
 	free(pr);
 }
 
@@ -561,8 +561,8 @@ static struct blkid_bufinfo *read_buffer(blkid_probe pr, uint64_t real_off, uint
 	bf->off = real_off;
 	INIT_LIST_HEAD(&bf->bufs);
 
-	DBG(LOWPROBE, ul_debug("\tread %p: off=%"PRIu64" len=%"PRIu64"",
-	                       bf->data, real_off, len));
+	DBG(LOWPROBE, ul_debug("\tread: off=%"PRIu64" len=%"PRIu64"",
+	                       real_off, len));
 
 	ret = read(pr->fd, bf->data, len);
 	if (ret != (ssize_t) len) {
@@ -592,8 +592,8 @@ static struct blkid_bufinfo *get_cached_buffer(blkid_probe pr, uint64_t off, uin
 				list_entry(p, struct blkid_bufinfo, bufs);
 
 		if (real_off >= x->off && real_off + len <= x->off + x->len) {
-			DBG(BUFFER, ul_debug("\treuse %p: off=%"PRIu64" len=%"PRIu64" (for off=%"PRIu64" len=%"PRIu64")",
-						x->data, x->off, x->len, real_off, len));
+			DBG(BUFFER, ul_debug("\treuse: off=%"PRIu64" len=%"PRIu64" (for off=%"PRIu64" len=%"PRIu64")",
+						x->off, x->len, real_off, len));
 			return x;
 		}
 	}
@@ -625,8 +625,8 @@ static int hide_buffer(blkid_probe pr, uint64_t off, uint64_t len)
 
 			data = real_off ? x->data + (real_off - x->off) : x->data;
 
-			DBG(BUFFER, ul_debug("\thidding %p: off=%"PRIu64" len=%"PRIu64,
-						x->data, off, len));
+			DBG(BUFFER, ul_debug("\thidding: off=%"PRIu64" len=%"PRIu64,
+						off, len));
 			memset(data, 0, len);
 			ct++;
 		}
@@ -712,7 +712,7 @@ int blkid_probe_reset_buffers(blkid_probe pr)
 	if (list_empty(&pr->buffers))
 		return 0;
 
-	DBG(BUFFER, ul_debug("Resetting probing buffers pr=%p", pr));
+	DBG(BUFFER, ul_debug("Resetting probing buffers"));
 
 	while (!list_empty(&pr->buffers)) {
 		struct blkid_bufinfo *bf = list_entry(pr->buffers.next,
@@ -721,8 +721,8 @@ int blkid_probe_reset_buffers(blkid_probe pr)
 		len += bf->len;
 		list_del(&bf->bufs);
 
-		DBG(BUFFER, ul_debug(" remove buffer: %p [off=%"PRIu64", len=%"PRIu64"]",
-		                     bf->data, bf->off, bf->len));
+		DBG(BUFFER, ul_debug(" remove buffer: [off=%"PRIu64", len=%"PRIu64"]",
+		                     bf->off, bf->len));
 		free(bf);
 	}
 
@@ -765,7 +765,7 @@ static void blkid_probe_reset_values(blkid_probe pr)
 	if (list_empty(&pr->values))
 		return;
 
-	DBG(LOWPROBE, ul_debug("resetting results pr=%p", pr));
+	DBG(LOWPROBE, ul_debug("resetting results"));
 
 	while (!list_empty(&pr->values)) {
 		struct blkid_prval *v = list_entry(pr->values.next,
@@ -923,8 +923,8 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 		pr->flags |= BLKID_FL_TINY_DEV;
 
 	if (S_ISBLK(sb.st_mode) &&
-	    sysfs_devno_is_lvm_private(sb.st_rdev, &dm_uuid)) {
-		DBG(LOWPROBE, ul_debug("ignore private LVM device"));
+	    sysfs_devno_is_dm_private(sb.st_rdev, &dm_uuid)) {
+		DBG(LOWPROBE, ul_debug("ignore private device mapper device"));
 		pr->flags |= BLKID_FL_NOSCAN_DEV;
 	}
 
@@ -964,9 +964,9 @@ int blkid_probe_get_dimension(blkid_probe pr, uint64_t *off, uint64_t *size)
 int blkid_probe_set_dimension(blkid_probe pr, uint64_t off, uint64_t size)
 {
 	DBG(LOWPROBE, ul_debug(
-		"changing probing area pr=%p: size=%"PRIu64", off=%"PRIu64" "
+		"changing probing area: size=%"PRIu64", off=%"PRIu64" "
 		"-to-> size=%"PRIu64", off=%"PRIu64"",
-		pr, pr->size, pr->off, size, off));
+		pr->size, pr->off, size, off));
 
 	pr->off = off;
 	pr->size = size;
@@ -1029,7 +1029,7 @@ int blkid_probe_get_idmag(blkid_probe pr, const struct blkid_idinfo *id,
 
 static inline void blkid_probe_start(blkid_probe pr)
 {
-	DBG(LOWPROBE, ul_debug("%p: start probe", pr));
+	DBG(LOWPROBE, ul_debug("start probe"));
 	pr->cur_chain = NULL;
 	pr->prob_flags = 0;
 	blkid_probe_set_wiper(pr, 0, 0);
@@ -1037,7 +1037,7 @@ static inline void blkid_probe_start(blkid_probe pr)
 
 static inline void blkid_probe_end(blkid_probe pr)
 {
-	DBG(LOWPROBE, ul_debug("%p: end probe", pr));
+	DBG(LOWPROBE, ul_debug("end probe"));
 	pr->cur_chain = NULL;
 	pr->prob_flags = 0;
 	blkid_probe_set_wiper(pr, 0, 0);
@@ -1147,7 +1147,7 @@ int blkid_do_probe(blkid_probe pr)
  * After successful signature removing the @pr prober will be moved one step
  * back and the next blkid_do_probe() call will again call previously called
  * probing function. All in-memory cached data from the device are always
- * reseted.
+ * reset.
  *
  *  <example>
  *  <title>wipe all filesystems or raids from the device</title>
@@ -1248,7 +1248,7 @@ int blkid_do_wipe(blkid_probe pr, int dryrun)
  * according to the current libblkid probing result.
  *
  * Note that blkid_probe_hide_range() changes semantic of this function and
- * cached bufferes are not reseted, but library uses in-memory modified
+ * cached bufferes are not reset, but library uses in-memory modified
  * buffers to call the next probing function.
  *
  * <example>

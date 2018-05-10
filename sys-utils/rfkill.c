@@ -45,7 +45,12 @@
  * year 2009 (2.6.33) or older.
  */
 #ifndef RFKILL_TYPE_NFC
+# ifndef RFKILL_TYPE_FM
+#  define RFKILL_TYPE_FM	RFKILL_TYPE_GPS + 1
+# endif
 # define RFKILL_TYPE_NFC	RFKILL_TYPE_FM + 1
+# undef NUM_RFKILL_TYPES
+# define NUM_RFKILL_TYPES	RFKILL_TYPE_NFC + 1
 #endif
 
 struct rfkill_type_str {
@@ -223,7 +228,7 @@ static int rfkill_event(void)
 {
 	struct rfkill_event event;
 	struct timeval tv;
-	char date_buf[ISO_8601_BUFSIZ];
+	char date_buf[ISO_BUFSIZ];
 	struct pollfd p;
 	int fd, n;
 
@@ -253,12 +258,8 @@ static int rfkill_event(void)
 			continue;
 
 		gettimeofday(&tv, NULL);
-		strtimeval_iso(&tv,
-			       ISO_8601_DATE |
-			       ISO_8601_TIME |
-			       ISO_8601_COMMAUSEC |
-			       ISO_8601_TIMEZONE |
-			       ISO_8601_SPACE, date_buf, sizeof(date_buf));
+		strtimeval_iso(&tv, ISO_TIMESTAMP_COMMA, date_buf,
+			       sizeof(date_buf));
 		printf("%s: idx %u type %u op %u soft %u hard %u\n",
 		       date_buf,
 		       event.idx, event.type, event.op, event.soft, event.hard);
@@ -584,7 +585,7 @@ static void __attribute__((__noreturn__)) usage(void)
 
 	/*
 	 * TRANSLATORS: command names should not be translated, explaining
-	 * them as additional field after identifer is fine, for example
+	 * them as additional field after identifier is fine, for example
 	 *
 	 * list   [identifier]   (lista [tarkenne])
 	 */

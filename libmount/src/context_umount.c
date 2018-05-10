@@ -521,6 +521,7 @@ eperm:
 static int exec_helper(struct libmnt_context *cxt)
 {
 	int rc;
+	pid_t pid;
 
 	assert(cxt);
 	assert(cxt->fs);
@@ -536,7 +537,8 @@ static int exec_helper(struct libmnt_context *cxt)
 
 	DBG_FLUSH;
 
-	switch (fork()) {
+	pid = fork();
+	switch (pid) {
 	case 0:
 	{
 		const char *args[10], *type;
@@ -581,12 +583,18 @@ static int exec_helper(struct libmnt_context *cxt)
 	default:
 	{
 		int st;
-		wait(&st);
-		cxt->helper_status = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 
-		DBG(CXT, ul_debugobj(cxt, "%s executed [status=%d]",
-					cxt->helper, cxt->helper_status));
-		cxt->helper_exec_status = rc = 0;
+		if (waitpid(pid, &st, 0) == (pid_t) -1) {
+			cxt->helper_status = -1;
+			rc = -errno;
+		} else {
+			cxt->helper_status = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+			cxt->helper_exec_status = rc = 0;
+		}
+		DBG(CXT, ul_debugobj(cxt, "%s executed [status=%d, rc=%d%s]",
+				cxt->helper,
+				cxt->helper_status, rc,
+				rc ? " waitpid failed" : ""));
 		break;
 	}
 

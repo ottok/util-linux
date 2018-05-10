@@ -12,7 +12,9 @@ dist_noinst_HEADERS += \
 	include/color-names.h \
 	include/cpuset.h \
 	include/crc32.h \
+	include/crc32c.h \
 	include/debug.h \
+	include/debugobj.h \
 	include/env.h \
 	include/exec_shell.h \
 	include/exitcodes.h \
@@ -47,6 +49,7 @@ dist_noinst_HEADERS += \
 	include/randutils.h \
 	include/rpmatch.h \
 	include/sha1.h \
+	include/signames.h \
 	include/setproctitle.h \
 	include/statfs_magic.h \
 	include/strutils.h \

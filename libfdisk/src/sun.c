@@ -182,11 +182,19 @@ static void ask_geom(struct fdisk_context *cxt)
 
 	assert(cxt);
 
-	if (fdisk_ask_number(cxt, 1, 1, 1024, _("Heads"), &res) == 0)
+	if (fdisk_ask_number(cxt, cxt->label->geom_min.heads, 1,
+				  cxt->label->geom_max.heads,
+				  _("Heads"), &res) == 0)
 		cxt->geom.heads = res;
-	if (fdisk_ask_number(cxt, 1, 1, 1024, _("Sectors/track"), &res) == 0)
+
+	if (fdisk_ask_number(cxt, cxt->label->geom_min.sectors, 1,
+				  cxt->label->geom_max.sectors,
+				  _("Sectors/track"), &res) == 0)
 		cxt->geom.sectors = res;
-	if (fdisk_ask_number(cxt, 1, 1, USHRT_MAX, _("Cylinders"), &res) == 0)
+
+	if (fdisk_ask_number(cxt, cxt->label->geom_min.cylinders, 1,
+				  cxt->label->geom_max.cylinders,
+				  _("Cylinders"), &res) == 0)
 		cxt->geom.cylinders = res;
 }
 
@@ -499,6 +507,8 @@ static int sun_add_partition(
 	size_t i;
 	unsigned int first, last;
 
+	DBG(LABEL, ul_debug("SUN adding partition"));
+
 	rc = fdisk_partition_next_partno(pa, cxt, &n);
 	if (rc)
 		return rc;
@@ -513,6 +523,9 @@ static int sun_add_partition(
 	}
 
 	fetch_sun(cxt, starts, lens, &start, &stop);
+
+	if (pa && pa->type && pa->type->code == SUN_TAG_WHOLEDISK)
+		whole_disk = 1;
 
 	if (stop <= start) {
 		if (n == 2)
@@ -621,8 +634,9 @@ static int sun_add_partition(
 	/* last */
 	if (pa && pa->end_follow_default)
 		last = whole_disk || (n == 2 && !first) ? stop2 : stop;
+
 	else if (pa && fdisk_partition_has_size(pa)) {
-		last = first + pa->size - 1ULL;
+		last = first + pa->size;
 
 		if (!whole_disk && last > stop)
 			return -ERANGE;
@@ -691,6 +705,8 @@ static int sun_add_partition(
 
 	if (whole_disk)
 		sys = SUN_TAG_WHOLEDISK;
+
+	DBG(LABEL, ul_debug("SUN new partition #%zu: first=%u, last=%u, sys=%d", n, first, last, sys));
 
 	set_partition(cxt, n, first, last, sys);
 	cxt->label->nparts_cur = count_used_partitions(cxt);
@@ -1076,6 +1092,7 @@ static int sun_set_partition(
 
 static int sun_reset_alignment(struct fdisk_context *cxt __attribute__((__unused__)))
 {
+	fdisk_set_first_lba(cxt, 0);
 	return 0;
 }
 
@@ -1154,5 +1171,12 @@ struct fdisk_label *fdisk_new_sun_label(struct fdisk_context *cxt)
 	lb->nfields = ARRAY_SIZE(sun_fields);
 	lb->flags |= FDISK_LABEL_FL_REQUIRE_GEOMETRY;
 
+	lb->geom_min.sectors = 1;
+	lb->geom_min.heads = 1;
+	lb->geom_min.cylinders = 1;
+
+	lb->geom_max.sectors = 1024;
+	lb->geom_max.heads = 1024;
+	lb->geom_max.cylinders = USHRT_MAX;
 	return lb;
 }

@@ -422,16 +422,15 @@ static void fill_table_row(struct libscols_table *tb, struct zram *z)
 		case COL_ALGORITHM:
 		{
 			char *alg = sysfs_strdup(sysfs, "comp_algorithm");
-			if (!alg)
-				break;
-			if (strstr(alg, "[lzo]") == NULL) {
-				if (strstr(alg, "[lz4]") == NULL)
-					;
-				else
-					str = xstrdup("lz4");
-			} else
-				str = xstrdup("lzo");
-			free(alg);
+
+			if (alg != NULL) {
+				char* lbr = strrchr(alg, '[');
+				char* rbr = strrchr(alg, ']');
+
+				if (lbr != NULL && rbr != NULL && rbr - lbr > 1)
+					str = xstrndup(lbr + 1, rbr - lbr - 1);
+				free(alg);
+			}
 			break;
 		}
 		case COL_MOUNTPOINT:
@@ -539,7 +538,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_("Set up and control zram devices.\n"), out);
 
 	fputs(USAGE_OPTIONS, out);
-	fputs(_(" -a, --algorithm lzo|lz4   compression algorithm to use\n"), out);
+	fputs(_(" -a, --algorithm lzo|lz4|lz4hc|deflate|842   compression algorithm to use\n"), out);
 	fputs(_(" -b, --bytes               print sizes in bytes rather than in human readable format\n"), out);
 	fputs(_(" -f, --find                find a free device\n"), out);
 	fputs(_(" -n, --noheadings          don't print headings\n"), out);
@@ -611,9 +610,6 @@ int main(int argc, char **argv)
 
 		switch (c) {
 		case 'a':
-			if (strcmp(optarg,"lzo") && strcmp(optarg,"lz4"))
-				errx(EXIT_FAILURE, _("unsupported algorithm: %s"),
-					     optarg);
 			algorithm = optarg;
 			break;
 		case 'b':

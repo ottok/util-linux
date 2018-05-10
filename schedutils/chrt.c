@@ -207,7 +207,7 @@ static const char *get_policy_name(int policy)
 
 static void show_sched_pid_info(struct chrt_ctl *ctl, pid_t pid)
 {
-	int policy, reset_on_fork = 0, prio = 0;
+	int policy = -1, reset_on_fork = 0, prio = 0;
 #ifdef SCHED_DEADLINE
 	uint64_t deadline = 0, runtime = 0, period = 0;
 #endif
@@ -553,7 +553,7 @@ int main(int argc, char **argv)
 	if (!ctl->pid) {
 		argv += optind + 1;
 		execvp(argv[0], argv);
-		err(EXIT_FAILURE, _("failed to execute %s"), argv[0]);
+		errexec(argv[0]);
 	}
 
 	return EXIT_SUCCESS;

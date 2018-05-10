@@ -4,6 +4,7 @@
  * Copyright (C) 2001 by Andreas Dilger
  * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
  * Copyright (C) 2008 Karel Zak <kzak@redhat.com>
+ * Copyright (C) 2014-2017 Pali Rohár <pali.rohar@gmail.com>
  *
  * This file may be redistributed under the terms of the
  * GNU Lesser General Public License.
@@ -68,7 +69,11 @@ struct volume_descriptor {
 			uint8_t		desc_charset[64];
 			struct dstring128 logvol_id;
 			uint32_t	logical_blocksize;
-			uint8_t		domain_id[32];
+			uint8_t		domain_id_flags;
+			char		domain_id[23];
+			uint16_t	udf_rev;
+			uint8_t		domain_suffix_flags;
+			uint8_t		reserved[5];
 			uint8_t		logical_contents_use[16];
 			uint32_t	map_table_length;
 			uint32_t	num_partition_maps;
@@ -77,6 +82,16 @@ struct volume_descriptor {
 			uint32_t	lvid_length;
 			uint32_t	lvid_location;
 		} __attribute__((packed)) logical;
+
+		struct logical_vol_integ_descriptor {
+			uint8_t		recording_date[12];
+			uint32_t	type;
+			uint32_t	next_lvid_length;
+			uint32_t	next_lvid_location;
+			uint8_t		logical_contents_use[32];
+			uint32_t	num_partitions;
+			uint32_t	imp_use_length;
+		} __attribute__((packed)) logical_vol_integ;
 	} __attribute__((packed)) type;
 
 } __attribute__((packed));
@@ -84,6 +99,7 @@ struct volume_descriptor {
 #define TAG_ID_PVD  1
 #define TAG_ID_AVDP 2
 #define TAG_ID_LVD  6
+#define TAG_ID_TD   8
 #define TAG_ID_LVID 9
 
 struct volume_structure_descriptor {
@@ -104,7 +120,8 @@ struct logical_vol_integ_descriptor_imp_use
 	uint16_t	max_udf_write_rev;
 } __attribute__ ((packed));
 
-#define UDF_LVIDIU_OFFSET(num_partition_maps) (80 + 2 * 4 * num_partition_maps)
+#define UDF_LVIDIU_OFFSET(vd) (sizeof((vd).tag) + sizeof((vd).type.logical_vol_integ) + 2 * 4 * le32_to_cpu((vd).type.logical_vol_integ.num_partitions))
+#define UDF_LVIDIU_LENGTH(vd) (le32_to_cpu((vd).type.logical_vol_integ.imp_use_length))
 
 static inline int gen_uuid_from_volset_id(unsigned char uuid[17], struct dstring128 *volset_id)
 {
@@ -163,75 +180,101 @@ static int probe_udf(blkid_probe pr,
 	struct volume_descriptor *vd;
 	struct volume_structure_descriptor *vsd;
 	struct logical_vol_integ_descriptor_imp_use *lvidiu;
-	uint32_t num_partition_maps = 0;
-	uint32_t lvid_count = 0;
+	uint32_t lvid_len = 0;
 	uint32_t lvid_loc = 0;
 	uint32_t bs;
-	uint32_t pbs[5];
 	uint32_t b;
 	uint16_t type;
 	uint32_t count;
 	uint32_t loc;
 	size_t i;
+	uint32_t vsd_len;
+	uint16_t udf_rev = 0;
+	int vsd_2048_valid = -1;
 	int have_label = 0;
 	int have_uuid = 0;
 	int have_logvolid = 0;
 	int have_volid = 0;
 	int have_volsetid = 0;
-	int have_udf_rev = 0;
 
 	/* The block size of a UDF filesystem is that of the underlying
 	 * storage; we check later on for the special case of image files,
 	 * which may have any block size valid for UDF filesystem */
+	uint32_t pbs[] = { 0, 512, 1024, 2048, 4096 };
 	pbs[0] = blkid_probe_get_sectorsize(pr);
-	pbs[1] = 512;
-	pbs[2] = 1024;
-	pbs[3] = 2048;
-	pbs[4] = 4096;
 
-	/* check for a Volume Structure Descriptor (VSD); each is
-	 * 2048 bytes long */
-	for (b = 0; b < 0x8000; b += 0x800) {
-		vsd = (struct volume_structure_descriptor *)
-			blkid_probe_get_buffer(pr,
-					UDF_VSD_OFFSET + b,
-					sizeof(*vsd));
-		if (!vsd)
-			return errno ? -errno : 1;
-		if (vsd->id[0] != '\0')
-			goto nsr;
-	}
-	return 1;
+	for (i = 0; i < ARRAY_SIZE(pbs); i++) {
+		/* Do not try with block size same as sector size two times */
+		if (i != 0 && pbs[0] == pbs[i])
+			continue;
 
-nsr:
-	/* search the list of VSDs for a NSR descriptor */
-	for (b = 0; b < 64; b++) {
-		vsd = (struct volume_structure_descriptor *)
-			blkid_probe_get_buffer(pr,
-					UDF_VSD_OFFSET + ((uint64_t) b * 0x800),
-					sizeof(*vsd));
-		if (!vsd)
-			return errno ? -errno : 1;
-		if (memcmp(vsd->id, "NSR02", 5) == 0)
-			goto anchor;
-		if (memcmp(vsd->id, "NSR03", 5) == 0)
-			goto anchor;
-	}
-	return 1;
+		/* ECMA-167 2/8.4, 2/9.1: Each VSD is either 2048 bytes long or
+		 * its size is same as blocksize (for blocksize > 2048 bytes)
+		 * plus padded with zeros */
+		vsd_len = pbs[i] > 2048 ? pbs[i] : 2048;
+
+		/* Process 2048 bytes long VSD only once */
+		if (vsd_len == 2048) {
+			if (vsd_2048_valid == 0)
+				continue;
+			else if (vsd_2048_valid == 1)
+				goto anchor;
+		}
+
+		/* Check for a Volume Structure Descriptor (VSD) */
+		for (b = 0; b < 64; b++) {
+			vsd = (struct volume_structure_descriptor *)
+				blkid_probe_get_buffer(pr,
+						UDF_VSD_OFFSET + b * vsd_len,
+						sizeof(*vsd));
+			if (!vsd)
+				return errno ? -errno : 1;
+			if (vsd->id[0] == '\0')
+				break;
+			if (memcmp(vsd->id, "NSR02", 5) == 0 ||
+			    memcmp(vsd->id, "NSR03", 5) == 0)
+				goto anchor;
+			else if (memcmp(vsd->id, "BEA01", 5) != 0 &&
+			         memcmp(vsd->id, "BOOT2", 5) != 0 &&
+			         memcmp(vsd->id, "CD001", 5) != 0 &&
+			         memcmp(vsd->id, "CDW02", 5) != 0 &&
+			         memcmp(vsd->id, "TEA01", 5) != 0)
+				/* ECMA-167 2/8.3.1: The volume recognition sequence is
+				 * terminated by the first sector which is not a valid
+				 * descriptor.
+				 * UDF-2.60 2.1.7: UDF 2.00 and lower revisions do not
+				 * have requirement that NSR descritor is in Extended Area
+				 * (between BEA01 and TEA01) and that there is only one
+				 * Extended Area. So do not stop scanning after TEA01. */
+				break;
+		}
+
+		if (vsd_len == 2048)
+			vsd_2048_valid = 0;
+
+		/* NSR was not found, try with next block size */
+		continue;
 
 anchor:
-	/* read Anchor Volume Descriptor (AVDP), checking block size */
-	for (i = 0; i < ARRAY_SIZE(pbs); i++) {
+		if (vsd_len == 2048)
+			vsd_2048_valid = 1;
+
+		/* Read Anchor Volume Descriptor (AVDP), detect block size */
 		vd = (struct volume_descriptor *)
 			blkid_probe_get_buffer(pr, 256 * pbs[i], sizeof(*vd));
 		if (!vd)
 			return errno ? -errno : 1;
 
+		/* Check that we read correct sector and detected correct block size */
+		if (le32_to_cpu(vd->tag.location) != 256)
+			continue;
+
 		type = le16_to_cpu(vd->tag.id);
 		if (type == TAG_ID_AVDP)
 			goto real_blksz;
+
 	}
-	return 0;
+	return 1;
 
 real_blksz:
 	/* Use the actual block size from here on out */
@@ -253,6 +296,8 @@ real_blksz:
 		if (type == 0)
 			break;
 		if (le32_to_cpu(vd->tag.location) != loc + b)
+			break;
+		if (type == TAG_ID_TD)
 			break;
 		if (type == TAG_ID_PVD) {
 			if (!have_volid) {
@@ -312,10 +357,19 @@ real_blksz:
 							vd->type.primary.volset_id.c, clen, enc);
 			}
 		} else if (type == TAG_ID_LVD) {
-			if (!num_partition_maps || !lvid_count || !lvid_loc) {
-				num_partition_maps = le32_to_cpu(vd->type.logical.num_partition_maps);
-				lvid_count = le32_to_cpu(vd->type.logical.lvid_length) / bs;
-				lvid_loc = le32_to_cpu(vd->type.logical.lvid_location);
+			if (!lvid_len || !lvid_loc) {
+				uint32_t num_partition_maps = le32_to_cpu(vd->type.logical.num_partition_maps);
+				/* ECMA-167 3/10.6.12: If num_partition_maps is 0, then no LVID is specified */
+				if (num_partition_maps) {
+					lvid_len = le32_to_cpu(vd->type.logical.lvid_length);
+					lvid_loc = le32_to_cpu(vd->type.logical.lvid_location);
+				}
+			}
+			if (!udf_rev) {
+				/* UDF-2.60: 2.1.5.3: UDF revision field shall indicate revision of UDF document
+				 * We use this field as fallback value for ID_FS_VERSION when LVIDIU is missing */
+				if (strncmp(vd->type.logical.domain_id, "*OSTA UDF Compliant", sizeof(vd->type.logical.domain_id)) == 0)
+					udf_rev = le16_to_cpu(vd->type.logical.udf_rev);
 			}
 			if (!have_logvolid || !have_label) {
 				/* LogicalVolumeIdentifier in UDF 2.01 specification:
@@ -360,43 +414,45 @@ real_blksz:
 				}
 			}
 		}
-		if (have_volid && have_uuid && have_volsetid && have_logvolid && have_label && num_partition_maps && lvid_count && lvid_loc)
+		if (have_volid && have_uuid && have_volsetid && have_logvolid && have_label && lvid_len && lvid_loc)
 			break;
 	}
 
-	/* pick the logical volume integrity descriptor from the list and read UDF revision */
-	if (lvid_count && lvid_loc && num_partition_maps) {
-		for (b = 0; b < lvid_count; b++) {
-			vd = (struct volume_descriptor *)
+	/* Pick the first logical volume integrity descriptor and read UDF revision */
+	if (lvid_loc && lvid_len >= sizeof(*vd)) {
+		vd = (struct volume_descriptor *)
+			blkid_probe_get_buffer(pr,
+					(uint64_t) lvid_loc * bs,
+					sizeof(*vd));
+		if (!vd)
+			return errno ? -errno : 1;
+		type = le16_to_cpu(vd->tag.id);
+		if (type == TAG_ID_LVID &&
+		    le32_to_cpu(vd->tag.location) == lvid_loc &&
+		    UDF_LVIDIU_LENGTH(*vd) >= sizeof(*lvidiu)) {
+			/* ECMA-167 3/8.8.2: There is stored sequence of LVIDs and valid is just last
+			 * one. So correctly we should jump to next_lvid_location and read next LVID
+			 * until we find last one. This could be time consuming process and could
+			 * lead to scanning lot of disk blocks. Because we use LVID only for UDF
+			 * version, in the worst case we would report only wrong ID_FS_VERSION. */
+			uint16_t lvidiu_udf_rev;
+			lvidiu = (struct logical_vol_integ_descriptor_imp_use *)
 				blkid_probe_get_buffer(pr,
-						(uint64_t) (lvid_loc + b) * bs,
-						sizeof(*vd));
-			if (!vd)
+						(uint64_t) lvid_loc * bs + UDF_LVIDIU_OFFSET(*vd),
+						sizeof(*lvidiu));
+			if (!lvidiu)
 				return errno ? -errno : 1;
-			type = le16_to_cpu(vd->tag.id);
-			if (type == 0)
-				break;
-			if (le32_to_cpu(vd->tag.location) != lvid_loc + b)
-				break;
-			if (type == TAG_ID_LVID) {
-				uint16_t udf_rev;
-				lvidiu = (struct logical_vol_integ_descriptor_imp_use *)
-					blkid_probe_get_buffer(pr,
-							(uint64_t) (lvid_loc + b) * bs + UDF_LVIDIU_OFFSET(num_partition_maps),
-							sizeof(*lvidiu));
-				if (!lvidiu)
-					return errno ? -errno : 1;
-				/* Use Minimum UDF Read Revision as ID_FS_VERSION */
-				udf_rev = le16_to_cpu(lvidiu->min_udf_read_rev);
-				if (udf_rev)
-					have_udf_rev = !blkid_probe_sprintf_version(pr, "%d.%02d",
-							(int)(udf_rev >> 8),
-							(int)(udf_rev & 0xFF));
-			}
-			if (have_udf_rev)
-				break;
+			/* Use Minimum UDF Read Revision as ID_FS_VERSION */
+			lvidiu_udf_rev = le16_to_cpu(lvidiu->min_udf_read_rev);
+			if (lvidiu_udf_rev)
+				udf_rev = lvidiu_udf_rev;
 		}
 	}
+
+	if (udf_rev)
+		/* UDF revision is stored as decimal number in hexadecimal format.
+		 * E.g. number 0x0150 is revision 1.50, number 0x0201 is revision 2.01. */
+		blkid_probe_sprintf_version(pr, "%x.%02x", (unsigned int)(udf_rev >> 8), (unsigned int)(udf_rev & 0xFF));
 
 	return 0;
 }

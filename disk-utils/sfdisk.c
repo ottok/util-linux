@@ -119,7 +119,7 @@ struct sfdisk {
 
 static void sfdiskprog_init_debug(void)
 {
-	__UL_INIT_DEBUG(sfdisk, SFDISKPROG_DEBUG_, 0, SFDISK_DEBUG);
+	__UL_INIT_DEBUG_FROM_ENV(sfdisk, SFDISKPROG_DEBUG_, 0, SFDISK_DEBUG);
 }
 
 
@@ -546,8 +546,15 @@ static int write_changes(struct sfdisk *sf)
 			rc = move_partition_data(sf, sf->partno, sf->orig_pa);
 		if (!rc) {
 			fdisk_info(sf->cxt, _("\nThe partition table has been altered."));
-			if (!sf->notell)
+			if (!sf->notell) {
+				/* Let's wait a little bit. It's possible that our
+				 * system is still busy with a previous re-read
+				 * ioctl (on sfdisk start) or with another task
+				 * related to the write to the device.
+				 */
+				xusleep(250000);
 				fdisk_reread_partition_table(sf->cxt);
+			}
 		}
 	}
 	if (!rc)
@@ -816,8 +823,13 @@ static int command_activate(struct sfdisk *sf, int argc, char **argv)
 	if (rc)
 		err(EXIT_FAILURE, _("cannot open %s"), devname);
 
-	if (!fdisk_is_label(sf->cxt, DOS))
-		errx(EXIT_FAILURE, _("toggle boot flags is supported for MBR only"));
+	if (fdisk_is_label(sf->cxt, GPT)) {
+		/* Switch from GPT to PMBR */
+		sf->cxt = fdisk_new_nested_context(sf->cxt, "dos");
+		if (!sf->cxt)
+			err(EXIT_FAILURE, _("cannot switch to PMBR"));
+	} else if (!fdisk_is_label(sf->cxt, DOS))
+		errx(EXIT_FAILURE, _("toggle boot flags is supported for MBR or PMBR only"));
 
 	if (!listonly && sf->backup)
 		backup_partition_table(sf, devname);
@@ -848,7 +860,11 @@ static int command_activate(struct sfdisk *sf, int argc, char **argv)
 
 	/* sfdisk --activate <partno> [..] */
 	for (i = 1; i < argc; i++) {
-		int n = strtou32_or_err(argv[i], _("failed to parse partition number"));
+		int n;
+
+		if (i == 1 && strcmp(argv[1], "-") == 0)
+			break;
+		n = strtou32_or_err(argv[i], _("failed to parse partition number"));
 
 		rc = fdisk_toggle_partition_flag(sf->cxt, n - 1, DOS_FLAG_ACTIVE);
 		if (rc)
@@ -858,6 +874,7 @@ static int command_activate(struct sfdisk *sf, int argc, char **argv)
 	}
 
 	fdisk_unref_partition(pa);
+
 	if (listonly)
 		rc = fdisk_deassign_device(sf->cxt, 1);
 	else
@@ -1295,8 +1312,8 @@ static void command_fdisk_help(void)
 
 	fputc('\n', stdout);
 	fputs(_("   <type>   The partition type.  Default is a Linux data partition.\n"), stdout);
-	fputs(_("            MBR: hex or L,S,E,X shortcuts.\n"), stdout);
-	fputs(_("            GPT: UUID or L,S,H shortcuts.\n"), stdout);
+	fputs(_("            MBR: hex or L,S,E,X,U,R,V shortcuts.\n"), stdout);
+	fputs(_("            GPT: UUID or L,S,H,U,R,V shortcuts.\n"), stdout);
 
 	fputc('\n', stdout);
 	fputs(_("   <bootable>  Use '*' to mark an MBR partition as bootable.\n"), stdout);
@@ -1826,7 +1843,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_("Display or manipulate a disk partition table.\n"), out);
 
 	fputs(USAGE_COMMANDS, out);
-	fputs(_(" -A, --activate <dev> [<part> ...] list or set bootable MBR partitions\n"), out);
+	fputs(_(" -A, --activate <dev> [<part> ...] list or set bootable (P)MBR partitions\n"), out);
 	fputs(_(" -d, --dump <dev>                  dump partition table (usable for later input)\n"), out);
 	fputs(_(" -J, --json <dev>                  dump partition table in JSON format\n"), out);
 	fputs(_(" -g, --show-geometry [<dev> ...]   list geometry of all or specified devices\n"), out);

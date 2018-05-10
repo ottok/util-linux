@@ -11,10 +11,11 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl AC_USE_SYSTEM_EXTENSIONS must be called before any macros that run
 dnl the compiler (like AC_PROG_LIBTOOL) to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
-AM_INIT_AUTOMAKE([-Wall foreign 1.10 tar-pax dist-bzip2 no-dist-gzip dist-xz -Wno-portability subdir-objects])
+AM_INIT_AUTOMAKE([-Wall foreign 1.10 tar-pax no-dist-gzip dist-xz subdir-objects])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
 			    [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_CONFIG_SRCDIR([sys-utils/mount.c])
 AC_PREFIX_DEFAULT([/usr])
@@ -28,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="19-Dec-2017"
+LIBBLKID_DATE="21-Mar-2018"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -141,6 +142,17 @@ AC_SUBST([BSD_WARN_CFLAGS])
 UL_WARN_ADD([-Wno-unused-parameter], [NO_UNUSED_WARN_CFLAGS])
 AC_SUBST([NO_UNUSED_WARN_CFLAGS])
 
+
+AC_ARG_ENABLE([asan],
+  AS_HELP_STRING([--enable-asan], [compile with Address Sanitizer]),
+  [], [enable_asan=no]
+)
+AS_IF([test "x$enable_asan" = xyes], [
+  UL_WARN_ADD([-fsanitize=address])
+])
+
+
+
 dnl libtool-2
 LT_INIT
 
@@ -223,6 +235,7 @@ AC_CHECK_HEADERS([ \
 	linux/tiocl.h \
 	linux/version.h \
 	linux/securebits.h \
+	linux/net_namespace.h \
 	locale.h \
 	mntent.h \
 	net/if.h \
@@ -267,6 +280,16 @@ AC_CHECK_HEADERS([ \
 	utmpx.h \
 ])
 
+# There is a collision in old kernel-headers. The both files mount.h and fs.h
+# define MS_* macros. Fixed by kernel commit e462ec50cb5fad19f6003a3d8087f4a0945dd2b1.
+#
+AC_CHECK_HEADERS([linux/fs.h ], [], [],
+ [#ifdef HAVE_SYS_MOUNT_H
+   # include <linux/fs.h>
+   # include <sys/mount.h>
+  #endif
+])
+
 AC_CHECK_HEADERS([linux/gsmmux.h ], [], [],
  [#ifdef LINUX_GSMMUX_H
    # include <linux/gsmmux.h>
@@ -292,6 +315,58 @@ AC_CHECK_HEADERS([security/openpam.h], [], [], [
 AC_CHECK_HEADERS([langinfo.h],
 		[AM_CONDITIONAL([HAVE_LANGINFO], [true])],
 		[AM_CONDITIONAL([HAVE_LANGINFO], [false])])
+
+AC_MSG_CHECKING([whether langinfo.h defines ALTMON_x constants])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	#include <langinfo.h>
+]], [[
+	char *str;
+	str = nl_langinfo (ALTMON_1);
+	str = nl_langinfo (ALTMON_2);
+	str = nl_langinfo (ALTMON_3);
+	str = nl_langinfo (ALTMON_4);
+	str = nl_langinfo (ALTMON_5);
+	str = nl_langinfo (ALTMON_6);
+	str = nl_langinfo (ALTMON_7);
+	str = nl_langinfo (ALTMON_8);
+	str = nl_langinfo (ALTMON_9);
+	str = nl_langinfo (ALTMON_10);
+	str = nl_langinfo (ALTMON_11);
+	str = nl_langinfo (ALTMON_12);
+]])], [
+	AC_MSG_RESULT([yes])
+	AC_DEFINE([HAVE_LANGINFO_ALTMON], [1],
+		[Define if langinfo.h defines ALTMON_x constants])
+], [
+	AC_MSG_RESULT([no])
+])
+
+
+AC_MSG_CHECKING([whether langinfo.h defines _NL_ABALTMON_x constants])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	#include <langinfo.h>
+]], [[
+	char *str;
+	str = nl_langinfo (_NL_ABALTMON_1);
+	str = nl_langinfo (_NL_ABALTMON_2);
+	str = nl_langinfo (_NL_ABALTMON_3);
+	str = nl_langinfo (_NL_ABALTMON_4);
+	str = nl_langinfo (_NL_ABALTMON_5);
+	str = nl_langinfo (_NL_ABALTMON_6);
+	str = nl_langinfo (_NL_ABALTMON_7);
+	str = nl_langinfo (_NL_ABALTMON_8);
+	str = nl_langinfo (_NL_ABALTMON_9);
+	str = nl_langinfo (_NL_ABALTMON_10);
+	str = nl_langinfo (_NL_ABALTMON_11);
+	str = nl_langinfo (_NL_ABALTMON_12);
+]])], [
+	AC_MSG_RESULT([yes])
+	AC_DEFINE([HAVE_LANGINFO_NL_ABALTMON], [1],
+		[Define if langinfo.h defines _NL_ABALTMON_x constants])
+], [
+	AC_MSG_RESULT([no])
+])
+
 
 dnl Convert some ac_cv_header_* variables to have_*
 dnl
@@ -330,20 +405,6 @@ AC_CHECK_MEMBERS([struct termios.c_line],,,
 
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec],,,
 	[#include <sys/stat.h>])
-
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-[[
-#ifdef HAVE_SYS_SWAP_H
-# include <sys/swap.h>
-#endif
-#include <unistd.h>
-]],
-[[swapon("/dev/null", 0);]])],
-[AC_DEFINE([SWAPON_HAS_TWO_ARGS], [1], [Is swapon() declared with two parameters?])
-],
-[AC_MSG_NOTICE([Your libc thinks that swapon has 1 arg only.])
-])
-
 
 AC_CHECK_DECLS([_NL_TIME_WEEK_1STDAY],[],[],[[#include <langinfo.h>]])
 
@@ -391,6 +452,7 @@ AC_CHECK_FUNCS([ \
 	__fpending \
 	secure_getenv \
 	__secure_getenv \
+	eaccess \
 	err \
 	errx \
 	explicit_bzero \
@@ -1028,7 +1090,7 @@ AC_ARG_ENABLE([libmount-support-mtab],
   [], [enable_libmount_support_mtab=no]
 )
 
-AS_IF([test "x$enable_libmount_support_mtab" == xyes], [
+AS_IF([test "x$enable_libmount_support_mtab" = xyes], [
   AC_DEFINE([USE_LIBMOUNT_SUPPORT_MTAB], [1], [Define to 1 if want to support mtab.])
 ])
 
@@ -1150,7 +1212,7 @@ UL_BUILD_INIT([uuidd])
 UL_REQUIRES_BUILD([uuidd], [libuuid])
 UL_REQUIRES_HAVE([uuidd], [timer], [timer_create function])
 UL_REQUIRES_HAVE([uuidd], [sys_signalfd_h], [sys/signalfd.h header])
-AS_IF([test "x$build_uuidd" = xyes || test "x$enable_libuuid_force_uuidd" == xyes ], [
+AS_IF([test "x$build_uuidd" = xyes || test "x$enable_libuuid_force_uuidd" = xyes], [
   AC_DEFINE([HAVE_UUIDD], [1], [Define to 1 if you want to use uuid daemon.])
 ])
 AM_CONDITIONAL([BUILD_UUIDD], [test "x$build_uuidd" = xyes])
@@ -1325,7 +1387,7 @@ AC_ARG_ENABLE([agetty],
 )
 UL_BUILD_INIT([agetty])
 UL_REQUIRES_HAVE([agetty], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([agetty], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([agetty], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_AGETTY], [test "x$build_agetty" = xyes])
 AS_IF([test "x$have_futimens" = xyes -a "x$have_inotify_init1" = xyes ], [
   AC_DEFINE([AGETTY_RELOAD], [1], [Enable agetty --reload feature])
@@ -1418,10 +1480,14 @@ AM_CONDITIONAL([BUILD_FSTRIM], [test "x$build_fstrim" = xyes])
 
 UL_BUILD_INIT([swapon], [check])
 UL_REQUIRES_LINUX([swapon])
+UL_REQUIRES_SYSCALL_CHECK([swapon], [UL_CHECK_SYSCALL([swapon])], [swapon])
+UL_REQUIRES_SYSCALL_CHECK([swapon], [UL_CHECK_SYSCALL([swapoff])], [swapoff])
 UL_REQUIRES_BUILD([swapon], [libblkid])
 UL_REQUIRES_BUILD([swapon], [libmount])
 UL_REQUIRES_BUILD([swapon], [libsmartcols])
 AM_CONDITIONAL([BUILD_SWAPON], [test "x$build_swapon" = xyes])
+AC_CHECK_FUNCS([swapon])
+AC_CHECK_FUNCS([swapoff])
 
 
 UL_BUILD_INIT([lsblk], [check])
@@ -1447,7 +1513,7 @@ UL_BUILD_INIT([lslogins])
 UL_REQUIRES_BUILD([lslogins], [libsmartcols])
 UL_REQUIRES_HAVE([lslogins], [shadow_h], [shadow.h header])
 UL_REQUIRES_HAVE([lslogins], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([lslogins], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([lslogins], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_LSLOGINS], [test "x$build_lslogins" = xyes])
 
 
@@ -1606,6 +1672,7 @@ AM_CONDITIONAL([BUILD_LSIPC], [test "x$build_lsipc" = xyes])
 UL_BUILD_INIT([lsns], [check])
 UL_REQUIRES_LINUX([lsns])
 UL_REQUIRES_BUILD([lsns], [libsmartcols])
+UL_REQUIRES_BUILD([lsns], [libmount])
 AM_CONDITIONAL([BUILD_LSNS], [test "x$build_lsns" = xyes])
 
 UL_BUILD_INIT([renice], [yes])
@@ -1723,7 +1790,7 @@ AC_ARG_ENABLE([last],
 )
 UL_BUILD_INIT([last])
 UL_REQUIRES_HAVE([last], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([last], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([last], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_LAST], [test "x$build_last" = xyes])
 
 
@@ -1733,7 +1800,7 @@ AC_ARG_ENABLE([utmpdump],
 )
 UL_BUILD_INIT([utmpdump])
 UL_REQUIRES_HAVE([utmpdump], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([utmpdump], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([utmpdump], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_UTMPDUMP], [test "x$build_utmpdump" = xyes])
 
 
@@ -1846,7 +1913,7 @@ UL_BUILD_INIT([login])
 UL_REQUIRES_HAVE([login], [security_pam_appl_h], [PAM header file])
 UL_REQUIRES_HAVE([login], [security_pam_misc_h, security_openpam_h], [PAM conversation functions])
 UL_REQUIRES_HAVE([login], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([login], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([login], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_LOGIN], [test "x$build_login" = xyes])
 
 AC_ARG_ENABLE([login-chown-vcs],
@@ -1892,7 +1959,7 @@ AC_ARG_ENABLE([su],
 UL_BUILD_INIT([su])
 UL_REQUIRES_HAVE([su], [security_pam_appl_h], [PAM header file])
 UL_REQUIRES_HAVE([su], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([su], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([su], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_SU], [test "x$build_su" = xyes])
 
 
@@ -1903,7 +1970,7 @@ AC_ARG_ENABLE([runuser],
 UL_BUILD_INIT([runuser])
 UL_REQUIRES_HAVE([runuser], [security_pam_appl_h], [PAM header file])
 UL_REQUIRES_HAVE([runuser], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([runuser], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([runuser], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_RUNUSER], [test "x$build_runuser" = xyes])
 
 
@@ -2018,7 +2085,7 @@ AC_ARG_ENABLE([write],
 )
 UL_BUILD_INIT([write])
 UL_REQUIRES_HAVE([write], [utmpx_h], [utmpx.h header])
-UL_REQUIRES_HAVE([write], [gnu_utmpx], [GNU utmpx fucntions])
+UL_REQUIRES_HAVE([write], [gnu_utmpx], [GNU utmpx functions])
 AM_CONDITIONAL([BUILD_WRITE], [test "x$build_write" = xyes])
 
 
@@ -2224,7 +2291,7 @@ AC_ARG_ENABLE([usrdir-path],
   [], [enable_usrdir_path=no]
 )
 
-AS_IF([test "x$enable_usrdir_path" == xyes], [
+AS_IF([test "x$enable_usrdir_path" = xyes], [
   AC_DEFINE([USE_USRDIR_PATHS_ONLY], [1], [Define to 1 to remove /bin and /sbin from PATH env.variable])
 ])
 

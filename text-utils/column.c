@@ -86,6 +86,7 @@ struct column_control {
 	const char *tree_parent;
 
 	wchar_t *input_separator;
+	char *input_separator_raw;
 	const char *output_separator;
 
 	wchar_t	**ents;		/* input entries */
@@ -94,7 +95,9 @@ struct column_control {
 
 	unsigned int greedy :1,
 		     json :1,
-		     header_repeat :1;
+		     header_repeat :1,
+		     input_sep_space : 1,	/* input separator contains space chars */
+		     tab_noheadings :1;
 };
 
 static size_t width(const wchar_t *str)
@@ -219,6 +222,7 @@ static void init_table(struct column_control *ctl)
 			scols_table_new_column(ctl->tab, *name, 0, 0);
 		if (ctl->header_repeat)
 			scols_table_enable_header_repeat(ctl->tab, 1);
+		scols_table_enable_noheadings(ctl->tab, !!ctl->tab_noheadings);
 	} else
 		scols_table_enable_noheadings(ctl->tab, 1);
 }
@@ -275,13 +279,38 @@ static void apply_columnflag_from_list(struct column_control *ctl, const char *l
 {
 	char **all = split_or_error(list, errmsg);
 	char **one;
+	int unnamed = 0;
 
 	STRV_FOREACH(one, all) {
-		struct libscols_column *cl = string_to_column(ctl, *one);
+		struct libscols_column *cl;
+
+		if (flag == SCOLS_FL_HIDDEN && strcmp(*one, "-") == 0) {
+			unnamed = 1;
+			continue;
+		}
+		cl = string_to_column(ctl, *one);
 		if (cl)
 			column_set_flag(cl, flag);
 	}
 	strv_free(all);
+
+	/* apply flag to all columns without name */
+	if (unnamed) {
+		struct libscols_iter *itr;
+		struct libscols_column *cl;
+
+		itr = scols_new_iter(SCOLS_ITER_FORWARD);
+		if (!itr)
+			err_oom();
+
+		while (scols_table_next_column(ctl->tab, itr, &cl) == 0) {
+			struct libscols_cell *ce = scols_column_get_header(cl);
+
+			if (ce == NULL ||  scols_cell_get_data(ce) == NULL)
+				column_set_flag(cl, flag);
+		}
+		scols_free_iter(itr);
+	}
 }
 
 static void reorder_table(struct column_control *ctl)
@@ -304,6 +333,9 @@ static void reorder_table(struct column_control *ctl)
 		scols_table_move_column(ctl->tab, last, wanted[i]);
 		last = wanted[i];
 	}
+
+	free(wanted);
+	strv_free(order);
 }
 
 static void create_tree(struct column_control *ctl)
@@ -420,6 +452,7 @@ static int add_line_to_table(struct column_control *ctl, wchar_t *wcs)
 			if (!ln)
 				err(EXIT_FAILURE, _("failed to allocate output line"));
 		}
+
 		data = wcs_to_mbs(wcdata);
 		if (!data)
 			err(EXIT_FAILURE, _("failed to allocate output data"));
@@ -437,8 +470,21 @@ static int read_input(struct column_control *ctl, FILE *fp)
 	char *buf = NULL;
 	size_t bufsz = 0;
 	size_t maxents = 0;
-	int rc = 0;
+	int rc = 0, is_space_sep = 0;
 
+	/* Check if columns separator contains spaces chars */
+	if (ctl->mode == COLUMN_MODE_TABLE && ctl->input_separator_raw) {
+		char *p;
+
+		for (p = ctl->input_separator_raw; *p; p++) {
+			if (isspace(*p)) {
+				is_space_sep = 1;
+				break;
+			}
+		}
+	}
+
+	/* Read input */
 	do {
 		char *str, *p;
 		wchar_t *wcs = NULL;
@@ -450,6 +496,19 @@ static int read_input(struct column_control *ctl, FILE *fp)
 			err(EXIT_FAILURE, _("read failed"));
 		}
 		str = (char *) skip_space(buf);
+
+		/* The table columns separator could be a space. In this case
+		 * don't skip the separator if at begin of the line. For example:
+		 *
+		 * echo -e "\tcol1\tcol2\nrow\t1\t2" \
+		 *	| column -t -s "$(echo -e '\t')" --table-columns A,B,C
+		 */
+		if (is_space_sep && str > buf) {
+			char *x = strpbrk(buf, ctl->input_separator_raw);
+			if (x && x < str)
+				str = x;
+		}
+
 		if (str) {
 			p = strchr(str, '\n');
 			if (p)
@@ -583,6 +642,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -O, --table-order <columns>      specify order of output columns\n"), out);
 	fputs(_(" -N, --table-columns <names>      comma separated columns names\n"), out);
 	fputs(_(" -E, --table-noextreme <columns>  don't count long text from the columns to column width\n"), out);
+	fputs(_(" -d, --table-noheadings           don't print header\n"), out);
 	fputs(_(" -e, --table-header-repeat        repeat header for each page\n"), out);
 	fputs(_(" -H, --table-hide <columns>       don't print the columns\n"), out);
 	fputs(_(" -R, --table-right <columns>      right align text in these columns\n"), out);
@@ -634,6 +694,7 @@ int main(int argc, char **argv)
 		{ "table-hide",          required_argument, NULL, 'H' },
 		{ "table-name",          required_argument, NULL, 'n' },
 		{ "table-noextreme",     required_argument, NULL, 'E' },
+		{ "table-noheadings",    no_argument,       NULL, 'd' },
 		{ "table-order",         required_argument, NULL, 'O' },
 		{ "table-right",         required_argument, NULL, 'R' },
 		{ "table-truncate",      required_argument, NULL, 'T' },
@@ -659,14 +720,18 @@ int main(int argc, char **argv)
 
 	ctl.output_separator = "  ";
 	ctl.input_separator = mbs_to_wcs("\t ");
+	ctl.input_separator_raw = xstrdup("\t ");
 
-	while ((c = getopt_long(argc, argv, "c:E:eH:hi:JN:n:O:o:p:R:r:s:T:tVW:x", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "c:dE:eH:hi:JN:n:O:o:p:R:r:s:T:tVW:x", longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
 
 		switch(c) {
 		case 'c':
 			ctl.termwidth = strtou32_or_err(optarg, _("invalid columns argument"));
+			break;
+		case 'd':
+			ctl.tab_noheadings = 1;
 			break;
 		case 'E':
 			ctl.tab_colnoextrem = optarg;
@@ -710,7 +775,9 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			free(ctl.input_separator);
+			free(ctl.input_separator_raw);
 			ctl.input_separator = mbs_to_wcs(optarg);
+			ctl.input_separator_raw = xstrdup(optarg);
 			ctl.greedy = 0;
 			break;
 		case 'T':

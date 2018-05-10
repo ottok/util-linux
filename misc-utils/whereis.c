@@ -72,6 +72,9 @@ UL_DEBUG_DEFINE_MASKNAMES(whereis) = UL_DEBUG_EMPTY_MASKNAMES;
 #define DBG(m, x)       __UL_DBG(whereis, WHEREIS_DEBUG_, m, x)
 #define ON_DBG(m, x)    __UL_DBG_CALL(whereis, WHEREIS_DEBUG_, m, x)
 
+#define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(whereis)
+#include "debugobj.h"
+
 static char uflag = 0;
 
 /* supported types */
@@ -175,7 +178,7 @@ static const char *srcdirs[] = {
 
 static void whereis_init_debug(void)
 {
-	__UL_INIT_DEBUG(whereis, WHEREIS_DEBUG_, 0, WHEREIS_DEBUG);
+	__UL_INIT_DEBUG_FROM_ENV(whereis, WHEREIS_DEBUG_, 0, WHEREIS_DEBUG);
 }
 
 static const char *whereis_type_to_name(int type)
@@ -455,7 +458,7 @@ static void lookup(const char *pattern, struct wh_dirlist *ls, int want)
 	DBG(SEARCH, ul_debug("lookup dirs for '%s' (%s), want: %s %s %s",
 				patbuf, pattern,
 				want & BIN_DIR ? "bin" : "",
-				want & MAN_DIR ? "min" : "",
+				want & MAN_DIR ? "man" : "",
 				want & SRC_DIR ? "src" : ""));
 	p = strrchr(patbuf, '.');
 	if (p)

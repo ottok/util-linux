@@ -35,6 +35,7 @@
 #include <netdb.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <sys/utsname.h>
 
 #include "strutils.h"
 #include "all-io.h"
@@ -116,9 +117,9 @@
 /*
  * Things you may want to modify.
  *
- * If ISSUE is not defined, agetty will never display the contents of the
- * /etc/issue file. You will not want to spit out large "issue" files at the
- * wrong baud rate. Relevant for System V only.
+ * If ISSUE_SUPPORT is not defined, agetty will never display the contents of
+ * the /etc/issue file. You will not want to spit out large "issue" files at
+ * the wrong baud rate. Relevant for System V only.
  *
  * You may disagree with the default line-editing etc. characters defined
  * below. Note, however, that DEL cannot be used for interrupt generation
@@ -127,8 +128,14 @@
 
 /* Displayed before the login prompt. */
 #ifdef	SYSV_STYLE
-#  define ISSUE _PATH_ISSUE
-#  include <sys/utsname.h>
+#  define ISSUE_SUPPORT
+#  if defined(HAVE_SCANDIRAT) && defined(HAVE_OPENAT)
+#    include <dirent.h>
+#    include "fileutils.h"
+#    define ISSUEDIR_SUPPORT
+#    define ISSUEDIR_EXT	".issue"
+#    define ISSUEDIR_EXTSIZ	(sizeof(ISSUEDIR_EXT) - 1)
+#  endif
 #endif
 
 /* Login prompt. */
@@ -169,7 +176,7 @@ struct options {
 	char *vcline;			/* line of virtual console */
 	char *term;			/* terminal type */
 	char *initstring;		/* modem init string */
-	char *issue;			/* alternative issue file */
+	char *issue;			/* alternative issue file or directory */
 	char *erasechars;		/* string with erase chars */
 	char *killchars;		/* string with kill chars */
 	char *osrelease;		/* /etc/os-release data */
@@ -188,12 +195,12 @@ enum {
 };
 
 #define	F_PARSE		(1<<0)	/* process modem status messages */
-#define	F_ISSUE		(1<<1)	/* display /etc/issue */
+#define	F_ISSUE		(1<<1)	/* display /etc/issue or /etc/issue.d */
 #define	F_RTSCTS	(1<<2)	/* enable RTS/CTS flow control */
 
 #define F_INITSTRING    (1<<4)	/* initstring is set */
 #define F_WAITCRLF	(1<<5)	/* wait for CR or LF */
-#define F_CUSTISSUE	(1<<6)	/* give alternative issue file */
+
 #define F_NOPROMPT	(1<<7)	/* do not ask for login name! */
 #define F_LCUC		(1<<8)	/* support for *LCUC stty modes */
 #define F_KEEPSPEED	(1<<9)	/* follow baud rate from kernel */
@@ -310,6 +317,7 @@ static void termio_final(struct options *op,
 static int caps_lock(char *s);
 static speed_t bcode(char *s);
 static void usage(void) __attribute__((__noreturn__));
+static void exit_slowly(int code) __attribute__((__noreturn__));
 static void log_err(const char *, ...) __attribute__((__noreturn__))
 			       __attribute__((__format__(printf, 1, 2)));
 static void log_warn (const char *, ...)
@@ -342,8 +350,7 @@ int main(int argc, char **argv)
 	struct options options = {
 		.flags  =  F_ISSUE,		/* show /etc/issue (SYSV_STYLE) */
 		.login  =  _PATH_LOGIN,		/* default login program */
-		.tty    = "tty1",		/* default tty line */
-		.issue  =  ISSUE		/* default issue file */
+		.tty    = "tty1"		/* default tty line */
 	};
 	char *login_argv[LOGIN_ARGV_MAX + 1];
 	int login_argc = 0;
@@ -629,8 +636,11 @@ static void output_version(void)
 #ifdef KDGKBLED
 		"hints",
 #endif
-#ifdef ISSUE
+#ifdef ISSUE_SUPPORT
 		"issue",
+#endif
+#ifdef ISSUEDIR_SUPPORT
+		"issue.d",
 #endif
 #ifdef KDGKBMODE
 		"keyboard mode",
@@ -741,7 +751,6 @@ static void parse_args(int argc, char **argv, struct options *op)
 			op->flags |= F_REMOTE;
 			break;
 		case 'f':
-			op->flags |= F_CUSTISSUE;
 			op->issue = optarg;
 			break;
 		case 'h':
@@ -1658,18 +1667,117 @@ static int wait_for_term_input(int fd)
 	}
 }
 #endif  /* AGETTY_RELOAD */
+
+#ifdef ISSUEDIR_SUPPORT
+static int issuedir_filter(const struct dirent *d)
+{
+	size_t namesz;
+
+#ifdef _DIRENT_HAVE_D_TYPE
+	if (d->d_type != DT_UNKNOWN && d->d_type != DT_REG &&
+	    d->d_type != DT_LNK)
+		return 0;
+#endif
+	if (*d->d_name == '.')
+		return 0;
+
+	namesz = strlen(d->d_name);
+	if (!namesz || namesz < ISSUEDIR_EXTSIZ + 1 ||
+	    strcmp(d->d_name + (namesz - ISSUEDIR_EXTSIZ), ISSUEDIR_EXT))
+		return 0;
+
+	/* Accept this */
+	return 1;
+}
+
+static FILE *issuedir_next_file(int dd, struct dirent **namelist, int nfiles, int *n)
+{
+	while (*n < nfiles) {
+		struct dirent *d = namelist[*n];
+		struct stat st;
+		FILE *f;
+
+		(*n)++;
+
+		if (fstatat(dd, d->d_name, &st, 0) ||
+		    !S_ISREG(st.st_mode))
+			continue;
+
+		f = fopen_at(dd, d->d_name, O_RDONLY|O_CLOEXEC, "r" UL_CLOEXECSTR);
+		if (f)
+			return f;
+	}
+	return NULL;
+}
+
+#endif /* ISSUEDIR_SUPPORT */
+
+#ifndef ISSUE_SUPPORT
+static void print_issue_file(struct options *op, struct termios *tp __attribute__((__unused__)))
+{
+	if ((op->flags & F_NONL) == 0) {
+		/* Issue not in use, start with a new line. */
+		write_all(STDOUT_FILENO, "\r\n", 2);
+	}
+}
+#else /* ISSUE_SUPPORT */
+
 static void print_issue_file(struct options *op, struct termios *tp)
 {
-#ifdef	ISSUE
-	FILE *fd;
+	const char *filename, *dirname = NULL;
+	FILE *f = NULL;
+#ifdef ISSUEDIR_SUPPORT
+	int dd = -1, nfiles = 0, i;
+	struct dirent **namelist = NULL;
 #endif
 	if ((op->flags & F_NONL) == 0) {
 		/* Issue not in use, start with a new line. */
 		write_all(STDOUT_FILENO, "\r\n", 2);
 	}
 
-#ifdef	ISSUE
-	if ((op->flags & F_ISSUE) && (fd = fopen(op->issue, "r"))) {
+	if (!(op->flags & F_ISSUE))
+		return;
+
+	/*
+	 * The custom issue file or directory specified by: agetty -f <path>.
+	 * Note that nothing is printed if the file/dir does not exist.
+	 */
+	filename = op->issue;
+	if (filename) {
+		struct stat st;
+
+		if (stat(filename, &st) < 0)
+			return;
+		if (S_ISDIR(st.st_mode)) {
+			dirname = filename;
+			filename = NULL;
+		}
+	} else {
+		/* The default /etc/issue and optional /etc/issue.d directory
+		 * as extension to the file. The /etc/issue.d directory is
+		 * ignored if there is no /etc/issue file. The file may be
+		 * empty or symlink.
+		 */
+		if (access(_PATH_ISSUE, F_OK|R_OK) != 0)
+			return;
+		filename  = _PATH_ISSUE;
+		dirname = _PATH_ISSUEDIR;
+	}
+
+#ifdef ISSUEDIR_SUPPORT
+	if (dirname) {
+		dd = open(dirname, O_RDONLY|O_CLOEXEC|O_DIRECTORY);
+		if (dd >= 0)
+			nfiles = scandirat(dd, ".", &namelist, issuedir_filter, versionsort);
+		if (nfiles <= 0)
+			dirname = NULL;
+	}
+	i = 0;
+#endif
+	if (filename)
+		f = fopen(filename, "r");
+
+	if (f || dirname) {
 		int c, oflag = tp->c_oflag;	    /* Save current setting. */
 
 		if ((op->flags & F_VCONSOLE) == 0) {
@@ -1678,12 +1786,23 @@ static void print_issue_file(struct options *op, struct termios *tp)
 			tcsetattr(STDIN_FILENO, TCSADRAIN, tp);
 		}
 
-		while ((c = getc(fd)) != EOF) {
-			if (c == '\\')
-				output_special_char(getc(fd), op, tp, fd);
-			else
-				putchar(c);
-		}
+		do {
+#ifdef ISSUEDIR_SUPPORT
+			if (!f && i < nfiles)
+				f = issuedir_next_file(dd, namelist, nfiles, &i);
+#endif
+			if (!f)
+				break;
+			while ((c = getc(f)) != EOF) {
+				if (c == '\\')
+					output_special_char(getc(f), op, tp, f);
+				else
+					putchar(c);
+			}
+			fclose(f);
+			f = NULL;
+		} while (dirname);
+
 		fflush(stdout);
 
 		if ((op->flags & F_VCONSOLE) == 0) {
@@ -1692,10 +1811,17 @@ static void print_issue_file(struct options *op, struct termios *tp)
 			/* Wait till output is gone. */
 			tcsetattr(STDIN_FILENO, TCSADRAIN, tp);
 		}
-		fclose(fd);
 	}
-#endif	/* ISSUE */
+
+#ifdef ISSUEDIR_SUPPORT
+	for (i = 0; i < nfiles; i++)
+		free(namelist[i]);
+	free(namelist);
+	if (dd >= 0)
+		close(dd);
+#endif
 }
+#endif /* ISSUE_SUPPORT */
 
 /* Show login prompt, optionally preceded by /etc/issue contents. */
 static void do_prompt(struct options *op, struct termios *tp)
@@ -1858,9 +1984,11 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 		while (cp->eol == '\0') {
 
 			char key;
+			ssize_t readres;
 
 			debug("read from FD\n");
-			if (read(STDIN_FILENO, &c, 1) < 1) {
+			readres = read(STDIN_FILENO, &c, 1);
+			if (readres < 0) {
 				debug("read failed\n");
 
 				/* The terminal could be open with O_NONBLOCK when
@@ -1875,11 +2003,14 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 				case ESRCH:
 				case EINVAL:
 				case ENOENT:
-					break;
+					exit_slowly(EXIT_SUCCESS);
 				default:
 					log_err(_("%s: read: %m"), op->tty);
 				}
 			}
+
+			if (readres == 0)
+				c = 0;
 
 			/* Do parity bit handling. */
 			if (eightbit)
@@ -1905,8 +2036,10 @@ static char *get_logname(struct options *op, struct termios *tp, struct chardata
 			switch (key) {
 			case 0:
 				*bp = 0;
-				if (op->numspeed > 1)
+				if (op->numspeed > 1 && !(op->flags & F_VCONSOLE))
 					return NULL;
+				if (readres == 0)
+					exit_slowly(EXIT_SUCCESS);
 				break;
 			case CR:
 			case NL:
@@ -2192,6 +2325,13 @@ static void dolog(int priority, const char *fmt, va_list ap)
 #endif				/* USE_SYSLOG */
 }
 
+static void exit_slowly(int code)
+{
+	/* Be kind to init(8). */
+	sleep(10);
+	exit(code);
+}
+
 static void log_err(const char *fmt, ...)
 {
 	va_list ap;
@@ -2200,9 +2340,7 @@ static void log_err(const char *fmt, ...)
 	dolog(LOG_ERR, fmt, ap);
 	va_end(ap);
 
-	/* Be kind to init(8). */
-	sleep(10);
-	exit(EXIT_FAILURE);
+	exit_slowly(EXIT_FAILURE);
 }
 
 static void log_warn(const char *fmt, ...)

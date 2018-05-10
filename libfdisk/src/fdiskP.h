@@ -47,6 +47,9 @@ UL_DEBUG_DECLARE_MASK(libfdisk);
 #define ON_DBG(m, x)	__UL_DBG_CALL(libfdisk, LIBFDISK_DEBUG_, m, x)
 #define DBG_FLUSH	__UL_DBG_FLUSH(libfdisk, LIBFDISK_DEBUG_)
 
+#define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(libfdisk)
+#include "debugobj.h"
+
 /*
  * NLS -- the library has to be independent on main program, so define
  * UL_TEXTDOMAIN_EXPLICIT before you include nls.h.
@@ -278,6 +281,9 @@ struct fdisk_label {
 	size_t			nparts_cur;	/* number of currently used partitions */
 
 	int			flags;		/* FDISK_LABEL_FL_* flags */
+
+	struct fdisk_geometry	geom_min;	/* minimal geometry */
+	struct fdisk_geometry	geom_max;	/* maximal geometry */
 
 	unsigned int		changed:1,	/* label has been modified */
 				disabled:1;	/* this driver is disabled at all */

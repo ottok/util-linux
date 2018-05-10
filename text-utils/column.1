@@ -45,7 +45,7 @@ utility formats its input into multiple columns.  The util support three modes:
 .BR "columns are filled before rows"
 This is the default mode (required by backward compatibility).
 .TP
-.BR "rows are filed before columns"
+.BR "rows are filled before columns"
 This mode is enabled by option \fB-x, \-\-fillrows\fP
 .TP
 .BR "table"
@@ -68,6 +68,8 @@ Use JSON output format to print the table, the option
 Output is formatted to a width specified as number of characters. The original
 name of this option is --columns; this name is deprecated since v2.30. Note that input
 longer than \fIwidth\fP is not truncated by default.
+.IP "\fB\-d, \-\-table\-noheadings\fP"
+Do not print header. This option allows to use logical column names on command line, but keep the header hidden when print the table.
 .IP "\fB\-o, \-\-output\-separator\fP \fIstring\fP"
 Specify the columns delimiter for table output (default is two spaces).
 .IP "\fB\-s, \-\-separator\fP \fIseparators\fP"
@@ -98,7 +100,8 @@ Print header line for each page.
 Specify columns where is possible to use multi-line cell for long text when
 necessary.
 .IP "\fB\-H, \-\-table-hide\fP \fIcolumns\fP"
-Don't print specified columns.
+Don't print specified columns. The special placeholder '-' maybe be used to
+hide all unnamed columns (see --table-columns).
 .IP "\fB\-O, \-\-table-order\fP \fIcolumns\fP"
 Specify columns order on output.
 .IP "\fB\-n, \-\-table-name\fP \fIname\fP"
@@ -125,6 +128,13 @@ Print fstab with header line and align number to the right:
 .EX
 \fBsed 's/#.*//' /etc/fstab | column --table --table-columns SOURCE,TARGET,TYPE,OPTIONS,PASS,FREQ --table-right PASS,FREQ\fR
 .EE
+.PP
+Print fstab and hide unnamed columns:
+.EX
+\fBsed 's/#.*//' /etc/fstab | column --table --table-columns SOURCE,TARGET,TYPE --table-hide -\fR
+.EE
+.PP
+
 .PP
 Print a tree:
 .EX

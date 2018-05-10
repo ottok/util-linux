@@ -59,8 +59,7 @@
 # define SWAP_FLAG_PRIO_SHIFT	0
 #endif
 
-#ifndef SWAPON_HAS_TWO_ARGS
-/* libc is insane, let's call the kernel */
+#if !defined(HAVE_SWAPON) && defined(SYS_swapon)
 # include <sys/syscall.h>
 # define swapon(path, flags) syscall(SYS_swapon, path, flags)
 #endif
@@ -342,7 +341,7 @@ static int swap_reinitialize(struct swap_device *dev)
 		cmd[idx++] = dev->path;
 		cmd[idx++] = NULL;
 		execvp(cmd[0], (char * const *) cmd);
-		err(EXIT_FAILURE, _("failed to execute %s"), cmd[0]);
+		errexec(cmd[0]);
 
 	default: /* parent */
 		do {
@@ -354,7 +353,7 @@ static int swap_reinitialize(struct swap_device *dev)
 			return -1;
 		}
 
-		/* mkswap returns: 0=suss, 1=error */
+		/* mkswap returns: 0=suss, >0 error */
 		if (WIFEXITED(status) && WEXITSTATUS(status)==0)
 			return 0; /* ok */
 		break;

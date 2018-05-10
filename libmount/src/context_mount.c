@@ -576,6 +576,7 @@ static int exec_helper(struct libmnt_context *cxt)
 {
 	char *o = NULL;
 	int rc;
+	pid_t pid;
 
 	assert(cxt);
 	assert(cxt->fs);
@@ -590,7 +591,8 @@ static int exec_helper(struct libmnt_context *cxt)
 
 	DBG_FLUSH;
 
-	switch (fork()) {
+	pid = fork();
+	switch (pid) {
 	case 0:
 	{
 		const char *args[12], *type;
@@ -637,12 +639,18 @@ static int exec_helper(struct libmnt_context *cxt)
 	default:
 	{
 		int st;
-		wait(&st);
-		cxt->helper_status = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 
-		DBG(CXT, ul_debugobj(cxt, "%s executed [status=%d]",
-					cxt->helper, cxt->helper_status));
-		cxt->helper_exec_status = rc = 0;
+		if (waitpid(pid, &st, 0) == (pid_t) -1) {
+			cxt->helper_status = -1;
+			rc = -errno;
+		} else {
+			cxt->helper_status = WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+			cxt->helper_exec_status = rc = 0;
+		}
+		DBG(CXT, ul_debugobj(cxt, "%s executed [status=%d, rc=%d%s]",
+				cxt->helper,
+				cxt->helper_status, rc,
+				rc ? " waitpid failed" : ""));
 		break;
 	}
 
@@ -990,7 +998,13 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 #ifdef USE_LIBMOUNT_SUPPORT_MTAB
 	if (mnt_context_get_status(cxt)
 	    && !mnt_context_is_fake(cxt)
-	    && !cxt->helper) {
+	    && !cxt->helper
+	    && mnt_context_mtab_writable(cxt)) {
+
+		int is_rdonly = -1;
+
+		DBG(CXT, ul_debugobj(cxt, "checking for RDONLY mismatch"));
+
 		/*
 		 * Mounted by mount(2), do some post-mount checks
 		 *
@@ -999,11 +1013,13 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 		 * avoid 'ro' in mtab and 'rw' in /proc/mounts.
 		 */
 		if ((cxt->mountflags & MS_BIND)
-		    && (cxt->mountflags & MS_RDONLY)
-		    && !mnt_is_readonly(mnt_context_get_target(cxt)))
+		    && (cxt->mountflags & MS_RDONLY)) {
 
-			mnt_context_set_mflags(cxt,
-					cxt->mountflags & ~MS_RDONLY);
+			if (is_rdonly < 0)
+				is_rdonly = mnt_is_readonly(mnt_context_get_target(cxt));
+			if (!is_rdonly)
+				mnt_context_set_mflags(cxt, cxt->mountflags & ~MS_RDONLY);
+		}
 
 
 		/* Kernel can silently add MS_RDONLY flag when mounting file
@@ -1011,11 +1027,13 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 		 * 'ro' in /proc/mounts and 'rw' in mtab.
 		 */
 		if (!(cxt->mountflags & (MS_RDONLY | MS_MOVE))
-		    && !mnt_context_propagation_only(cxt)
-		    && mnt_is_readonly(mnt_context_get_target(cxt)))
+		    && !mnt_context_propagation_only(cxt)) {
 
-			mnt_context_set_mflags(cxt,
-					cxt->mountflags | MS_RDONLY);
+			if (is_rdonly < 0)
+				is_rdonly = mnt_is_readonly(mnt_context_get_target(cxt));
+			if (is_rdonly)
+				mnt_context_set_mflags(cxt, cxt->mountflags | MS_RDONLY);
+		}
 	}
 #endif
 
@@ -1157,6 +1175,7 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 {
 	struct libmnt_table *fstab, *mtab;
 	const char *o, *tgt;
+	char *pattern;
 	int rc, mounted = 0;
 
 	if (ignored)
@@ -1236,7 +1255,18 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 
 	rc = mnt_context_set_fs(cxt, *fs);
 	if (!rc) {
+		/*
+		 * "-t <pattern>" is used to filter out fstab entries, but for ordinary
+		 * mount operation -t means "-t <type>". We have to zeroize the pattern
+		 * to avoid misinterpretation.
+		 */
+		pattern = cxt->fstype_pattern;
+		cxt->fstype_pattern = NULL;
+
 		rc = mnt_context_mount(cxt);
+
+		cxt->fstype_pattern = pattern;
+
 		if (mntrc)
 			*mntrc = rc;
 	}

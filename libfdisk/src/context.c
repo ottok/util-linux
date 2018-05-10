@@ -301,6 +301,8 @@ int __fdisk_switch_label(struct fdisk_context *cxt, struct fdisk_label *lb)
 	}
 	cxt->label = lb;
 	DBG(CXT, ul_debugobj(cxt, "--> switching context to %s!", lb->name));
+
+	fdisk_apply_label_device_properties(cxt);
 	return 0;
 }
 
@@ -347,7 +349,7 @@ int fdisk_enable_bootbits_protection(struct fdisk_context *cxt, int enable)
 /**
  * fdisk_disable_dialogs
  * @cxt: fdisk context
- * @enable: 1 or 0
+ * @disable: 1 or 0
  *
  * The library uses dialog driven partitioning by default.
  *
@@ -798,7 +800,7 @@ static inline int add_to_partitions_array(
  * advantage is that unmodified partitions maybe mounted.
  *
  * The function behavies like fdisk_reread_partition_table() on systems where
- * are no avaialble BLKPG_* ioctls.
+ * are no available BLKPG_* ioctls.
  *
  * Returns: <0 on error, or 0.
  */

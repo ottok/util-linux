@@ -104,11 +104,6 @@ extern char **environ;
 #endif
 
 enum {
-	EXIT_CANNOT_INVOKE = 126,
-	EXIT_ENOENT = 127
-};
-
-enum {
 	SIGTERM_IDX = 0,
 	SIGINT_IDX,
 	SIGQUIT_IDX,
@@ -172,13 +167,13 @@ su_catch_sig(int sig)
 
 static void su_init_debug(void)
 {
-	__UL_INIT_DEBUG(su, SU_DEBUG_, 0, SU_DEBUG);
+	__UL_INIT_DEBUG_FROM_ENV(su, SU_DEBUG_, 0, SU_DEBUG);
 }
 
 static void init_tty(struct su_context *su)
 {
 	su->isterm = isatty(STDIN_FILENO) ? 1 : 0;
-	DBG(TTY, ul_debug("initilize [is-term=%s]", su->isterm ? "true" : "false"));
+	DBG(TTY, ul_debug("initialize [is-term=%s]", su->isterm ? "true" : "false"));
 	if (su->isterm)
 		get_terminal_name(NULL, &su->tty_name, &su->tty_number);
 }
@@ -854,6 +849,8 @@ static void create_watching_parent(struct su_context *su)
 		break;
 	}
 
+	/* free unnecessary stuff */
+	free_getlogindefs_data();
 
 	/* In the parent watch the child.  */
 
@@ -1039,7 +1036,6 @@ static void run_shell(
 	size_t n_args = 1 + su->fast_startup + 2 * ! !command + n_additional_args + 1;
 	const char **args = xcalloc(n_args, sizeof *args);
 	size_t argno = 1;
-	int rc;
 
 	DBG(MISC, ul_debug("starting shell [shell=%s, command=\"%s\"%s%s]",
 				shell, command,
@@ -1068,9 +1064,7 @@ static void run_shell(
 	memcpy(args + argno, additional_args, n_additional_args * sizeof *args);
 	args[argno + n_additional_args] = NULL;
 	execv(shell, (char **)args);
-
-	rc = errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE;
-	err(rc, _("failed to execute %s"), shell);
+	errexec(shell);
 }
 
 /* Return true if SHELL is a restricted shell (one not returned by
@@ -1422,10 +1416,10 @@ int su_main(int argc, char **argv, int mode)
 		DBG(MISC, ul_debug("call setsid()"));
 		setsid();
 	}
-
+#ifdef USE_PTY
 	if (su->pty)
 		pty_init_slave(su);
-
+#endif
 	/* Set environment after pam_open_session, which may put KRB5CCNAME
 	   into the pam_env, etc.  */
 

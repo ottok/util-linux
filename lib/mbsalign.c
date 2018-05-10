@@ -54,7 +54,8 @@ size_t mbs_safe_nwidth(const char *buf, size_t bufsz, size_t *sz)
 		last = p + (bufsz - 1);
 
 	while (p && *p && p <= last) {
-		if (iscntrl((unsigned char) *p)) {
+		if ((p < last && *p == '\\' && *(p + 1) == 'x')
+		    || iscntrl((unsigned char) *p)) {
 			width += 4, bytes += 4;		/* *p encoded to \x?? */
 			p++;
 		}
@@ -135,7 +136,8 @@ char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf, const c
 			continue;
 		}
 
-		if (iscntrl((unsigned char) *p)) {
+		if ((*p == '\\' && *(p + 1) == 'x')
+		    || iscntrl((unsigned char) *p)) {
 			sprintf(r, "\\x%02x", (unsigned char) *p);
 			r += 4;
 			*width += 4;
@@ -166,7 +168,7 @@ char *mbs_safe_encode_to_buffer(const char *s, size_t *width, char *buf, const c
 			} else if (!iswprint(wc)) {
 				size_t i;
 				for (i = 0; i < len; i++) {
-					sprintf(r, "\\x%02x", (unsigned char) *p);
+					sprintf(r, "\\x%02x", (unsigned char) p[i]);
 					r += 4;
 					*width += 4;
 				}
@@ -221,6 +223,9 @@ char *mbs_invalid_encode_to_buffer(const char *s, size_t *width, char *buf)
 #ifdef HAVE_WIDECHAR
 		wchar_t wc;
 		size_t len = mbrtowc(&wc, p, MB_CUR_MAX, &st);
+#else
+		size_t len = 1;
+#endif
 
 		if (len == 0)
 			break;		/* end of string */
@@ -239,16 +244,16 @@ char *mbs_invalid_encode_to_buffer(const char *s, size_t *width, char *buf)
 				(*width)++;
 				*r++ = *p;
 			}
+		} else if (*p == '\\' && *(p + 1) == 'x') {
+			sprintf(r, "\\x%02x", (unsigned char) *p);
+			r += 4;
+			*width += 4;
 		} else {
 			memcpy(r, p, len);
 			r += len;
 			*width += wcwidth(wc);
 		}
 		p += len;
-#else
-		*r++ = *p++;
-		(*width)++;
-#endif
 	}
 
 	*r = '\0';
