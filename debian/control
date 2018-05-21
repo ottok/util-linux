@@ -382,7 +382,7 @@ Package: rfkill
 Architecture: linux-any
 Build-Profiles: <!stage1>
 Section: utils
-Priority: important
+Priority: optional
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: foreign
