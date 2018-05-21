@@ -62,6 +62,7 @@ Section: localization
 Priority: optional
 Depends: util-linux (>= ${source:Upstream-Version}), ${misc:Depends}
 Replaces: util-linux (<< 2.11b)
+Multi-Arch: foreign
 Description: locales files for util-linux
  This package contains the internationalization files for the util-linux
  package.
