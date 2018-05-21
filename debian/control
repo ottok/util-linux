@@ -379,7 +379,7 @@ Description: tool to run a program with different Linux privilege settings
  query various Linux privilege settings that are inherited across execve.
 
 Package: rfkill
-Architecture: any
+Architecture: linux-any
 Build-Profiles: <!stage1>
 Section: utils
 Priority: important
