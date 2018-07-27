@@ -1,8 +1,24 @@
-util-linux (2.32-1) UNRELEASED; urgency=medium
+util-linux (2.32-1) unstable; urgency=medium
 
+  * Non-maintainer upload (greetings from DebCamp/DebConf Taiwan).
+
+  [ Laurent Bigonville ]
   * debian/libfdisk1.shlibs: Bump shlibs version as well
 
- -- Laurent Bigonville <bigon@debian.org>  Thu, 10 May 2018 21:44:54 +0200
+  [ Andreas Henriksson ]
+  * Mark rfkill as linux-any in debian/control
+  * Demote rfkill package to optional again
+  * Mark util-linux-locales as M-A foreign
+    - as suggested by Multiarch hinter on tracker.debian.org
+  * Take over /bin/su from login/src:shadow (See #833256)
+    - depends on new login package (rather than breaking old) as an
+      attempt to make apt unpack new u-l before new login to avoid
+      any gaps where /bin/su is not available.
+      The Depends/Breaks relationship between u-l and login can
+      be switched around (in both packages at the same time) once
+      the transition is fully done (after next stable or lts release).
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 27 Jul 2018 10:01:46 +0200
 
 util-linux (2.32-0.1) unstable; urgency=medium
 
