@@ -1,0 +1,38 @@
+commit 061d1a51097c3c025ff46173f10aa135f9a610d4
+Author: Karel Zak <kzak@redhat.com>
+Date:   Thu Mar 22 14:05:17 2018 +0100
+
+    libmount: include sys/mount.h only if necessary
+    
+    Addresses: https://github.com/systemd/systemd/issues/8507
+    Signed-off-by: Karel Zak <kzak@redhat.com>
+
+commit c0bdff9997d032e6be2bd89e89d3e06fa02a5c3f
+Author: Karel Zak <kzak@redhat.com>
+Date:   Tue May 29 10:06:00 2018 +0200
+
+    libmount: include sys/mount.h on Linux only
+    
+    Addresses: https://bugs.debian.org/cgi-bin/bugreport.cgi?att=1;bug=891812
+    Signed-off-by: Karel Zak <kzak@redhat.com>
+
+diff --git a/libmount/src/libmount.h.in b/libmount/src/libmount.h.in
+index 8f323fcbf..11fd759fa 100644
+--- a/libmount/src/libmount.h.in
++++ b/libmount/src/libmount.h.in
+@@ -28,7 +28,14 @@ extern "C" {
+ #include <stdio.h>
+ #include <mntent.h>
+ #include <sys/types.h>
+-#include <sys/mount.h>
++
++/* Make sure libc MS_* definitions are used by default. Note that MS_* flags
++ * may be already defined by linux/fs.h or another file -- in this case we
++ * don't want to include sys/mount.h at all to avoid collisions.
++ */
++#if defined(__linux__) && !defined(MS_RDONLY)
++# include <sys/mount.h>
++#endif
+ 
+ #define LIBMOUNT_VERSION   "@LIBMOUNT_VERSION@"
+ #define LIBMOUNT_MAJOR_VERSION   @LIBMOUNT_MAJOR_VERSION@
