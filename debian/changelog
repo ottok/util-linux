@@ -1,3 +1,19 @@
+util-linux (2.32-0.3) unstable; urgency=medium
+
+  * Non-maintainer upload (greetings from DebCamp/DebConf Taiwan).
+
+  [ Andreas Henriksson ]
+  * Revert "Disable pristine-tar"
+    - needs pristine-tar >= 1.43
+  * Install su(1) manpage (Closes: #904837)
+  * Actually install su and su-l pam configs (Closes: #904832)
+
+  [ Samuel Thibault ]
+  * Add patches from upstream that should fix build on hurd
+    - debian/patches/fix-hurd.patch (Closes: #891812)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sat, 28 Jul 2018 20:21:05 +0200
+
 util-linux (2.32-0.2) unstable; urgency=medium
 
   * Non-maintainer upload (greetings from DebCamp/DebConf Taiwan).
