@@ -1,3 +1,15 @@
+util-linux (2.32-0.2) unstable; urgency=medium
+
+  The util-linux implementation of /bin/su is now used, replacing the
+  one previously supplied by src:shadow (shipped in login package). The
+  two implementations are very similar but have some minor differences
+  (and there might be more that was not yet noticed ofcourse), e.g.
+  - su '' (empty user string) used to give root, but now returns an error.
+  - previously su only had one pam config, but now 'su -' is configured
+    separately in /etc/pam.d/su-l
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 02 Aug 2018 09:54:11 +0200
+
 util-linux (2.29.2-3) experimental; urgency=medium
 
   * The cfdisk, fdisk and sfdisk utilities has been split out into a
