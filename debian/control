@@ -36,13 +36,13 @@ Essential: yes
 Pre-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
 Depends: ${misc:Depends}, fdisk, login (>= 1:4.5-1.1~)
 Suggests: dosfstools, kbd | console-tools, util-linux-locales
-Replaces: bash-completion (<< 1:2.1-4.1~),
+Replaces: bash-completion (<< 1:2.8),
           sysvinit-utils (<< 2.88dsf-59.1~),
           initscripts (<< 2.88dsf-59.2~),
           mount (<< 2.29.2-3~),
           s390-tools (<< 2.2.0-1~),
           login (<< 1:4.5-1.1~)
-Breaks: bash-completion (<< 1:2.1-4.1~),
+Breaks: bash-completion (<< 1:2.8),
           grml-debootstrap (<< 0.68),
           cloud-utils (<< 0.27-1~),
           sysvinit-utils (<< 2.88dsf-59.4~),
