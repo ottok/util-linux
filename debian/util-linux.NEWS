@@ -1,12 +1,23 @@
 util-linux (2.32-0.2) unstable; urgency=medium
 
   The util-linux implementation of /bin/su is now used, replacing the
-  one previously supplied by src:shadow (shipped in login package). The
-  two implementations are very similar but have some minor differences
-  (and there might be more that was not yet noticed ofcourse), e.g.
+  one previously supplied by src:shadow (shipped in login package), and
+  bringing Debian in line with other modern distributions. The two
+  implementations are very similar but have some minor differences (and
+  there might be more that was not yet noticed ofcourse), e.g.
+
+  - new 'su' (with no args, i.e. when preserving the environment) also
+    preserves PATH and IFS, while old su would always reset PATH and IFS
+    even in 'preserve environment' mode.
   - su '' (empty user string) used to give root, but now returns an error.
   - previously su only had one pam config, but now 'su -' is configured
     separately in /etc/pam.d/su-l
+
+  The first difference is probably the most user visible one. Doing
+  plain 'su' is a really bad idea for many reasons, so using 'su -' is
+  strongly recommended to always get a newly set up environment similar
+  to a normal login. If you want to restore behaviour more similar to
+  the previous one you can add 'ALWAYS_SET_PATH yes' in /etc/login.defs.
 
  -- Andreas Henriksson <andreas@fatal.se>  Thu, 02 Aug 2018 09:54:11 +0200
 
