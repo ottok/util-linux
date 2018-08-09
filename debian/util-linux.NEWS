@@ -11,7 +11,8 @@ util-linux (2.32-0.4) unstable; urgency=medium
     even in 'preserve environment' mode.
   - su '' (empty user string) used to give root, but now returns an error.
   - previously su only had one pam config, but now 'su -' is configured
-    separately in /etc/pam.d/su-l
+    separately in /etc/pam.d/su-l. This file additionally invokes
+    'pam_keyinit' to revoke the session keyring.
 
   The first difference is probably the most user visible one. Doing
   plain 'su' is a really bad idea for many reasons, so using 'su -' is
