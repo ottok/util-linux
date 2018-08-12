@@ -25,6 +25,7 @@ Priority: required
 Maintainer: LaMont Jones <lamont@debian.org>
 Uploaders: Adam Conrad <adconrad@0c3.net>
 Standards-Version: 4.1.2
+Rules-Requires-Root: binary-targets
 Vcs-Browser: https://salsa.debian.org/debian/util-linux
 Vcs-Git: https://salsa.debian.org/debian/util-linux.git
 
