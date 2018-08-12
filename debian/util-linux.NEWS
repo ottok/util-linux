@@ -9,6 +9,11 @@ util-linux (2.32-0.4) unstable; urgency=medium
   - new 'su' (with no args, i.e. when preserving the environment) also
     preserves PATH and IFS, while old su would always reset PATH and IFS
     even in 'preserve environment' mode.
+  - new 'su -' (creating new environment) will do just that, while old
+    su would always preserve content of DISPLAY and XAUTHORITY
+    environment variables. Set them as needed (but beware X doesn't give
+    you any real privileges separation anyway if you can access an X
+    server of another user).
   - su '' (empty user string) used to give root, but now returns an error.
   - previously su only had one pam config, but now 'su -' is configured
     separately in /etc/pam.d/su-l. This file additionally invokes
