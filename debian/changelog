@@ -1,3 +1,13 @@
+util-linux (2.32-0.5) UNRELEASED; urgency=medium
+
+  [ Kapil Hari Paranjape ]
+  * Mention the su-l pam config keyinit revoke in NEWS (Closes: #905710)
+
+  [ Andreas Henriksson ]
+  * Mention DISPLAY and XAUTHORITY in util-linux.NEWS (Closes: #905409)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 12 Aug 2018 06:01:42 +0200
+
 util-linux (2.32-0.4) unstable; urgency=medium
 
   * Non-maintainer upload (greetings from DebCamp/DebConf Taiwan).
