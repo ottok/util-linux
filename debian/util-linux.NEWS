@@ -13,7 +13,8 @@ util-linux (2.32-0.4) unstable; urgency=medium
     su would always preserve content of DISPLAY and XAUTHORITY
     environment variables. Set them as needed (but beware X doesn't give
     you any real privileges separation anyway if you can access an X
-    server of another user).
+    server of another user). See pam_xauth(8) if you want to reconfigure
+    pam for seamless xauth keys.
   - su '' (empty user string) used to give root, but now returns an error.
   - previously su only had one pam config, but now 'su -' is configured
     separately in /etc/pam.d/su-l. This file additionally invokes
