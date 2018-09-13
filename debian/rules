@@ -42,6 +42,11 @@ CONFOPTS += --disable-col --disable-colcrt --disable-colrm --disable-column
 CONFOPTS += --disable-ul
 CONFOPTS += --disable-cal
 
+# Get the list of binary package, except lib* and *-udeb, from
+# debian/control instead of hardcoding the list when installing
+# bash-completions below.
+BINARYPACKAGES := $(shell awk '/^Package: /{if($$2 !~ /^lib|-udeb$$/) print $$2}' $(CURDIR)/debian/control )
+
 %:
 	dh $@
 
@@ -89,7 +94,7 @@ override_dh_install:
 	dh_install --remaining-packages
 	#
 	# Install bash-completions only for binaries we ship
-	for PACKAGE in util-linux uuid-runtime bsdutils mount; do \
+	for PACKAGE in $(BINARYPACKAGES) ; do \
 	for BINARY in debian/$$PACKAGE/bin/* debian/$$PACKAGE/sbin/* \
 			debian/$$PACKAGE/usr/bin/* \
 			debian/$$PACKAGE/usr/sbin/* ; \
