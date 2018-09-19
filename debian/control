@@ -42,12 +42,14 @@ Replaces: bash-completion (<< 1:2.8),
           initscripts (<< 2.88dsf-59.2~),
           mount (<< 2.29.2-3~),
           s390-tools (<< 2.2.0-1~),
-          login (<< 1:4.5-1.1~)
+          login (<< 1:4.5-1.1~),
+          setpriv (<< 2.32.1-0.2~)
 Breaks: bash-completion (<< 1:2.8),
           grml-debootstrap (<< 0.68),
           sysvinit-utils (<< 2.88dsf-59.4~),
           mount (<< 2.29.2-3~),
-          s390-tools (<< 2.2.0-1~)
+          s390-tools (<< 2.2.0-1~),
+          setpriv (<< 2.32.1-0.2~)
 Multi-Arch: foreign
 Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
@@ -367,18 +369,6 @@ Package-Type: udeb
 Description: stripped down miscellaneous system utilities, for debian-installer
  This is a minimal version of util-linux for debian-installer. It only
  contains the blkid binary at the moment.
-
-Package: setpriv
-Architecture: linux-any
-Build-Profiles: <!stage1>
-Section: admin
-Priority: optional
-Pre-Depends: ${misc:Pre-Depends}
-Depends: ${misc:Depends}, ${shlibs:Depends}
-Multi-Arch: foreign
-Description: tool to run a program with different Linux privilege settings
- This package provides the setpriv command which allows the user to set or
- query various Linux privilege settings that are inherited across execve.
 
 Package: rfkill
 Architecture: linux-any

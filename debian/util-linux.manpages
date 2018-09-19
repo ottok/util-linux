@@ -23,6 +23,7 @@ debian/tmp/usr/share/man/man1/mountpoint.1
 debian/tmp/usr/share/man/man1/namei.1
 debian/tmp/usr/share/man/man1/rev.1
 debian/tmp/usr/share/man/man1/runuser.1
+debian/tmp/usr/share/man/man1/setpriv.1                         [linux-any]
 debian/tmp/usr/share/man/man1/setsid.1
 debian/tmp/usr/share/man/man1/su.1
 debian/tmp/usr/share/man/man1/utmpdump.1

@@ -52,6 +52,7 @@ usr/bin/ppc64                                        [powerpc ppc64 ppc64el]
 usr/bin/rev
 usr/bin/s390                                                    [s390x]
 usr/bin/s390x                                                   [s390x]
+usr/bin/setpriv                                                 [linux-any]
 usr/bin/setsid
 usr/bin/utmpdump
 usr/bin/whereis
