@@ -1,6 +1,7 @@
 util-linux (2.32.1-1) UNRELEASED; urgency=medium
 
   * d/copyright: Use https protocol in Format field
+  * d/changelog: Remove trailing whitespaces
 
  -- Ondřej Nový <onovy@debian.org>  Mon, 01 Oct 2018 10:28:17 +0200
 
@@ -1166,7 +1167,7 @@ util-linux (2.24.2-1) experimental; urgency=low
 util-linux (2.20.1-5.8) unstable; urgency=medium
 
   * Non-maintainer upload.
-  
+
   [Martin Pitt]
   * misc-utils/wipefs.c: In --all mode, wipe several times until no further
     signatures are found. This is required for file systems like VFAT which
@@ -1196,7 +1197,7 @@ util-linux (2.20.1-5.5) unstable; urgency=medium
 
   * Non-maintainer upload by the Security Team.
   * Fix cve-2013-0157: mount discloses information about the existence of
-    folders (closes: #697464) 
+    folders (closes: #697464)
 
  -- Michael Gilbert <mgilbert@debian.org>  Wed, 03 Jul 2013 01:39:47 +0000
 
