@@ -5,6 +5,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  SMARTCOLS_2.29@SMARTCOLS_2.29 2.29~rc2
  SMARTCOLS_2.30@SMARTCOLS_2.30 2.30.2
  SMARTCOLS_2.31@SMARTCOLS_2.31 2.31.1
+ SMARTCOLS_2.33@SMARTCOLS_2.33 2.33
  scols_cell_copy_content@SMARTCOLS_2.25 2.25
  scols_cell_get_alignment@SMARTCOLS_2.30 2.30.2
  scols_cell_get_color@SMARTCOLS_2.25 2.25
@@ -20,6 +21,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  scols_column_get_color@SMARTCOLS_2.25 2.25
  scols_column_get_flags@SMARTCOLS_2.25 2.25
  scols_column_get_header@SMARTCOLS_2.25 2.25
+ scols_column_get_json_type@SMARTCOLS_2.33 2.33
  scols_column_get_safechars@SMARTCOLS_2.29 2.29~rc2
  scols_column_get_table@SMARTCOLS_2.29 2.29~rc2
  scols_column_get_whint@SMARTCOLS_2.25 2.25
@@ -35,6 +37,7 @@ libsmartcols.so.1 libsmartcols1 #MINVER#
  scols_column_set_cmpfunc@SMARTCOLS_2.25 2.25
  scols_column_set_color@SMARTCOLS_2.25 2.25
  scols_column_set_flags@SMARTCOLS_2.25 2.25
+ scols_column_set_json_type@SMARTCOLS_2.33 2.33
  scols_column_set_safechars@SMARTCOLS_2.29 2.29~rc2
  scols_column_set_whint@SMARTCOLS_2.25 2.25
  scols_column_set_wrapfunc@SMARTCOLS_2.29 2.29~rc2
