@@ -119,9 +119,11 @@ libblkid/src/read.c
 libblkid/src/resolve.c
 libblkid/src/save.c
 libblkid/src/superblocks/adaptec_raid.c
+libblkid/src/superblocks/apfs.c
 libblkid/src/superblocks/bcache.c
 libblkid/src/superblocks/befs.c
 libblkid/src/superblocks/bfs.c
+libblkid/src/superblocks/bitlocker.c
 libblkid/src/superblocks/btrfs.c
 libblkid/src/superblocks/cramfs.c
 libblkid/src/superblocks/ddf_raid.c
@@ -335,6 +337,9 @@ misc-utils/kill.c
 misc-utils/logger.c
 misc-utils/look.c
 misc-utils/lsblk.c
+misc-utils/lsblk.h
+misc-utils/lsblk-mnt.c
+misc-utils/lsblk-properties.c
 misc-utils/lslocks.c
 misc-utils/mcookie.c
 misc-utils/namei.c
@@ -352,6 +357,7 @@ sys-utils/blkdiscard.c
 sys-utils/blkzone.c
 sys-utils/chcpu.c
 sys-utils/chmem.c
+sys-utils/choom.c
 sys-utils/ctrlaltdel.c
 sys-utils/dmesg.c
 sys-utils/eject.c
