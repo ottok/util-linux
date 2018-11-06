@@ -6,3 +6,5 @@ util-linux: systemd-no-service-for-init-rcS-script hwclock.sh
 # and on systemd systems this init script is masked.
 # (Same check also in uuid-runtime.lintian-overrides)
 util-linux: init.d-script-needs-depends-on-lsb-base etc/init.d/hwclock.sh (line 45)
+# Yes, su really needs to be suid ofcourse...
+util-linux: setuid-binary bin/su 4755 root/root
