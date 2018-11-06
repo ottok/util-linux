@@ -1,8 +1,17 @@
-util-linux (2.33-0.1) UNRELEASED; urgency=medium
+util-linux (2.33-0.1) experimental; urgency=medium
 
+  * Non-maintainer upload.
   * New upstream release.
+  * Ship new choom(1) command in util-linux pkg
+  * Add debian/patches/fix-agetty-hurd.patch.
+    Thanks to Samuel Thibault for fixing this upstream.
+  * Update symbols files with new additions
+  * Bump shlibs for new symbols
+  * Add lintian override because su really needs suid bit
+  * Drop unused lintian overrides
+  * Ship adjtime_config(5) manpage in util-linux
 
- -- Andreas Henriksson <andreas@fatal.se>  Tue, 06 Nov 2018 21:09:19 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 06 Nov 2018 22:17:06 +0100
 
 util-linux (2.32.1-0.2) unstable; urgency=medium
 
