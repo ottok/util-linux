@@ -1,4 +1,6 @@
-util-linux (2.32.1-1) UNRELEASED; urgency=medium
+util-linux (2.32.1-0.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
 
   [ Niels Thykier ]
   * Declare the explicit requirement for (fake)root
@@ -18,7 +20,7 @@ util-linux (2.32.1-1) UNRELEASED; urgency=medium
   * d/copyright: Use https protocol in Format field
   * d/changelog: Remove trailing whitespaces
 
- -- Andreas Henriksson <andreas@fatal.se>  Fri, 19 Oct 2018 10:15:51 +0200
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 06 Nov 2018 20:53:01 +0100
 
 util-linux (2.32.1-0.1) unstable; urgency=medium
 
