@@ -377,6 +377,8 @@ Section: utils
 Priority: optional
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
+Breaks: bash-completion (<< 1:2.8~)
+Replaces: bash-completion (<< 1:2.8~)
 Multi-Arch: foreign
 Description: tool for enabling and disabling wireless devices
  rfkill is a simple tool for accessing the Linux rfkill device interface,
