@@ -47,6 +47,9 @@ CONFOPTS += --disable-cal
 # bash-completions below.
 BINARYPACKAGES := $(shell awk '/^Package: /{if($$2 !~ /^lib|-udeb$$/) print $$2}' $(CURDIR)/debian/control )
 
+# hardening
+export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
+
 %:
 	dh $@
 
