@@ -1,4 +1,5 @@
 libsmartcols.so.1 libsmartcols1 #MINVER#
+* Build-Depends-Package: libsmartcols-dev
  SMARTCOLS_2.25@SMARTCOLS_2.25 2.25
  SMARTCOLS_2.27@SMARTCOLS_2.27 2.27~rc1
  SMARTCOLS_2.28@SMARTCOLS_2.28 2.28~rc1

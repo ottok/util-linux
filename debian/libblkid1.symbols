@@ -1,4 +1,5 @@
 libblkid.so.1 libblkid1 #MINVER#
+* Build-Depends-Package: libblkid-dev
  BLKID_1.0@BLKID_1.0 2.16
  BLKID_2.15@BLKID_2.15 2.16
  BLKID_2.17@BLKID_2.17 2.17.2
