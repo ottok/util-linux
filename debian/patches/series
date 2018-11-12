@@ -1,2 +1,3 @@
 verbose-tests.patch
 fix-agetty-hurd.patch
+uuid-service-documentation.patch
