@@ -1,3 +1,16 @@
+util-linux (2.33-0.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Make tests non-fatal on alpha and arm*
+  * Breaks/Replaces bash-completion < 2.8 (Closes: #913412)
+  * Enable bindnow hardening
+  * Add Build-Depends-Package to debian/*.symbols
+  * Add debian/patches/uuid-service-documentation.patch
+  * Add debian/patches/fstrim-service-documentation.patch
+  * Add d/p/agetty-Return-old-behavior-with-empty-logname.patch
+
+ -- Andreas Henriksson <andreas@fatal.se>  Fri, 07 Dec 2018 10:56:50 +0100
+
 util-linux (2.33-0.1) experimental; urgency=medium
 
   * Non-maintainer upload.
