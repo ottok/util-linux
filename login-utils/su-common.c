@@ -438,7 +438,10 @@ static int pty_handle_signal(struct su_context *su, int fd)
 
 		/* The child terminated or stopped. Note that we ignore SIGCONT
 		 * here, because stop/cont semantic is handled by wait_for_child() */
-		if (info.ssi_code == CLD_EXITED || info.ssi_status == SIGSTOP)
+		if (info.ssi_code == CLD_EXITED
+		    || info.ssi_code == CLD_KILLED
+		    || info.ssi_code == CLD_DUMPED
+		    || info.ssi_status == SIGSTOP)
 			wait_for_child(su);
 		/* The child is dead, force poll() timeout. */
 		if (su->child == (pid_t) -1)
@@ -732,7 +735,7 @@ static void supam_authenticate(struct su_context *su)
 		msg = pam_strerror(su->pamh, rc);
 		pam_end(su->pamh, rc);
 		sleep(getlogindefs_num("FAIL_DELAY", 1));
-		errx(EXIT_FAILURE, "%s", msg ? msg : _("incorrect password"));
+		errx(EXIT_FAILURE, "%s", msg ? msg : _("authentication failed"));
 	}
 }
 

@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="09-Jan-2019"
+LIBBLKID_DATE="09-Apr-2019"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -792,7 +792,10 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #endif
 ]], [[
 char *c = crypt("abc","pw");
-]])],[],[
+]])],[
+  have_libcrypt=no
+  have_crypt=yes
+],[
   LIBS="$LIBS -lcrypt"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   #ifdef HAVE_CRYPT_H
@@ -1426,7 +1429,7 @@ AS_IF([test "x$have_futimens" = xyes -a "x$have_inotify_init1" = xyes ], [
 
 
 AC_ARG_ENABLE([plymouth_support],
-  AS_HELP_STRING([--disable-plymouth_support], [don not care about plymouth in sylogin(8) and agetty(8)]),
+  AS_HELP_STRING([--disable-plymouth_support], [do not care about plymouth in sylogin(8) and agetty(8)]),
   [], [enable_plymouth_support=check]
 )
 UL_BUILD_INIT([plymouth_support])
