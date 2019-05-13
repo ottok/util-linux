@@ -80,6 +80,12 @@
 # endif
 #endif
 
+#if __GNUC_PREREQ (4, 9)
+# define __ul_returns_nonnull __attribute__((returns_nonnull))
+#else
+# define __ul_returns_nonnull
+#endif
+
 /*
  * Force a compilation error if condition is true, but also produce a
  * result (of value 0 and type size_t), so the expression can be used
@@ -344,6 +350,11 @@ static inline int xusleep(useconds_t usec)
 #define USAGE_MAN_TAIL(_man)   _("\nFor more details see %s.\n"), _man
 
 #define UTIL_LINUX_VERSION _("%s from %s\n"), program_invocation_short_name, PACKAGE_STRING
+
+#define print_version(eval) __extension__ ({ \
+		printf(UTIL_LINUX_VERSION); \
+		exit(eval); \
+})
 
 /*
  * scanf modifiers for "strings allocation"

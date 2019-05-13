@@ -362,6 +362,9 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define if libpcre2 is available */
+#undef HAVE_PCRE
+
 /* Define to 1 if you have the `personality' function. */
 #undef HAVE_PERSONALITY
 
@@ -427,6 +430,9 @@
 
 /* Define to 1 if you have the <security/pam_misc.h> header file. */
 #undef HAVE_SECURITY_PAM_MISC_H
+
+/* Define to 1 if you have the `setitimer' function. */
+#undef HAVE_SETITIMER
 
 /* Define to 1 if you have the `setns' function. */
 #undef HAVE_SETNS
@@ -596,7 +602,7 @@
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
 
-/* Define to 1 if you have the `timer_create' function. */
+/* Define if timer_create exist in -lrt -lpthread */
 #undef HAVE_TIMER_CREATE
 
 /* Define to 1 if the target supports thread-local storage. */
@@ -765,6 +771,9 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
+
+/* close stdout at exit */
+#undef USE_CLOSE_ATEXIT
 
 /* Enables colorized output from utils by default */
 #undef USE_COLORS_BY_DEFAULT

@@ -200,21 +200,6 @@ char *sysfs_blkdev_get_name(struct path_cxt *pc, char *buf, size_t bufsiz)
 	return buf;
 }
 
-static struct dirent *xreaddir(DIR *dp)
-{
-	struct dirent *d;
-
-	while ((d = readdir(dp))) {
-		if (!strcmp(d->d_name, ".") ||
-		    !strcmp(d->d_name, ".."))
-			continue;
-
-		/* blacklist here? */
-		break;
-	}
-	return d;
-}
-
 int sysfs_blkdev_is_partition_dirent(DIR *dir, struct dirent *d, const char *parent_name)
 {
 	char path[NAME_MAX + 6 + 1];
@@ -999,6 +984,20 @@ char *sysfs_devno_to_devname(dev_t devno, char *buf, size_t bufsiz)
 	return res;
 }
 
+int sysfs_devno_count_partitions(dev_t devno)
+{
+	struct path_cxt *pc = ul_new_sysfs_path(devno, NULL, NULL);
+	int n = 0;
+
+	if (pc) {
+		char buf[PATH_MAX + 1];
+		char *name = sysfs_blkdev_get_name(pc, buf, sizeof(buf));
+
+		n = sysfs_blkdev_count_partitions(pc, name);
+		ul_unref_path(pc);
+	}
+	return n;
+}
 
 
 #ifdef TEST_PROGRAM_SYSFS

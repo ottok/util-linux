@@ -67,14 +67,20 @@ struct fstrim_control {
 /* returns: 0 = success, 1 = unsupported, < 0 = error */
 static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const char *devname)
 {
-	int fd, rc;
+	int fd = -1, rc;
 	struct stat sb;
 	struct fstrim_range range;
+	char *rpath = realpath(path, NULL);
 
+	if (!rpath) {
+		warn(_("cannot get realpath: %s"), path);
+		rc = -errno;
+		goto done;
+	}
 	/* kernel modifies the range */
 	memcpy(&range, &ctl->range, sizeof(range));
 
-	fd = open(path, O_RDONLY);
+	fd = open(rpath, O_RDONLY);
 	if (fd < 0) {
 		warn(_("cannot open %s"), path);
 		rc = -errno;
@@ -129,6 +135,7 @@ static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const
 done:
 	if (fd >= 0)
 		close(fd);
+	free(rpath);
 	return rc;
 }
 
@@ -137,7 +144,7 @@ static int has_discard(const char *devname, struct path_cxt **wholedisk)
 	struct path_cxt *pc = NULL;
 	uint64_t dg = 0;
 	dev_t disk = 0, dev;
-	int rc = -1;
+	int rc = -1, rdonly = 0;
 
 	dev = sysfs_devname_to_devno(devname);
 	if (!dev)
@@ -175,9 +182,11 @@ static int has_discard(const char *devname, struct path_cxt **wholedisk)
 	}
 
 	rc = ul_path_read_u64(pc, &dg, "queue/discard_granularity");
+	if (!rc)
+		ul_path_scanf(pc, "ro", "%d", &rdonly);
 
 	ul_unref_path(pc);
-	return rc == 0 && dg > 0;
+	return rc == 0 && dg > 0 && rdonly == 0;
 fail:
 	ul_unref_path(pc);
 	return 1;
@@ -242,9 +251,26 @@ static int fstrim_all(struct fstrim_control *ctl)
 	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
 
 	if (ctl->fstab) {
+		char *rootdev = NULL;
+
 		cache = mnt_new_cache();
 		if (!cache)
 			err(MNT_EX_FAIL, _("failed to initialize libmount cache"));
+
+		/* Make sure we trim also root FS on --fstab */
+		if (mnt_table_find_target(tab, "/", MNT_ITER_FORWARD) == NULL &&
+		    mnt_guess_system_root(0, cache, &rootdev) == 0) {
+
+			fs = mnt_new_fs();
+			if (!fs)
+				err(MNT_EX_FAIL, _("failed to allocate FS handler"));
+			mnt_fs_set_target(fs, "/");
+			mnt_fs_set_source(fs, rootdev);
+			mnt_fs_set_fstype(fs, "auto");
+			mnt_table_add_fs(tab, fs);
+			mnt_unref_fs(fs);
+			fs = NULL;
+		}
 	}
 
 	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
@@ -355,7 +381,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "Aahl:m:no:Vv", longopts, NULL)) != -1) {
 		switch(c) {
@@ -368,12 +394,6 @@ int main(int argc, char **argv)
 		case 'n':
 			ctl.dryrun = 1;
 			break;
-		case 'h':
-			usage();
-			break;
-		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
 		case 'l':
 			ctl.range.len = strtosize_or_err(optarg,
 					_("failed to parse length"));
@@ -389,9 +409,13 @@ int main(int argc, char **argv)
 		case 'v':
 			ctl.verbose = 1;
 			break;
+
+		case 'h':
+			usage();
+		case 'V':
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
-			break;
 		}
 	}
 

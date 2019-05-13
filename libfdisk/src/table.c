@@ -225,6 +225,9 @@ int fdisk_table_add_partition(struct fdisk_table *tb, struct fdisk_partition *pa
 	if (!tb || !pa)
 		return -EINVAL;
 
+	if (!list_empty(&pa->parts))
+		return -EBUSY;
+
 	fdisk_ref_partition(pa);
 	list_add_tail(&pa->parts, &tb->parts);
 	tb->nents++;
@@ -725,7 +728,7 @@ int fdisk_diff_tables(struct fdisk_table *a, struct fdisk_table *b,
 		      struct fdisk_iter *itr,
 		      struct fdisk_partition **res, int *change)
 {
-	struct fdisk_partition *pa, *pb;
+	struct fdisk_partition *pa = NULL, *pb;
 	int rc = 1;
 
 	assert(itr);

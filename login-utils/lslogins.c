@@ -74,7 +74,7 @@ static int lslogins_flag;
 
 #define UL_UID_MIN 1000
 #define UL_UID_MAX 60000
-#define UL_SYS_UID_MIN 201
+#define UL_SYS_UID_MIN 101
 #define UL_SYS_UID_MAX 999
 
 /* we use the value of outmode to determine
@@ -611,19 +611,25 @@ static const char *get_pwd_method(const char *str, const char **next, unsigned i
 
 #define is_valid_pwd_char(x)	(isalnum((unsigned char) (x)) || (x) ==  '.' || (x) == '/')
 
+/*
+ * This function do not accept empty passwords or locked accouns.
+ */
 static int valid_pwd(const char *str)
 {
 	const char *p = str;
 	unsigned int sz = 0, n;
 
+	if (!str || !*str)
+		return 0;
+
 	/* $id$ */
 	if (get_pwd_method(str, &p, &sz) == NULL)
 		return 0;
-	if (!*p)
+	if (!p || !*p)
 		return 0;
 
 	/* salt$ */
-	for (; p && *p; p++) {
+	for (; *p; p++) {
 		if (*p == '$') {
 			p++;
 			break;
@@ -635,7 +641,7 @@ static int valid_pwd(const char *str)
 		return 0;
 
 	/* encrypted */
-	for (n = 0; p && *p; p++, n++) {
+	for (n = 0; *p; p++, n++) {
 		if (!is_valid_pwd_char(*p))
 			return 0;
 	}
@@ -1419,7 +1425,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	ctl->time_mode = TIME_SHORT;
 
@@ -1522,8 +1528,7 @@ int main(int argc, char *argv[])
 			ctl->time_mode = parse_time_mode(optarg);
 			break;
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'Z':
 		{
 #ifdef HAVE_LIBSELINUX
@@ -1562,7 +1567,7 @@ int main(int argc, char *argv[])
 			 columns[ncolumns++] = i;
 
 	} else if (ncolumns == 2) {
-		/* default colummns */
+		/* default columns */
 		add_column(columns, ncolumns++, COL_NPROCS);
 		add_column(columns, ncolumns++, COL_PWDLOCK);
 		add_column(columns, ncolumns++, COL_PWDDENY);

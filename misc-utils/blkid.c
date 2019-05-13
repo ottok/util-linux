@@ -58,15 +58,9 @@ struct blkid_control {
 		lowprobe:1,
 		lowprobe_superblocks:1,
 		lowprobe_topology:1,
+		no_part_details:1,
 		raw_chars:1;
 };
-
-static void print_version(FILE *out)
-{
-	fprintf(out, _("%s from %s  (libblkid %s, %s)\n"),
-		program_invocation_short_name, PACKAGE_STRING,
-		LIBBLKID_VERSION, LIBBLKID_DATE);
-}
 
 static void __attribute__((__noreturn__)) usage(void)
 {
@@ -101,6 +95,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(	" -O, --offset <offset>      probe at the given offset\n"), out);
 	fputs(_(	" -u, --usages <list>        filter by \"usage\" (e.g. -u filesystem,raid)\n"), out);
 	fputs(_(	" -n, --match-types <list>   filter by filesystem type (e.g. -n vfat,ext3)\n"), out);
+	fputs(_(	" -D, --no-part-details      don't print info from partition table\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
 	printf(USAGE_HELP_OPTIONS(28));
@@ -444,7 +439,7 @@ done:
 	return rc;
 }
 
-static int lowprobe_superblocks(blkid_probe pr)
+static int lowprobe_superblocks(blkid_probe pr, struct blkid_control *ctl)
 {
 	struct stat st;
 	int rc, fd = blkid_probe_get_fd(pr);
@@ -470,7 +465,8 @@ static int lowprobe_superblocks(blkid_probe pr)
 			return 0;	/* partition table detected */
 	}
 
-	blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS);
+	if (!ctl->no_part_details)
+		blkid_probe_set_partitions_flags(pr, BLKID_PARTS_ENTRY_DETAILS);
 	blkid_probe_enable_superblocks(pr, 1);
 
 	return blkid_do_safeprobe(pr);
@@ -509,7 +505,7 @@ static int lowprobe_device(blkid_probe pr, const char *devname,
 	if (ctl->lowprobe_topology)
 		rc = lowprobe_topology(pr);
 	if (rc >= 0 && ctl->lowprobe_superblocks)
-		rc = lowprobe_superblocks(pr);
+		rc = lowprobe_superblocks(pr, ctl);
 	if (rc < 0)
 		goto done;
 
@@ -661,6 +657,7 @@ int main(int argc, char **argv)
 	static const struct option longopts[] = {
 		{ "cache-file",	      required_argument, NULL, 'c' },
 		{ "no-encoding",      no_argument,	 NULL, 'd' },
+		{ "no-part-details",  no_argument,       NULL, 'D' },
 		{ "garbage-collect",  no_argument,	 NULL, 'g' },
 		{ "output",	      required_argument, NULL, 'o' },
 		{ "list-filesystems", no_argument,	 NULL, 'k' },
@@ -689,12 +686,12 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	strutils_set_exitcode(BLKID_EXIT_OTHER);
 
 	while ((c = getopt_long (argc, argv,
-			    "c:dghilL:n:ko:O:ps:S:t:u:U:w:Vv", longopts, NULL)) != -1) {
+			    "c:DdghilL:n:ko:O:ps:S:t:u:U:w:Vv", longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, NULL, excl, excl_st);
 
@@ -704,6 +701,9 @@ int main(int argc, char **argv)
 			break;
 		case 'd':
 			ctl.raw_chars = 1;
+			break;
+		case 'D':
+			ctl.no_part_details = 1;
 			break;
 		case 'L':
 			ctl.eval = 1;
@@ -786,7 +786,9 @@ int main(int argc, char **argv)
 			break;
 		case 'V':
 		case 'v':
-			print_version(stdout);
+			fprintf(stdout, _("%s from %s  (libblkid %s, %s)\n"),
+				program_invocation_short_name, PACKAGE_STRING,
+				LIBBLKID_VERSION, LIBBLKID_DATE);
 			err = 0;
 			goto exit;
 		case 'w':

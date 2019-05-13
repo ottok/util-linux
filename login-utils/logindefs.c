@@ -196,7 +196,7 @@ int getlogindefs_bool(const char *name, int dflt)
 	return ptr && ptr->value ? (strcasecmp(ptr->value, "yes") == 0) : dflt;
 }
 
-unsigned long getlogindefs_num(const char *name, long dflt)
+unsigned long getlogindefs_num(const char *name, unsigned long dflt)
 {
 	struct item *ptr = search(name);
 	char *end = NULL;
@@ -403,7 +403,7 @@ int get_hushlogin_status(struct passwd *pwd, int force_check)
 int main(int argc, char *argv[])
 {
 	char *name, *type;
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	if (argc <= 1)
 		errx(EXIT_FAILURE, "usage: %s <filename> "

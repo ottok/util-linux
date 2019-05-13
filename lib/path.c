@@ -94,8 +94,7 @@ void ul_unref_path(struct path_cxt *pc)
 		DBG(CXT, ul_debugobj(pc, "dealloc"));
 		if (pc->dialect)
 			pc->free_dialect(pc);
-		if (pc->dir_fd >= 0)
-			close(pc->dir_fd);
+		ul_path_close_dirfd(pc);
 		free(pc->dir_path);
 		free(pc->prefix);
 		free(pc);
@@ -212,6 +211,23 @@ int ul_path_get_dirfd(struct path_cxt *pc)
 	return pc->dir_fd;
 }
 
+/* Note that next ul_path_get_dirfd() will reopen the directory */
+void ul_path_close_dirfd(struct path_cxt *pc)
+{
+	assert(pc);
+
+	if (pc->dir_fd >= 0) {
+		DBG(CXT, ul_debugobj(pc, "closing dir: '%s'", pc->dir_path));
+		close(pc->dir_fd);
+		pc->dir_fd = -1;
+	}
+}
+
+int ul_path_isopen_dirfd(struct path_cxt *pc)
+{
+	return pc && pc->dir_fd >= 0;
+}
+
 static const char *ul_path_mkpath(struct path_cxt *pc, const char *path, va_list ap)
 {
 	int rc = vsnprintf(pc->path_buffer, sizeof(pc->path_buffer), path, ap);
@@ -301,7 +317,7 @@ int ul_path_open(struct path_cxt *pc, int flags, const char *path)
 
 	if (!pc) {
 		fd = open(path, flags);
-		DBG(CXT, ul_debug("opening '%s'", path));
+		DBG(CXT, ul_debug("opening '%s' [no context]", path));
 	} else {
 		int fdx;
 		int dir = ul_path_get_dirfd(pc);
@@ -567,9 +583,9 @@ int ul_path_read_string(struct path_cxt *pc, char **str, const char *path)
 
 	rc = ul_path_read(pc, buf, sizeof(buf) - 1, path);
 	if (rc < 0 || !str)
-		return rc;;
+		return rc;
 
-	/* Remove tailing newline (usuall in sysfs) */
+	/* Remove tailing newline (usual in sysfs) */
 	if (rc > 0 && *(buf + rc - 1) == '\n')
 		--rc;
 
@@ -600,9 +616,9 @@ int ul_path_read_buffer(struct path_cxt *pc, char *buf, size_t bufsz, const char
 {
 	int rc = ul_path_read(pc, buf, bufsz - 1, path);
 	if (rc < 0)
-		return rc;;
+		return rc;
 
-	/* Remove tailing newline (usuall in sysfs) */
+	/* Remove tailing newline (usual in sysfs) */
 	if (rc > 0 && *(buf + rc - 1) == '\n')
 		--rc;
 
@@ -687,7 +703,7 @@ int ul_path_readf_s64(struct path_cxt *pc, int64_t *res, const char *path, ...)
 	va_end(ap);
 
 	if (!p)
-		return -EINVAL;;
+		return -EINVAL;
 
 	return ul_path_read_s64(pc, res, p);
 }
@@ -892,21 +908,6 @@ int ul_path_writef_u64(struct path_cxt *pc, uint64_t num, const char *path, ...)
 
 	return ul_path_write_u64(pc, num, p);
 
-}
-
-static struct dirent *xreaddir(DIR *dp)
-{
-	struct dirent *d;
-
-	while ((d = readdir(dp))) {
-		if (!strcmp(d->d_name, ".") ||
-		    !strcmp(d->d_name, ".."))
-			continue;
-
-		/* blacklist here? */
-		break;
-	}
-	return d;
 }
 
 int ul_path_count_dirents(struct path_cxt *pc, const char *path)

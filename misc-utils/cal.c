@@ -332,7 +332,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	term = getenv("TERM");
 	if (term) {
@@ -435,8 +435,7 @@ int main(int argc, char **argv)
 			ctl.reform_year = ISO;
 			break;
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'h':
 			usage();
 		default:
@@ -550,9 +549,21 @@ int main(int argc, char **argv)
 
 	headers_init(&ctl);
 
-	if (!colors_init(ctl.colormode, "cal")) {
-		ctl.req.day = 0;
-		ctl.weektype &= ~WEEK_NUM_MASK;
+	if (colors_init(ctl.colormode, "cal") == 0) {
+		/*
+		 * If standout mode available (Senter and Sexit are set) and
+		 * user or terminal-colors.d do not disable colors than
+		 * ignore colors_init().
+		 */
+		if (*Senter && *Sexit && colors_mode() != UL_COLORMODE_NEVER) {
+			/* let use standout mode */
+			;
+		} else {
+			/* disable */
+			Senter = ""; Sexit = "";
+			ctl.req.day = 0;
+			ctl.weektype &= ~WEEK_NUM_MASK;
+		}
 	}
 
 	if (yflag || Yflag) {

@@ -73,7 +73,7 @@ static void __attribute__((__noreturn__)) exit_non_root(const char *option)
 	errx(MNT_EX_USAGE, _("only root can do that"));
 }
 
-static void __attribute__((__noreturn__)) print_version(void)
+static void __attribute__((__noreturn__)) mount_print_version(void)
 {
 	const char *ver = NULL;
 	const char **features = NULL, **p;
@@ -218,6 +218,57 @@ static int mount_all(struct libmnt_context *cxt)
 		rc = mnt_context_wait_for_children(cxt, &nchildren, &nerrs);
 		if (!rc && nchildren)
 			nsucc = nchildren - nerrs;
+	}
+
+	if (nerrs == 0)
+		rc = MNT_EX_SUCCESS;		/* all success */
+	else if (nsucc == 0)
+		rc = MNT_EX_FAIL;		/* all failed */
+	else
+		rc = MNT_EX_SOMEOK;		/* some success, some failed */
+
+	mnt_free_iter(itr);
+	return rc;
+}
+
+
+/*
+ * mount -a -o remount
+ */
+static int remount_all(struct libmnt_context *cxt)
+{
+	struct libmnt_iter *itr;
+	struct libmnt_fs *fs;
+	int mntrc, ignored, rc = MNT_EX_SUCCESS;
+
+	int nsucc = 0, nerrs = 0;
+
+	itr = mnt_new_iter(MNT_ITER_FORWARD);
+	if (!itr) {
+		warn(_("failed to initialize libmount iterator"));
+		return MNT_EX_SYSERR;
+	}
+
+	while (mnt_context_next_remount(cxt, itr, &fs, &mntrc, &ignored) == 0) {
+
+		const char *tgt = mnt_fs_get_target(fs);
+
+		if (ignored) {
+			if (mnt_context_is_verbose(cxt))
+				printf(_("%-25s: ignored\n"), tgt);
+		} else {
+			if (mk_exit_code(cxt, mntrc) == MNT_EX_SUCCESS) {
+				nsucc++;
+
+				/* Note that MNT_EX_SUCCESS return code does
+				 * not mean that FS has been really mounted
+				 * (e.g. nofail option) */
+				if (mnt_context_get_status(cxt)
+				    && mnt_context_is_verbose(cxt))
+					printf("%-25s: successfully remounted\n", tgt);
+			} else
+				nerrs++;
+		}
 	}
 
 	if (nerrs == 0)
@@ -604,7 +655,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	strutils_set_exitcode(MNT_EX_USAGE);
 
@@ -640,9 +691,6 @@ int main(int argc, char **argv)
 		case 'F':
 			mnt_context_enable_fork(cxt, TRUE);
 			break;
-		case 'h':
-			usage();
-			break;
 		case 'i':
 			mnt_context_disable_helpers(cxt, TRUE);
 			break;
@@ -655,9 +703,6 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 			mnt_context_enable_verbose(cxt, TRUE);
-			break;
-		case 'V':
-			print_version();
 			break;
 		case 'w':
 			append_option(cxt, "rw");
@@ -778,6 +823,13 @@ int main(int argc, char **argv)
 		case MOUNT_OPT_OPTSRC_FORCE:
 			optmode |= MNT_OMODE_FORCE;
 			break;
+
+		case 'h':
+			mnt_free_context(cxt);
+			usage();
+		case 'V':
+			mnt_free_context(cxt);
+			mount_print_version();
 		default:
 			errtryhelp(MNT_EX_USAGE);
 		}
@@ -836,7 +888,10 @@ int main(int argc, char **argv)
 		/*
 		 * A) Mount all
 		 */
-		rc = mount_all(cxt);
+		if (has_remount_flag(cxt))
+			rc = remount_all(cxt);
+		else
+			rc = mount_all(cxt);
 		goto done;
 
 	} else if (argc == 0 && (mnt_context_get_source(cxt) ||

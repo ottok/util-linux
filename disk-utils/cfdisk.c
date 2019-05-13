@@ -1699,7 +1699,8 @@ static int ui_refresh(struct cfdisk *cf)
 	if (!ui_enabled)
 		return -EINVAL;
 
-	strsz = size_to_human_string(SIZE_SUFFIX_SPACE
+	strsz = size_to_human_string(SIZE_DECIMAL_2DIGITS
+				| SIZE_SUFFIX_SPACE
 				| SIZE_SUFFIX_3LETTER, bytes);
 
 	lb = fdisk_get_label(cf->cxt, NULL);
@@ -2666,7 +2667,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while((c = getopt_long(argc, argv, "L::hVz", longopts, NULL)) != -1) {
 		switch(c) {
@@ -2680,8 +2681,7 @@ int main(int argc, char *argv[])
 						_("unsupported color mode"));
 			break;
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'z':
 			cf->zero_start = 1;
 			break;

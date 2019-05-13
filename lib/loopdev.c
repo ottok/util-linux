@@ -96,6 +96,7 @@ int loopcxt_set_device(struct loopdev_cxt *lc, const char *device)
 	}
 	lc->fd = -1;
 	lc->mode = 0;
+	lc->blocksize = 0;
 	lc->has_info = 0;
 	lc->info_failed = 0;
 	*lc->device = '\0';
@@ -127,7 +128,7 @@ int loopcxt_set_device(struct loopdev_cxt *lc, const char *device)
 	return 0;
 }
 
-int loopcxt_has_device(struct loopdev_cxt *lc)
+inline int loopcxt_has_device(struct loopdev_cxt *lc)
 {
 	return lc && *lc->device;
 }
@@ -362,7 +363,7 @@ int loopcxt_deinit_iterator(struct loopdev_cxt *lc)
 
 /*
  * Same as loopcxt_set_device, but also checks if the device is
- * associeted with any file.
+ * associated with any file.
  *
  * Returns: <0 on error, 0 on success, 1 device does not match with
  *         LOOPITER_FL_{USED,FREE} flags.
@@ -691,7 +692,7 @@ char *loopcxt_get_backing_file(struct loopdev_cxt *lc)
 
 	if (sysfs)
 		/*
-		 * This is always preffered, the loop_info64
+		 * This is always preferred, the loop_info64
 		 * has too small buffer for the filename.
 		 */
 		ul_path_read_string(sysfs, &res, "loop/backing_file");
@@ -1107,6 +1108,22 @@ int loopcxt_set_sizelimit(struct loopdev_cxt *lc, uint64_t sizelimit)
 }
 
 /*
+ * The blocksize will be used by loopcxt_set_device(). For already exiting
+ * devices use  loopcxt_ioctl_blocksize().
+ *
+ * The setting is removed by loopcxt_set_device() loopcxt_next()!
+ */
+int loopcxt_set_blocksize(struct loopdev_cxt *lc, uint64_t blocksize)
+{
+	if (!lc)
+		return -EINVAL;
+	lc->blocksize = blocksize;
+
+	DBG(CXT, ul_debugobj(lc, "set blocksize=%jd", blocksize));
+	return 0;
+}
+
+/*
  * @lc: context
  * @flags: kernel LO_FLAGS_{READ_ONLY,USE_AOPS,AUTOCLEAR} flags
  *
@@ -1216,7 +1233,7 @@ static int loopcxt_check_size(struct loopdev_cxt *lc, int file_fd)
 				      "size mismatch (%ju/%ju)",
 				      size, expected_size));
 
-		if (loopcxt_set_capacity(lc)) {
+		if (loopcxt_ioctl_capacity(lc)) {
 			/* ioctl not available */
 			if (errno == ENOTTY || errno == EINVAL)
 				errno = ERANGE;
@@ -1331,6 +1348,12 @@ int loopcxt_setup_device(struct loopdev_cxt *lc)
 
 	DBG(SETUP, ul_debugobj(lc, "LOOP_SET_FD: OK"));
 
+	if (lc->blocksize > 0
+	    && (rc = loopcxt_ioctl_blocksize(lc, lc->blocksize)) < 0) {
+		errsv = -rc;
+		goto err;
+	}
+
 	if (ioctl(dev_fd, LOOP_SET_STATUS64, &lc->info)) {
 		rc = -errno;
 		errsv = errno;
@@ -1374,7 +1397,7 @@ err:
  *
  * Returns: <0 on error, 0 on success.
  */
-int loopcxt_set_status(struct loopdev_cxt *lc)
+int loopcxt_ioctl_status(struct loopdev_cxt *lc)
 {
 	int dev_fd, rc = -1;
 
@@ -1397,7 +1420,7 @@ int loopcxt_set_status(struct loopdev_cxt *lc)
 	return 0;
 }
 
-int loopcxt_set_capacity(struct loopdev_cxt *lc)
+int loopcxt_ioctl_capacity(struct loopdev_cxt *lc)
 {
 	int fd = loopcxt_get_fd(lc);
 
@@ -1415,7 +1438,7 @@ int loopcxt_set_capacity(struct loopdev_cxt *lc)
 	return 0;
 }
 
-int loopcxt_set_dio(struct loopdev_cxt *lc, unsigned long use_dio)
+int loopcxt_ioctl_dio(struct loopdev_cxt *lc, unsigned long use_dio)
 {
 	int fd = loopcxt_get_fd(lc);
 
@@ -1437,7 +1460,7 @@ int loopcxt_set_dio(struct loopdev_cxt *lc, unsigned long use_dio)
  * Kernel uses "unsigned long" as ioctl arg, but we use u64 for all sizes to
  * keep loopdev internal API simple.
  */
-int loopcxt_set_blocksize(struct loopdev_cxt *lc, uint64_t blocksize)
+int loopcxt_ioctl_blocksize(struct loopdev_cxt *lc, uint64_t blocksize)
 {
 	int fd = loopcxt_get_fd(lc);
 
@@ -1753,7 +1776,7 @@ char *loopdev_find_by_backing_file(const char *filename, uint64_t offset, uint64
 
 /*
  * Returns number of loop devices associated with @file, if only one loop
- * device is associeted with the given @filename and @loopdev is not NULL then
+ * device is associated with the given @filename and @loopdev is not NULL then
  * @loopdev returns name of the device.
  */
 int loopdev_count_by_backing_file(const char *filename, char **loopdev)
