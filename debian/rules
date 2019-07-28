@@ -26,6 +26,8 @@ CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
 CONFOPTS += --without-python
 
 # disable utilities shipped by other packages
+# => hardlink
+CONFOPTS += --disable-hardlink
 # => login
 CONFOPTS += --disable-login
 CONFOPTS += --disable-nologin
