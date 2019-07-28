@@ -1,3 +1,12 @@
+util-linux (2.34-0.1) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * New upstream release. (Closes: #931613)
+  * Do not ship new hardlink tool, would conflict with existing
+    hardlink package.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 28 Jul 2019 14:40:02 +0000
+
 util-linux (2.33.1-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
