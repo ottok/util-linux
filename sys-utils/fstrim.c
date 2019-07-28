@@ -60,6 +60,7 @@ struct fstrim_control {
 	struct fstrim_range range;
 
 	unsigned int verbose : 1,
+		     quiet   : 1,
 		     fstab   : 1,
 		     dryrun : 1;
 };
@@ -108,9 +109,16 @@ static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const
 
 	errno = 0;
 	if (ioctl(fd, FITRIM, &range)) {
-		rc = errno == EOPNOTSUPP || errno == ENOTTY ? 1 : -errno;
-
-		if (rc != 1)
+		switch (errno) {
+		case EBADF:
+		case ENOTTY:
+		case EOPNOTSUPP:
+			rc = 1;
+			break;
+		default:
+			rc = -errno;
+		}
+		if (rc < 0)
 			warn(_("%s: FITRIM ioctl failed"), path);
 		goto done;
 	}
@@ -233,10 +241,6 @@ static int fstrim_all(struct fstrim_control *ctl)
 	mnt_init_debug(0);
 	ul_path_init_debug();
 
-	itr = mnt_new_iter(MNT_ITER_BACKWARD);
-	if (!itr)
-		err(MNT_EX_FAIL, _("failed to initialize libmount iterator"));
-
 	if (ctl->fstab)
 		filename = mnt_get_fstab_path();
 
@@ -246,9 +250,6 @@ static int fstrim_all(struct fstrim_control *ctl)
 
 	/* de-duplicate by mountpoints */
 	mnt_table_uniq_fs(tab, 0, uniq_fs_target_cmp);
-
-	/* de-duplicate by source */
-	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
 
 	if (ctl->fstab) {
 		char *rootdev = NULL;
@@ -273,26 +274,49 @@ static int fstrim_all(struct fstrim_control *ctl)
 		}
 	}
 
+	itr = mnt_new_iter(MNT_ITER_BACKWARD);
+	if (!itr)
+		err(MNT_EX_FAIL, _("failed to initialize libmount iterator"));
+
+	/* Remove useless entries and canonicalize the table */
+	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
+		const char *src = mnt_fs_get_srcpath(fs),
+			   *tgt = mnt_fs_get_target(fs);
+
+		if (!tgt || mnt_fs_is_pseudofs(fs) || mnt_fs_is_netfs(fs)) {
+			mnt_table_remove_fs(tab, fs);
+			continue;
+		}
+
+		/* convert LABEL= (etc.) from fstab to paths */
+		if (!src && cache) {
+			const char *spec = mnt_fs_get_source(fs);
+
+			if (!spec) {
+				mnt_table_remove_fs(tab, fs);
+				continue;
+			}
+			src = mnt_resolve_spec(spec, cache);
+			mnt_fs_set_source(fs, src);
+		}
+
+		if (!src || *src != '/') {
+			mnt_table_remove_fs(tab, fs);
+			continue;
+		}
+	}
+
+	/* de-duplicate by source */
+	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
+
+	mnt_reset_iter(itr, MNT_ITER_BACKWARD);
+
+	/* Do FITRIM */
 	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
 		const char *src = mnt_fs_get_srcpath(fs),
 			   *tgt = mnt_fs_get_target(fs);
 		char *path;
 		int rc = 1;
-
-		if (!tgt || mnt_fs_is_pseudofs(fs) || mnt_fs_is_netfs(fs))
-			continue;
-
-		if (!src && cache) {
-			/* convert LABEL= (etc.) from fstab to paths */
-			const char *spec = mnt_fs_get_source(fs);
-
-			if (!spec)
-				continue;
-			src = mnt_resolve_spec(spec, cache);
-		}
-
-		if (!src || *src != '/')
-			continue;
 
 		/* Is it really accessible mountpoint? Not all mountpoints are
 		 * accessible (maybe over mounted by another filesystem) */
@@ -302,6 +326,14 @@ static int fstrim_all(struct fstrim_control *ctl)
 		free(path);
 		if (rc)
 			continue;	/* overlaying mount */
+
+		/* FITRIM on read-only filesystem can fail, and it can fail */
+		if (access(path, W_OK) != 0) {
+			if (errno == EROFS)
+				continue;
+			if (errno == EACCES)
+				continue;
+		}
 
 		if (!has_discard(src, &wholedisk))
 			continue;
@@ -315,13 +347,16 @@ static int fstrim_all(struct fstrim_control *ctl)
 		 * This is reason why we ignore EOPNOTSUPP and ENOTTY errors
 		 * from discard ioctl.
 		 */
-		if (fstrim_filesystem(ctl, tgt, src) < 0)
+		rc = fstrim_filesystem(ctl, tgt, src);
+		if (rc < 0)
 		       cnt_err++;
+		else if (rc == 1 && !ctl->quiet)
+			warnx(_("%s: the discard operation is not supported"), tgt);
 	}
+	mnt_free_iter(itr);
 
 	ul_unref_path(wholedisk);
 	mnt_unref_table(tab);
-	mnt_free_iter(itr);
 	mnt_unref_cache(cache);
 
 	if (cnt && cnt == cnt_err)
@@ -349,6 +384,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -l, --length <num>  the number of bytes to discard\n"), out);
 	fputs(_(" -m, --minimum <num> the minimum extent length to discard\n"), out);
 	fputs(_(" -v, --verbose       print number of discarded bytes\n"), out);
+	fputs(_("     --quiet         suppress error messages\n"), out);
 	fputs(_(" -n, --dry-run       does everything, but trim\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
@@ -364,6 +400,9 @@ int main(int argc, char **argv)
 	struct fstrim_control ctl = {
 			.range = { .len = ULLONG_MAX }
 	};
+	enum {
+		OPT_QUIET = CHAR_MAX + 1
+	};
 
 	static const struct option longopts[] = {
 	    { "all",       no_argument,       NULL, 'a' },
@@ -374,6 +413,7 @@ int main(int argc, char **argv)
 	    { "length",    required_argument, NULL, 'l' },
 	    { "minimum",   required_argument, NULL, 'm' },
 	    { "verbose",   no_argument,       NULL, 'v' },
+	    { "quiet",     no_argument,       NULL, OPT_QUIET },
 	    { "dry-run",   no_argument,       NULL, 'n' },
 	    { NULL, 0, NULL, 0 }
 	};
@@ -409,7 +449,9 @@ int main(int argc, char **argv)
 		case 'v':
 			ctl.verbose = 1;
 			break;
-
+		case OPT_QUIET:
+			ctl.quiet = 1;
+			break;
 		case 'h':
 			usage();
 		case 'V':
@@ -434,7 +476,7 @@ int main(int argc, char **argv)
 		return fstrim_all(&ctl);	/* MNT_EX_* codes */
 
 	rc = fstrim_filesystem(&ctl, path, NULL);
-	if (rc == 1)
+	if (rc == 1 && !ctl.quiet)
 		warnx(_("%s: the discard operation is not supported"), path);
 
 	return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

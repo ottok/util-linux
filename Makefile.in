@@ -808,9 +808,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_vscript.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/nls.m4 \
-	$(top_srcdir)/m4/po.m4 $(top_srcdir)/m4/progtest.m4 \
-	$(top_srcdir)/m4/tls.m4 $(top_srcdir)/m4/ul.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/pkg.m4 $(top_srcdir)/m4/po.m4 \
+	$(top_srcdir)/m4/progtest.m4 $(top_srcdir)/m4/tls.m4 \
+	$(top_srcdir)/m4/ul.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -1354,7 +1354,7 @@ am__libsmartcols_la_SOURCES_DIST = include/list.h \
 	libsmartcols/src/fput.c libsmartcols/src/print-api.c \
 	libsmartcols/src/version.c libsmartcols/src/buffer.c \
 	libsmartcols/src/calculate.c libsmartcols/src/grouping.c \
-	libsmartcols/src/init.c
+	libsmartcols/src/walk.c libsmartcols/src/init.c
 @BUILD_LIBSMARTCOLS_TRUE@am_libsmartcols_la_OBJECTS =  \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-iter.lo \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-symbols.lo \
@@ -1369,6 +1369,7 @@ am__libsmartcols_la_SOURCES_DIST = include/list.h \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-buffer.lo \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-calculate.lo \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-grouping.lo \
+@BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-walk.lo \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/la-init.lo
 libsmartcols_la_OBJECTS = $(am_libsmartcols_la_OBJECTS)
 libsmartcols_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
@@ -1981,8 +1982,8 @@ mcookie_OBJECTS = $(am_mcookie_OBJECTS)
 am__mesg_SOURCES_DIST = term-utils/mesg.c
 @BUILD_MESG_TRUE@am_mesg_OBJECTS = term-utils/mesg.$(OBJEXT)
 mesg_OBJECTS = $(am_mesg_OBJECTS)
-mesg_LDADD = $(LDADD)
-mesg_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@BUILD_MESG_TRUE@mesg_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+@BUILD_MESG_TRUE@	libcommon.la
 am__mkfs_SOURCES_DIST = disk-utils/mkfs.c
 @BUILD_MKFS_TRUE@am_mkfs_OBJECTS = disk-utils/mkfs.$(OBJEXT)
 mkfs_OBJECTS = $(am_mkfs_OBJECTS)
@@ -3466,6 +3467,7 @@ am__depfiles_remade = disk-utils/$(DEPDIR)/addpart.Po \
 	libsmartcols/src/$(DEPDIR)/la-symbols.Plo \
 	libsmartcols/src/$(DEPDIR)/la-table.Plo \
 	libsmartcols/src/$(DEPDIR)/la-version.Plo \
+	libsmartcols/src/$(DEPDIR)/la-walk.Plo \
 	libuuid/src/$(DEPDIR)/la-clear.Plo \
 	libuuid/src/$(DEPDIR)/la-compare.Plo \
 	libuuid/src/$(DEPDIR)/la-copy.Plo \
@@ -4314,6 +4316,7 @@ mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
+pkgconfigdir = @pkgconfigdir@
 pkgpyexecdir = @pkgpyexecdir@
 pkgpythondir = @pkgpythondir@
 prefix = @prefix@
@@ -4363,7 +4366,6 @@ ul_libmount_incdir = $(top_builddir)/libmount/src
 ul_libsmartcols_incdir = $(top_builddir)/libsmartcols/src
 ul_libfdisk_incdir = $(top_builddir)/libfdisk/src
 ul_libuuid_incdir = $(top_srcdir)/libuuid/src
-pkgconfigdir = $(usrlib_execdir)/pkgconfig
 dist_noinst_HEADERS = include/all-io.h include/bitops.h \
 	include/blkdev.h include/canonicalize.h include/carefulputc.h \
 	include/cctype.h include/c.h include/closestream.h \
@@ -4886,6 +4888,7 @@ test_pwdutils_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/buffer.c \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/calculate.c \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/grouping.c \
+@BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/walk.c \
 @BUILD_LIBSMARTCOLS_TRUE@	libsmartcols/src/init.c
 
 @BUILD_LIBSMARTCOLS_TRUE@libsmartcols_la_LIBADD = $(LDADD) libcommon.la
@@ -5069,6 +5072,7 @@ test_pwdutils_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM
 @BUILD_SETTERM_TRUE@	$(am__append_123)
 @BUILD_SETTERM_TRUE@setterm_LDADD = $(LDADD) libcommon.la \
 @BUILD_SETTERM_TRUE@	$(am__append_120) $(am__append_122)
+@BUILD_MESG_TRUE@mesg_LDADD = $(LDADD) libcommon.la
 @BUILD_MESG_TRUE@mesg_SOURCES = term-utils/mesg.c
 @BUILD_WALL_TRUE@wall_SOURCES = \
 @BUILD_WALL_TRUE@	term-utils/wall.c \
@@ -6454,6 +6458,8 @@ libsmartcols/src/la-buffer.lo: libsmartcols/src/$(am__dirstamp) \
 libsmartcols/src/la-calculate.lo: libsmartcols/src/$(am__dirstamp) \
 	libsmartcols/src/$(DEPDIR)/$(am__dirstamp)
 libsmartcols/src/la-grouping.lo: libsmartcols/src/$(am__dirstamp) \
+	libsmartcols/src/$(DEPDIR)/$(am__dirstamp)
+libsmartcols/src/la-walk.lo: libsmartcols/src/$(am__dirstamp) \
 	libsmartcols/src/$(DEPDIR)/$(am__dirstamp)
 libsmartcols/src/la-init.lo: libsmartcols/src/$(am__dirstamp) \
 	libsmartcols/src/$(DEPDIR)/$(am__dirstamp)
@@ -8409,6 +8415,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libsmartcols/src/$(DEPDIR)/la-symbols.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libsmartcols/src/$(DEPDIR)/la-table.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libsmartcols/src/$(DEPDIR)/la-version.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@libsmartcols/src/$(DEPDIR)/la-walk.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libuuid/src/$(DEPDIR)/la-clear.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libuuid/src/$(DEPDIR)/la-compare.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libuuid/src/$(DEPDIR)/la-copy.Plo@am__quote@ # am--include-marker
@@ -9887,6 +9894,13 @@ libsmartcols/src/la-grouping.lo: libsmartcols/src/grouping.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libsmartcols/src/grouping.c' object='libsmartcols/src/la-grouping.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsmartcols_la_CFLAGS) $(CFLAGS) -c -o libsmartcols/src/la-grouping.lo `test -f 'libsmartcols/src/grouping.c' || echo '$(srcdir)/'`libsmartcols/src/grouping.c
+
+libsmartcols/src/la-walk.lo: libsmartcols/src/walk.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsmartcols_la_CFLAGS) $(CFLAGS) -MT libsmartcols/src/la-walk.lo -MD -MP -MF libsmartcols/src/$(DEPDIR)/la-walk.Tpo -c -o libsmartcols/src/la-walk.lo `test -f 'libsmartcols/src/walk.c' || echo '$(srcdir)/'`libsmartcols/src/walk.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libsmartcols/src/$(DEPDIR)/la-walk.Tpo libsmartcols/src/$(DEPDIR)/la-walk.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libsmartcols/src/walk.c' object='libsmartcols/src/la-walk.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsmartcols_la_CFLAGS) $(CFLAGS) -c -o libsmartcols/src/la-walk.lo `test -f 'libsmartcols/src/walk.c' || echo '$(srcdir)/'`libsmartcols/src/walk.c
 
 libsmartcols/src/la-init.lo: libsmartcols/src/init.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libsmartcols_la_CFLAGS) $(CFLAGS) -MT libsmartcols/src/la-init.lo -MD -MP -MF libsmartcols/src/$(DEPDIR)/la-init.Tpo -c -o libsmartcols/src/la-init.lo `test -f 'libsmartcols/src/init.c' || echo '$(srcdir)/'`libsmartcols/src/init.c
@@ -13697,6 +13711,7 @@ distclean: distclean-recursive
 	-rm -f libsmartcols/src/$(DEPDIR)/la-symbols.Plo
 	-rm -f libsmartcols/src/$(DEPDIR)/la-table.Plo
 	-rm -f libsmartcols/src/$(DEPDIR)/la-version.Plo
+	-rm -f libsmartcols/src/$(DEPDIR)/la-walk.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-clear.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-compare.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-copy.Plo
@@ -14231,6 +14246,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f libsmartcols/src/$(DEPDIR)/la-symbols.Plo
 	-rm -f libsmartcols/src/$(DEPDIR)/la-table.Plo
 	-rm -f libsmartcols/src/$(DEPDIR)/la-version.Plo
+	-rm -f libsmartcols/src/$(DEPDIR)/la-walk.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-clear.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-compare.Plo
 	-rm -f libuuid/src/$(DEPDIR)/la-copy.Plo

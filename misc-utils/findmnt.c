@@ -292,7 +292,7 @@ static int is_tabdiff_column(int id)
  */
 int is_listall_mode(void)
 {
-	if ((flags & FL_DF) && !(flags & FL_ALL))
+	if ((flags & FL_DF || flags & FL_REAL || flags & FL_PSEUDO) && !(flags & FL_ALL))
 		return 0;
 
 	return (!get_match(COL_SOURCE) &&
@@ -989,7 +989,8 @@ struct libmnt_fs *get_next_fs(struct libmnt_table *tb,
 		 *    findmnt [-l] <spec> [-O <options>] [-t <types>]
 		 */
 again:
-		mnt_table_find_next_fs(tb, itr, match_func,  NULL, &fs);
+		if (mnt_table_find_next_fs(tb, itr, match_func,  NULL, &fs) != 0)
+			fs = NULL;
 
 		if (!fs &&
 		    !(flags & FL_NOSWAPMATCH) &&

@@ -279,6 +279,7 @@ libsmartcols/src/smartcolsP.h
 libsmartcols/src/symbols.c
 libsmartcols/src/table.c
 libsmartcols/src/version.c
+libsmartcols/src/walk.c
 lib/strutils.c
 lib/strv.c
 lib/swapprober.c

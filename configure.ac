@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="30-Apr-2019"
+LIBBLKID_DATE="14-Jun-2019"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -156,10 +156,7 @@ AC_ARG_ENABLE([asan],
 AS_IF([test "x$enable_asan" = xyes], [
   UL_WARN_ADD([-fsanitize=address])
   ASAN_LDFLAGS="-fsanitize=address"
-],[
-  AC_DEFINE([USE_CLOSE_ATEXIT], [1], [close stdout at exit])
 ])
-
 AC_SUBST([ASAN_LDFLAGS])
 
 dnl libtool-2
@@ -175,6 +172,7 @@ m4_ifndef([PKG_PROG_PKG_CONFIG],
     environment variable AL_OPTS="-I/other/macro/dir" before running
     ./autogen.sh or autoreconf again. Make sure pkg-config is installed.])])
 PKG_PROG_PKG_CONFIG
+PKG_INSTALLDIR(['${usrlib_execdir}/pkgconfig'])
 
 GTK_DOC_CHECK([1.10])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
@@ -2455,6 +2453,7 @@ AC_MSG_RESULT([
 	suid cflags:       ${SUID_CFLAGS}
 	ldflags:           ${LDFLAGS}
 	suid ldflags:      ${SUID_LDFLAGS}
+	ASAN enabled:      ${enable_asan}
 
 	Python:            ${PYTHON}
 	Python version:    ${PYTHON_VERSION}

@@ -655,8 +655,9 @@ static char *get_vfs_attribute(struct lsblk_device *dev, int id)
 
 static struct stat *device_get_stat(struct lsblk_device *dev)
 {
-	if (!dev->st.st_rdev)
-		stat(dev->filename, &dev->st);
+	if (!dev->st.st_rdev
+	    && stat(dev->filename, &dev->st) != 0)
+		return NULL;
 
 	return &dev->st;
 }
@@ -675,12 +676,13 @@ static int is_removable_device(struct lsblk_device *dev, struct lsblk_device *pa
 		if (!pc)
 			goto done;
 
+		/* dev is partition and parent is whole-disk  */
 		if (pc == parent->sysfs)
-			/* dev is partition and parent is whole-disk  */
 			dev->removable = is_removable_device(parent, NULL);
-		else
-			/* parent is something else, use sysfs parent */
-			ul_path_scanf(pc, "removable", "%d", &dev->removable);
+
+		/* parent is something else, use sysfs parent */
+		else if (ul_path_scanf(pc, "removable", "%d", &dev->removable) != 1)
+			dev->removable = 0;
 	}
 done:
 	if (dev->removable == -1)
@@ -1013,7 +1015,9 @@ static void device_to_scols(
 	struct lsblk_device *child = NULL;
 	int link_group = 0;
 
-	ON_DBG(DEV, if (ul_path_isopen_dirfd(dev->sysfs)) ul_debugobj(dev, "%s ---> is open!", dev->name));
+
+	DBG(DEV, ul_debugobj(dev, "add '%s' to scols", dev->name));
+	ON_DBG(DEV, if (ul_path_isopen_dirfd(dev->sysfs)) ul_debugobj(dev, " %s ---> is open!", dev->name));
 
 	/* Do not print device more than one in --list mode */
 	if (!(lsblk->flags & LSBLK_TREE) && dev->is_printed)
@@ -1036,14 +1040,19 @@ static void device_to_scols(
 		struct libscols_line *gr = parent_line;
 
 		/* Merge all my parents to the one group */
+		DBG(DEV, ul_debugobj(dev, " grouping parents [--merge]"));
 		lsblk_reset_iter(&itr, LSBLK_ITER_FORWARD);
 		while (lsblk_device_next_parent(dev, &itr, &p) == 0) {
-			if (!p->scols_line)
+			if (!p->scols_line) {
+				DBG(DEV, ul_debugobj(dev, " *** ignore '%s' no scols line yet", p->name));
 				continue;
-			scols_table_group_lines(tab, gr, p->scols_line, 0);
+			}
+			DBG(DEV, ul_debugobj(dev, " group '%s'", p->name));
+			scols_table_group_lines(tab, p->scols_line, gr, 0);
 		}
 
 		/* Link the group -- this makes group->child connection */
+		DBG(DEV, ul_debugobj(dev, " linking the group [--merge]"));
 		scols_line_link_group(ln, gr, 0);
 	}
 
@@ -1061,6 +1070,7 @@ static void device_to_scols(
 			if (data && sortdata != (uint64_t) -1)
 				set_sortdata_u64(ln, i, sortdata);
 		}
+		DBG(DEV, ul_debugobj(dev, " refer data[%zu]=\"%s\"", i, data));
 		if (data && scols_line_refer_data(ln, i, data))
 			err(EXIT_FAILURE, _("failed to add output data"));
 	}
@@ -1072,10 +1082,12 @@ static void device_to_scols(
 		 * otherwise we can close */
 		ul_path_close_dirfd(dev->sysfs);
 
-
 	lsblk_reset_iter(&itr, LSBLK_ITER_FORWARD);
-	while (lsblk_device_next_child(dev, &itr, &child) == 0)
+	while (lsblk_device_next_child(dev, &itr, &child) == 0) {
+		DBG(DEV, ul_debugobj(dev, "%s -> continue to child", dev->name));
 		device_to_scols(child, dev, tab, ln);
+		DBG(DEV, ul_debugobj(dev, "%s <- child done", dev->name));
+	}
 
 	/* Let's be careful with number of open files */
 	ul_path_close_dirfd(dev->sysfs);
@@ -1377,7 +1389,7 @@ static int __process_one_device(struct lsblk_devtree *tr, char *devname, dev_t d
 	char buf[PATH_MAX + 1], *name = NULL, *diskname = NULL;
 	int real_part = 0, rc = -EINVAL;
 
-	if (devno == 0) {
+	if (devno == 0 && devname) {
 		struct stat st;
 
 		DBG(DEV, ul_debug("%s: reading alone device", devname));
@@ -1387,8 +1399,12 @@ static int __process_one_device(struct lsblk_devtree *tr, char *devname, dev_t d
 			goto leave;
 		}
 		devno = st.st_rdev;
-	} else
+	} else if (devno) {
 		DBG(DEV, ul_debug("%d:%d: reading alone device", major(devno), minor(devno)));
+	} else {
+		assert(devno || devname);
+		return -EINVAL;
+	}
 
 	/* TODO: sysfs_devno_to_devname() internally initializes path_cxt, it
 	 * would be better to use ul_new_sysfs_path() + sysfs_blkdev_get_name()
@@ -1464,6 +1480,7 @@ leave:
 
 static int process_one_device(struct lsblk_devtree *tr, char *devname)
 {
+	assert(devname);
 	return __process_one_device(tr, devname, 0);
 }
 
@@ -1550,6 +1567,7 @@ static int process_all_devices(struct lsblk_devtree *tr)
 		if (is_maj_excluded(dev->maj) || !is_maj_included(dev->maj)) {
 			DBG(DEV, ul_debug(" %s: ignore (by filter)", d->d_name));
 			lsblk_devtree_remove_device(tr, dev);
+			dev = NULL;
 			goto next;
 		}
 

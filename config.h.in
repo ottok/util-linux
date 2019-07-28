@@ -772,9 +772,6 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
-/* close stdout at exit */
-#undef USE_CLOSE_ATEXIT
-
 /* Enables colorized output from utils by default */
 #undef USE_COLORS_BY_DEFAULT
 

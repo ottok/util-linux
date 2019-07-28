@@ -36,7 +36,7 @@
 #include "debug.h"
 
 /*
- * Default behavior, maybe be override by terminal-colors.d/{enable,disable}.
+ * Default behavior, may be overriden by terminal-colors.d/{enable,disable}.
  */
 #ifdef USE_COLORS_BY_DEFAULT
 # define UL_COLORMODE_DEFAULT	UL_COLORMODE_AUTO	/* check isatty() */
@@ -424,8 +424,10 @@ static int cn_sequence(const char *str, char **seq)
 		in++;
 	}
 
-	assert ((out - *seq) <= len);
-	*out = '\0';
+	if (out) {
+		assert ((out - *seq) <= len);
+		*out = '\0';
+	}
 
 	return 0;
 }
@@ -657,19 +659,16 @@ static int colors_terminal_is_ready(void)
 	{
 		int ret;
 
-		if (setupterm(NULL, STDOUT_FILENO, &ret) != 0 || ret != 1)
-			goto none;
-		ncolors = tigetnum("colors");
-		if (ncolors <= 2)
-			goto none;
+		if (setupterm(NULL, STDOUT_FILENO, &ret) == 0 && ret == 1)
+			ncolors = tigetnum("colors");
 	}
 #endif
-	if (ncolors != -1) {
+	if (1 < ncolors) {
 		DBG(CONF, ul_debug("terminal is ready (supports %d colors)", ncolors));
 		return 1;
 	}
-none:
-	DBG(CONF, ul_debug("terminal is NOT ready"));
+
+	DBG(CONF, ul_debug("terminal is NOT ready (no colors)"));
 	return 0;
 }
 

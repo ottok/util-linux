@@ -626,8 +626,10 @@ read_basicinfo(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 		read_physical_info_powerpc(desc);
 
 	if ((fp = ul_path_fopen(desc->procfs, "r", "sysinfo"))) {
-		while (fgets(buf, sizeof(buf), fp) != NULL && !desc->machinetype)
-			lookup(buf, "Type", &desc->machinetype);
+		while (fgets(buf, sizeof(buf), fp) != NULL) {
+			if (lookup(buf, "Type", &desc->machinetype))
+				break;
+		}
 		fclose(fp);
 	}
 
@@ -1778,10 +1780,12 @@ print_cpus_parsable(struct lscpu_desc *desc, int cols[], int ncols,
 		int c;
 		int cpu = real_cpu_num(desc, i);
 
-		if (!mod->offline && desc->online && !is_cpu_online(desc, cpu))
-			continue;
-		if (!mod->online && desc->online && is_cpu_online(desc, cpu))
-			continue;
+		if (desc->online) {
+			if (!mod->offline && !is_cpu_online(desc, cpu))
+				continue;
+			if (!mod->online && is_cpu_online(desc, cpu))
+				continue;
+		}
 		if (desc->present && !is_cpu_present(desc, cpu))
 			continue;
 		for (c = 0; c < ncols; c++) {
@@ -1835,10 +1839,12 @@ print_cpus_readable(struct lscpu_desc *desc, int cols[], int ncols,
 		struct libscols_line *line;
 		int cpu = real_cpu_num(desc, i);
 
-		if (!mod->offline && desc->online && !is_cpu_online(desc, cpu))
-			continue;
-		if (!mod->online && desc->online && is_cpu_online(desc, cpu))
-			continue;
+		if (desc->online) {
+			if (!mod->offline && !is_cpu_online(desc, cpu))
+				continue;
+			if (!mod->online && is_cpu_online(desc, cpu))
+				continue;
+		}
 		if (desc->present && !is_cpu_present(desc, cpu))
 			continue;
 
@@ -1875,7 +1881,8 @@ static void __attribute__ ((__format__(printf, 3, 4)))
 		err(EXIT_FAILURE, _("failed to allocate output line"));
 
 	/* description column */
-	scols_line_set_data(ln, 0, txt);
+	if (txt && scols_line_set_data(ln, 0, txt))
+		err(EXIT_FAILURE, _("failed to add output data"));
 
 	/* data column */
 	va_start(args, fmt);
@@ -1925,6 +1932,8 @@ static int get_cache_full_size(struct lscpu_desc *desc,
 	/* Correction for CPU threads */
 	if (desc->nthreads > desc->ncores)
 		nshares /= (desc->nthreads / desc->ncores);
+	if (nshares < 1)
+		nshares = 1;
 
 	*res = (desc->ncores / nshares) * ca->size;
 	return 0;
@@ -2117,7 +2126,7 @@ print_summary(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 				tmp = size_to_human_string(
 					SIZE_SUFFIX_3LETTER | SIZE_SUFFIX_SPACE,
 					sz);
-			snprintf(buf, sizeof(buf), _("%s cache: "), ca->name);
+			snprintf(buf, sizeof(buf), _("%s cache:"), ca->name);
 			add_summary_s(tb, buf, tmp);
 			free(tmp);
 		}
@@ -2135,7 +2144,7 @@ print_summary(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 				tmp = size_to_human_string(
 					SIZE_SUFFIX_3LETTER | SIZE_SUFFIX_SPACE,
 					ca->size);
-			snprintf(buf, sizeof(buf), _("%s cache: "), ca->name);
+			snprintf(buf, sizeof(buf), _("%s cache:"), ca->name);
 			add_summary_s(tb, buf, tmp);
 			free(tmp);
 		}
@@ -2154,7 +2163,7 @@ print_summary(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 
 	if (desc->vuls) {
 		for (i = 0; i < desc->nvuls; i++) {
-			snprintf(buf, sizeof(buf), ("Vulnerability %s: "), desc->vuls[i].name);
+			snprintf(buf, sizeof(buf), ("Vulnerability %s:"), desc->vuls[i].name);
 			add_summary_s(tb, buf, desc->vuls[i].text);
 		}
 	}
