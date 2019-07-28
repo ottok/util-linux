@@ -5,6 +5,7 @@ util-linux (2.34-0.1) UNRELEASED; urgency=medium
   * Do not ship new hardlink tool, would conflict with existing
     hardlink package.
   * Update symbol files.
+  * Bump Standards-Version to 4.4.0
 
  -- Chris Hofstaedtler <zeha@debian.org>  Sun, 28 Jul 2019 14:40:02 +0000
 
