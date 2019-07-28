@@ -1,4 +1,4 @@
-util-linux (2.34-0.1) UNRELEASED; urgency=medium
+util-linux (2.34-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
   * New upstream release. (Closes: #931613)
@@ -7,7 +7,7 @@ util-linux (2.34-0.1) UNRELEASED; urgency=medium
   * Update symbol files.
   * Bump Standards-Version to 4.4.0
 
- -- Chris Hofstaedtler <zeha@debian.org>  Sun, 28 Jul 2019 14:40:02 +0000
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 28 Jul 2019 15:14:02 +0000
 
 util-linux (2.33.1-0.1) unstable; urgency=medium
 
