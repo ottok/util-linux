@@ -16,6 +16,7 @@
 #include "fileutils.h"
 #include "all-io.h"
 #include "debug.h"
+#include "strutils.h"
 
 static void sysfs_blkdev_deinit_path(struct path_cxt *pc);
 static int  sysfs_blkdev_enoent_redirect(struct path_cxt *pc, const char *path, int *dirfd);
@@ -119,7 +120,7 @@ static void sysfs_blkdev_deinit_path(struct path_cxt *pc)
 	if (!blk)
 		return;
 
-	ul_ref_path(blk->parent);
+	ul_unref_path(blk->parent);
 	free(blk);
 
 	ul_path_set_dialect(pc, NULL, NULL);
@@ -198,21 +199,6 @@ char *sysfs_blkdev_get_name(struct path_cxt *pc, char *buf, size_t bufsiz)
 	memcpy(buf, name, sz + 1);
 	sysfs_devname_sys_to_dev(buf);
 	return buf;
-}
-
-static struct dirent *xreaddir(DIR *dp)
-{
-	struct dirent *d;
-
-	while ((d = readdir(dp))) {
-		if (!strcmp(d->d_name, ".") ||
-		    !strcmp(d->d_name, ".."))
-			continue;
-
-		/* blacklist here? */
-		break;
-	}
-	return d;
 }
 
 int sysfs_blkdev_is_partition_dirent(DIR *dir, struct dirent *d, const char *parent_name)
@@ -504,10 +490,8 @@ static int get_dm_wholedisk(struct path_cxt *pc, char *diskname,
     if (!name)
         return -1;
 
-    if (diskname && len) {
-        strncpy(diskname, name, len);
-        diskname[len - 1] = '\0';
-    }
+    if (diskname && len)
+        xstrncpy(diskname, name, len);
 
     if (diskdevno) {
         *diskdevno = __sysfs_devname_to_devno(ul_path_get_prefix(pc), name, NULL);
@@ -594,10 +578,8 @@ int sysfs_blkdev_get_wholedisk(	struct path_cxt *pc,
             goto err;
 
 	sysfs_devname_sys_to_dev(name);
-        if (diskname && len) {
-            strncpy(diskname, name, len);
-            diskname[len - 1] = '\0';
-        }
+        if (diskname && len)
+            xstrncpy(diskname, name, len);
 
         if (diskdevno) {
             *diskdevno = __sysfs_devname_to_devno(ul_path_get_prefix(pc), name, NULL);
@@ -999,6 +981,20 @@ char *sysfs_devno_to_devname(dev_t devno, char *buf, size_t bufsiz)
 	return res;
 }
 
+int sysfs_devno_count_partitions(dev_t devno)
+{
+	struct path_cxt *pc = ul_new_sysfs_path(devno, NULL, NULL);
+	int n = 0;
+
+	if (pc) {
+		char buf[PATH_MAX + 1];
+		char *name = sysfs_blkdev_get_name(pc, buf, sizeof(buf));
+
+		n = sysfs_blkdev_count_partitions(pc, name);
+		ul_unref_path(pc);
+	}
+	return n;
+}
 
 
 #ifdef TEST_PROGRAM_SYSFS

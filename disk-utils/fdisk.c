@@ -397,7 +397,7 @@ int ask_callback(struct fdisk_context *cxt, struct fdisk_ask *ask,
 		    void *data __attribute__((__unused__)))
 {
 	int rc = 0;
-	char buf[BUFSIZ];
+	char buf[BUFSIZ] = { '\0' };
 
 	assert(cxt);
 	assert(ask);
@@ -466,7 +466,7 @@ int ask_callback(struct fdisk_context *cxt, struct fdisk_ask *ask,
 	return rc;
 }
 
-static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt)
+static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt, int *canceled)
 {
 	const char *q;
 	struct fdisk_label *lb;
@@ -477,20 +477,29 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt)
 	if (!lb)
 		return NULL;
 
+	*canceled = 0;
         q = fdisk_label_has_code_parttypes(lb) ?
 		_("Hex code (type L to list all codes): ") :
 		_("Partition type (type L to list all types): ");
 	do {
-		char buf[256];
+		char buf[256] = { '\0' };
 		int rc = get_user_reply(q, buf, sizeof(buf));
 
-		if (rc)
+		if (rc) {
+			if (rc == -ECANCELED)
+				*canceled = 1;
 			break;
+		}
 
 		if (buf[1] == '\0' && toupper(*buf) == 'L')
 			list_partition_types(cxt);
-		else if (*buf)
-			return fdisk_label_parse_parttype(lb, buf);
+		else if (*buf) {
+			struct fdisk_parttype *t = fdisk_label_parse_parttype(lb, buf);
+
+			if (!t)
+				fdisk_info(cxt, _("Failed to parse '%s' partition type."), buf);
+			return t;
+		}
         } while (1);
 
 	return NULL;
@@ -596,6 +605,7 @@ void change_partition_type(struct fdisk_context *cxt)
 	struct fdisk_parttype *t = NULL;
 	struct fdisk_partition *pa = NULL;
 	const char *old = NULL;
+	int canceled = 0;
 
 	assert(cxt);
 
@@ -611,10 +621,12 @@ void change_partition_type(struct fdisk_context *cxt)
 	old = t ? fdisk_parttype_get_name(t) : _("Unknown");
 
 	do {
-		t = ask_partition_type(cxt);
+		t = ask_partition_type(cxt, &canceled);
+		if (canceled)
+			break;
 	} while (!t);
 
-	if (fdisk_set_partition_type(cxt, i, t) == 0)
+	if (canceled == 0 && t && fdisk_set_partition_type(cxt, i, t) == 0)
 		fdisk_info(cxt,
 			_("Changed type of partition '%s' to '%s'."),
 			old, t ? fdisk_parttype_get_name(t) : _("Unknown"));
@@ -879,7 +891,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	fdisk_init_debug(0);
 	scols_init_debug(0);
@@ -978,8 +990,7 @@ int main(int argc, char **argv)
 			break;
 		case 'V': /* preferred for util-linux */
 		case 'v': /* for backward compatibility only */
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'w':
 			wipemode = wipemode_from_string(optarg);
 			if (wipemode < 0)

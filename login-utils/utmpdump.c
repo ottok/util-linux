@@ -169,6 +169,9 @@ static int follow_by_inotify(FILE *in, const char *filename, FILE *out)
 	size = ftello(in);
 	fclose(in);
 
+	if (size < 0)
+		err(EXIT_FAILURE, _("%s: cannot get file position"), filename);
+
 	wd = inotify_add_watch(fd, filename, EVENTS);
 	if (wd == -1)
 		err(EXIT_FAILURE, _("%s: cannot add inotify watch."), filename);
@@ -334,7 +337,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "fro:hV", longopts, NULL)) != -1) {
 		switch (c) {
@@ -355,10 +358,8 @@ int main(int argc, char **argv)
 
 		case 'h':
 			usage();
-			break;
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}

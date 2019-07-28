@@ -388,6 +388,56 @@ static int prepare_helper_from_options(struct libmnt_context *cxt,
 	return rc;
 }
 
+static int is_fuse_usermount(struct libmnt_context *cxt, int *errsv)
+{
+	struct libmnt_ns *ns_old;
+	const char *type = mnt_fs_get_fstype(cxt->fs);
+	const char *optstr;
+	char *user_id = NULL;
+	size_t sz;
+	uid_t uid;
+	char uidstr[sizeof(stringify_value(ULONG_MAX))];
+
+	*errsv = 0;
+
+	if (!type)
+		return 0;
+
+	if (strcmp(type, "fuse") != 0 &&
+	    strcmp(type, "fuseblk") != 0 &&
+	    strncmp(type, "fuse.", 5) != 0 &&
+	    strncmp(type, "fuseblk.", 8) != 0)
+		return 0;
+
+	/* get user_id= from mount table */
+	optstr = mnt_fs_get_fs_options(cxt->fs);
+	if (!optstr)
+		return 0;
+
+	if (mnt_optstr_get_option(optstr, "user_id", &user_id, &sz) != 0)
+		return 0;
+
+	if (sz == 0 || user_id == NULL)
+		return 0;
+
+	/* get current user */
+	ns_old = mnt_context_switch_origin_ns(cxt);
+	if (!ns_old) {
+		*errsv = -MNT_ERR_NAMESPACE;
+		return 0;
+	}
+
+	uid = getuid();
+
+	if (!mnt_context_switch_ns(cxt, ns_old)) {
+		*errsv = -MNT_ERR_NAMESPACE;
+		return 0;
+	}
+
+	snprintf(uidstr, sizeof(uidstr), "%lu", (unsigned long) uid);
+	return strncmp(user_id, uidstr, sz) == 0;
+}
+
 /*
  * Note that cxt->fs contains relevant mtab entry!
  */
@@ -396,7 +446,7 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 	struct libmnt_table *fstab;
 	unsigned long u_flags = 0;
 	const char *tgt, *src, *optstr;
-	int rc, ok = 0;
+	int rc = 0, ok = 0;
 	struct libmnt_fs *fs;
 
 	assert(cxt);
@@ -423,6 +473,17 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 		if (cxt->helper)
 			return 0;	/* we'll call /sbin/umount.<uhelper> */
 	}
+
+	/*
+	 * Check if this is a fuse mount for the current user,
+	 * if so then unmounting is allowed
+	 */
+	if (is_fuse_usermount(cxt, &rc)) {
+		DBG(CXT, ul_debugobj(cxt, "fuse user mount, umount is allowed"));
+		return 0;
+	}
+	if (rc)
+		return rc;
 
 	/*
 	 * User mounts have to be in /etc/fstab
@@ -513,9 +574,10 @@ static int evaluate_permissions(struct libmnt_context *cxt)
 
 		curr_user = mnt_get_username(getuid());
 
-		if (!mnt_context_switch_ns(cxt, ns_old))
+		if (!mnt_context_switch_ns(cxt, ns_old)) {
+			free(curr_user);
 			return -MNT_ERR_NAMESPACE;
-
+		}
 		if (!curr_user) {
 			DBG(CXT, ul_debugobj(cxt, "umount %s: cannot "
 				"convert %d to username", tgt, getuid()));

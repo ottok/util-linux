@@ -273,6 +273,7 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"autofs",
 		"bdev",
 		"binfmt_misc",
+		"bpf",
 		"cgroup",
 		"cgroup2",
 		"configfs",
@@ -283,7 +284,14 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"devtmpfs",
 		"dlmfs",
 		"efivarfs",
-		"fuse.gvfs-fuse-daemon",
+		"fuse", /* Fallback name of fuse used by many poorly written drivers. */
+		"fuse.archivemount", /* Not a true pseudofs (has source), but source is not reported. */
+		"fuse.dumpfs", /* In fact, it is a netfs, but source is not reported. */
+		"fuse.encfs", /* Not a true pseudofs (has source), but source is not reported. */
+		"fuse.gvfs-fuse-daemon", /* Old name, not used by gvfs any more. */
+		"fuse.gvfsd-fuse",
+		"fuse.rofiles-fuse",
+		"fuse.xwmfs",
 		"fusectl",
 		"hugetlbfs",
 		"mqueue",
@@ -298,6 +306,7 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"rootfs",
 		"rpc_pipefs",
 		"securityfs",
+		"selinuxfs",
 		"sockfs",
 		"spufs",
 		"sysfs",
@@ -323,6 +332,8 @@ int mnt_fstype_is_netfs(const char *type)
 	    strncmp(type,"nfs", 3) == 0 ||
 	    strcmp(type, "afs")    == 0 ||
 	    strcmp(type, "ncpfs")  == 0 ||
+	    strcmp(type, "fuse.curlftpfs") == 0 ||
+	    strcmp(type, "fuse.sshfs") == 0 ||
 	    strncmp(type,"9p", 2)  == 0)
 		return 1;
 	return 0;
@@ -904,7 +915,7 @@ int mnt_open_uniq_filename(const char *filename, char **name)
  * should be canonicalized. The returned pointer should be freed by the caller.
  *
  * WARNING: the function compares st_dev of the @path elements. This traditional
- * way maybe be insufficient on filesystems like Linux "overlay". See also
+ * way may be insufficient on filesystems like Linux "overlay". See also
  * mnt_table_find_target().
  *
  * Returns: allocated string with the target of the mounted device or NULL on error
@@ -1037,13 +1048,20 @@ char *mnt_get_kernel_cmdline_option(const char *name)
 	return res;
 }
 
-/*
+/**
+ * mnt_guess_system_root:
+ * @devno: device number or zero
+ * @cache: paths cache or NULL
+ * @path: returns allocated path
+ *
  * Converts @devno to the real device name if devno major number is greater
  * than zero, otherwise use root= kernel cmdline option to get device name.
  *
  * The function uses /sys to convert devno to device name.
  *
  * Returns: 0 = success, 1 = not found, <0 = error
+ *
+ * Since: 2.34
  */
 int mnt_guess_system_root(dev_t devno, struct libmnt_cache *cache, char **path)
 {

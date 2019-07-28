@@ -60,6 +60,7 @@ struct fstrim_control {
 	struct fstrim_range range;
 
 	unsigned int verbose : 1,
+		     quiet   : 1,
 		     fstab   : 1,
 		     dryrun : 1;
 };
@@ -67,14 +68,20 @@ struct fstrim_control {
 /* returns: 0 = success, 1 = unsupported, < 0 = error */
 static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const char *devname)
 {
-	int fd, rc;
+	int fd = -1, rc;
 	struct stat sb;
 	struct fstrim_range range;
+	char *rpath = realpath(path, NULL);
 
+	if (!rpath) {
+		warn(_("cannot get realpath: %s"), path);
+		rc = -errno;
+		goto done;
+	}
 	/* kernel modifies the range */
 	memcpy(&range, &ctl->range, sizeof(range));
 
-	fd = open(path, O_RDONLY);
+	fd = open(rpath, O_RDONLY);
 	if (fd < 0) {
 		warn(_("cannot open %s"), path);
 		rc = -errno;
@@ -102,9 +109,16 @@ static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const
 
 	errno = 0;
 	if (ioctl(fd, FITRIM, &range)) {
-		rc = errno == EOPNOTSUPP || errno == ENOTTY ? 1 : -errno;
-
-		if (rc != 1)
+		switch (errno) {
+		case EBADF:
+		case ENOTTY:
+		case EOPNOTSUPP:
+			rc = 1;
+			break;
+		default:
+			rc = -errno;
+		}
+		if (rc < 0)
 			warn(_("%s: FITRIM ioctl failed"), path);
 		goto done;
 	}
@@ -129,6 +143,7 @@ static int fstrim_filesystem(struct fstrim_control *ctl, const char *path, const
 done:
 	if (fd >= 0)
 		close(fd);
+	free(rpath);
 	return rc;
 }
 
@@ -137,7 +152,7 @@ static int has_discard(const char *devname, struct path_cxt **wholedisk)
 	struct path_cxt *pc = NULL;
 	uint64_t dg = 0;
 	dev_t disk = 0, dev;
-	int rc = -1;
+	int rc = -1, rdonly = 0;
 
 	dev = sysfs_devname_to_devno(devname);
 	if (!dev)
@@ -175,9 +190,11 @@ static int has_discard(const char *devname, struct path_cxt **wholedisk)
 	}
 
 	rc = ul_path_read_u64(pc, &dg, "queue/discard_granularity");
+	if (!rc)
+		ul_path_scanf(pc, "ro", "%d", &rdonly);
 
 	ul_unref_path(pc);
-	return rc == 0 && dg > 0;
+	return rc == 0 && dg > 0 && rdonly == 0;
 fail:
 	ul_unref_path(pc);
 	return 1;
@@ -224,10 +241,6 @@ static int fstrim_all(struct fstrim_control *ctl)
 	mnt_init_debug(0);
 	ul_path_init_debug();
 
-	itr = mnt_new_iter(MNT_ITER_BACKWARD);
-	if (!itr)
-		err(MNT_EX_FAIL, _("failed to initialize libmount iterator"));
-
 	if (ctl->fstab)
 		filename = mnt_get_fstab_path();
 
@@ -238,35 +251,72 @@ static int fstrim_all(struct fstrim_control *ctl)
 	/* de-duplicate by mountpoints */
 	mnt_table_uniq_fs(tab, 0, uniq_fs_target_cmp);
 
-	/* de-duplicate by source */
-	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
-
 	if (ctl->fstab) {
+		char *rootdev = NULL;
+
 		cache = mnt_new_cache();
 		if (!cache)
 			err(MNT_EX_FAIL, _("failed to initialize libmount cache"));
+
+		/* Make sure we trim also root FS on --fstab */
+		if (mnt_table_find_target(tab, "/", MNT_ITER_FORWARD) == NULL &&
+		    mnt_guess_system_root(0, cache, &rootdev) == 0) {
+
+			fs = mnt_new_fs();
+			if (!fs)
+				err(MNT_EX_FAIL, _("failed to allocate FS handler"));
+			mnt_fs_set_target(fs, "/");
+			mnt_fs_set_source(fs, rootdev);
+			mnt_fs_set_fstype(fs, "auto");
+			mnt_table_add_fs(tab, fs);
+			mnt_unref_fs(fs);
+			fs = NULL;
+		}
 	}
 
+	itr = mnt_new_iter(MNT_ITER_BACKWARD);
+	if (!itr)
+		err(MNT_EX_FAIL, _("failed to initialize libmount iterator"));
+
+	/* Remove useless entries and canonicalize the table */
+	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
+		const char *src = mnt_fs_get_srcpath(fs),
+			   *tgt = mnt_fs_get_target(fs);
+
+		if (!tgt || mnt_fs_is_pseudofs(fs) || mnt_fs_is_netfs(fs)) {
+			mnt_table_remove_fs(tab, fs);
+			continue;
+		}
+
+		/* convert LABEL= (etc.) from fstab to paths */
+		if (!src && cache) {
+			const char *spec = mnt_fs_get_source(fs);
+
+			if (!spec) {
+				mnt_table_remove_fs(tab, fs);
+				continue;
+			}
+			src = mnt_resolve_spec(spec, cache);
+			mnt_fs_set_source(fs, src);
+		}
+
+		if (!src || *src != '/') {
+			mnt_table_remove_fs(tab, fs);
+			continue;
+		}
+	}
+
+	/* de-duplicate by source */
+	mnt_table_uniq_fs(tab, MNT_UNIQ_FORWARD, uniq_fs_source_cmp);
+
+	mnt_reset_iter(itr, MNT_ITER_BACKWARD);
+
+	/* Do FITRIM */
 	while (mnt_table_next_fs(tab, itr, &fs) == 0) {
 		const char *src = mnt_fs_get_srcpath(fs),
 			   *tgt = mnt_fs_get_target(fs);
 		char *path;
 		int rc = 1;
-
-		if (!tgt || mnt_fs_is_pseudofs(fs) || mnt_fs_is_netfs(fs))
-			continue;
-
-		if (!src && cache) {
-			/* convert LABEL= (etc.) from fstab to paths */
-			const char *spec = mnt_fs_get_source(fs);
-
-			if (!spec)
-				continue;
-			src = mnt_resolve_spec(spec, cache);
-		}
-
-		if (!src || *src != '/')
-			continue;
 
 		/* Is it really accessible mountpoint? Not all mountpoints are
 		 * accessible (maybe over mounted by another filesystem) */
@@ -277,6 +327,14 @@ static int fstrim_all(struct fstrim_control *ctl)
 		if (rc)
 			continue;	/* overlaying mount */
 
+		/* FITRIM on read-only filesystem can fail, and it can fail */
+		if (access(path, W_OK) != 0) {
+			if (errno == EROFS)
+				continue;
+			if (errno == EACCES)
+				continue;
+		}
+
 		if (!has_discard(src, &wholedisk))
 			continue;
 		cnt++;
@@ -284,18 +342,21 @@ static int fstrim_all(struct fstrim_control *ctl)
 		/*
 		 * We're able to detect that the device supports discard, but
 		 * things also depend on filesystem or device mapping, for
-		 * example vfat or LUKS (by default) does not support FSTRIM.
+		 * example LUKS (by default) does not support FSTRIM.
 		 *
 		 * This is reason why we ignore EOPNOTSUPP and ENOTTY errors
 		 * from discard ioctl.
 		 */
-		if (fstrim_filesystem(ctl, tgt, src) < 0)
+		rc = fstrim_filesystem(ctl, tgt, src);
+		if (rc < 0)
 		       cnt_err++;
+		else if (rc == 1 && !ctl->quiet)
+			warnx(_("%s: the discard operation is not supported"), tgt);
 	}
+	mnt_free_iter(itr);
 
 	ul_unref_path(wholedisk);
 	mnt_unref_table(tab);
-	mnt_free_iter(itr);
 	mnt_unref_cache(cache);
 
 	if (cnt && cnt == cnt_err)
@@ -323,6 +384,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -l, --length <num>  the number of bytes to discard\n"), out);
 	fputs(_(" -m, --minimum <num> the minimum extent length to discard\n"), out);
 	fputs(_(" -v, --verbose       print number of discarded bytes\n"), out);
+	fputs(_("     --quiet         suppress error messages\n"), out);
 	fputs(_(" -n, --dry-run       does everything, but trim\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
@@ -338,6 +400,9 @@ int main(int argc, char **argv)
 	struct fstrim_control ctl = {
 			.range = { .len = ULLONG_MAX }
 	};
+	enum {
+		OPT_QUIET = CHAR_MAX + 1
+	};
 
 	static const struct option longopts[] = {
 	    { "all",       no_argument,       NULL, 'a' },
@@ -348,6 +413,7 @@ int main(int argc, char **argv)
 	    { "length",    required_argument, NULL, 'l' },
 	    { "minimum",   required_argument, NULL, 'm' },
 	    { "verbose",   no_argument,       NULL, 'v' },
+	    { "quiet",     no_argument,       NULL, OPT_QUIET },
 	    { "dry-run",   no_argument,       NULL, 'n' },
 	    { NULL, 0, NULL, 0 }
 	};
@@ -355,7 +421,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "Aahl:m:no:Vv", longopts, NULL)) != -1) {
 		switch(c) {
@@ -368,12 +434,6 @@ int main(int argc, char **argv)
 		case 'n':
 			ctl.dryrun = 1;
 			break;
-		case 'h':
-			usage();
-			break;
-		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
 		case 'l':
 			ctl.range.len = strtosize_or_err(optarg,
 					_("failed to parse length"));
@@ -389,9 +449,15 @@ int main(int argc, char **argv)
 		case 'v':
 			ctl.verbose = 1;
 			break;
+		case OPT_QUIET:
+			ctl.quiet = 1;
+			break;
+		case 'h':
+			usage();
+		case 'V':
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
-			break;
 		}
 	}
 
@@ -410,7 +476,7 @@ int main(int argc, char **argv)
 		return fstrim_all(&ctl);	/* MNT_EX_* codes */
 
 	rc = fstrim_filesystem(&ctl, path, NULL);
-	if (rc == 1)
+	if (rc == 1 && !ctl.quiet)
 		warnx(_("%s: the discard operation is not supported"), path);
 
 	return rc == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

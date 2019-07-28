@@ -284,7 +284,11 @@ static struct fdisk_parttype gpt_parttypes[] =
 	DEF_GUID("CEF5A9AD-73BC-4601-89F3-CDEEEEE321A1", N_("QNX6 file system")),
 
 	/* Plan 9 */
-	DEF_GUID("C91818F9-8025-47AF-89D2-F030D7000C2C", N_("Plan 9 partition"))
+	DEF_GUID("C91818F9-8025-47AF-89D2-F030D7000C2C", N_("Plan 9 partition")),
+
+	/* HiFive Unleased bootloaders */
+	DEF_GUID("5B193300-FC78-40CD-8002-E86C45580B47", N_("HiFive Unleashed FSBL")),
+	DEF_GUID("2E54B353-1271-4842-806F-E436D6AF6985", N_("HiFive Unleashed BBL")),
 };
 
 #define alignment_required(_x)  ((_x)->grain != (_x)->sector_size)
@@ -2744,8 +2748,13 @@ int fdisk_gpt_set_npartitions(struct fdisk_context *cxt, uint32_t entries)
 	/* calculate the size (bytes) of the entries array */
 	rc = gpt_calculate_sizeof_ents(gpt->pheader, entries, &new_size);
 	if (rc) {
-		fdisk_warnx(cxt, _("The number of the partition has to be smaller than %zu."),
-				UINT32_MAX / le32_to_cpu(gpt->pheader->sizeof_partition_entry));
+		uint32_t entry_size = le32_to_cpu(gpt->pheader->sizeof_partition_entry);
+
+		if (entry_size == 0)
+			fdisk_warnx(cxt, _("The partition entry size is zero."));
+		else
+			fdisk_warnx(cxt, _("The number of the partition has to be smaller than %zu."),
+				UINT32_MAX / entry_size);
 		return rc;
 	}
 

@@ -846,7 +846,8 @@ int fdisk_reread_changes(struct fdisk_context *cxt, struct fdisk_table *org)
 			break;
 		case FDISK_DIFF_MOVED:
 			rc = add_to_partitions_array(&rem, pa, &nrems, nparts);
-			rc = add_to_partitions_array(&add, pa, &nadds, nparts);
+			if (!rc)
+				rc = add_to_partitions_array(&add, pa, &nadds, nparts);
 			break;
 		}
 		if (rc != 0)
@@ -1230,6 +1231,11 @@ fdisk_sector_t fdisk_get_first_lba(struct fdisk_context *cxt)
  * partition tables like GPT protective MBR or hybrid partition tables on
  * bootable media where the first partition may start on very crazy offsets.
  *
+ * Note that this function changes only runtime information. It does not update
+ * any range in on-disk partition table. For example GPT Header contains First
+ * and Last usable LBA fields. These fields are not updated by this function.
+ * Be careful.
+ *
  * Returns: 0 on success, <0 on error.
  */
 fdisk_sector_t fdisk_set_first_lba(struct fdisk_context *cxt, fdisk_sector_t lba)
@@ -1338,6 +1344,8 @@ const char *fdisk_get_devname(struct fdisk_context *cxt)
  * @cxt: context
  *
  * Returns: device number or zero for non-block devices
+ *
+ * Since: 2.33
  */
 dev_t fdisk_get_devno(struct fdisk_context *cxt)
 {
@@ -1350,6 +1358,8 @@ dev_t fdisk_get_devno(struct fdisk_context *cxt)
  * @cxt: context
  *
  * Returns: device model string or NULL.
+ *
+ * Since: 2.33
  */
 #ifdef __linux__
 const char *fdisk_get_devmodel(struct fdisk_context *cxt)

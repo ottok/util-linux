@@ -219,8 +219,11 @@ static void dig_holes(int fd, off_t file_off, off_t len)
 		if (file_end && end > file_end)
 			end = file_end;
 
+		if (off < 0 || end < 0)
+			break;
+
 #if defined(POSIX_FADV_SEQUENTIAL) && defined(HAVE_POSIX_FADVISE)
-		posix_fadvise(fd, off, end, POSIX_FADV_SEQUENTIAL);
+		(void) posix_fadvise(fd, off, end, POSIX_FADV_SEQUENTIAL);
 #endif
 		/*
 		 * Dig holes in the area
@@ -251,7 +254,7 @@ static void dig_holes(int fd, off_t file_off, off_t len)
 				size_t clen = off - cache_start;
 
 				clen = (clen / cachesz) * cachesz;
-				posix_fadvise(fd, cache_start, clen, POSIX_FADV_DONTNEED);
+				(void) posix_fadvise(fd, cache_start, clen, POSIX_FADV_DONTNEED);
 				cache_start = cache_start + clen;
 			}
 #endif
@@ -312,7 +315,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "hvVncpdizxl:o:", longopts, NULL))
 			!= -1) {
@@ -320,9 +323,6 @@ int main(int argc, char **argv)
 		err_exclusive_options(c, longopts, excl, excl_st);
 
 		switch(c) {
-		case 'h':
-			usage();
-			break;
 		case 'c':
 			mode |= FALLOC_FL_COLLAPSE_RANGE;
 			break;
@@ -357,9 +357,11 @@ int main(int argc, char **argv)
 		case 'v':
 			verbose++;
 			break;
+
+		case 'h':
+			usage();
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}

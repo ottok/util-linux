@@ -307,7 +307,7 @@ static struct wipe_desc *get_desc_for_probe(struct wipe_control *ctl,
 					    loff_t *offset,
 					    size_t *len)
 {
-	const char *off, *type, *mag, *p, *usage = NULL;
+	const char *off, *type, *mag, *p, *use = NULL;
 	struct wipe_desc *wp;
 	int rc, ispt = 0;
 
@@ -328,7 +328,7 @@ static struct wipe_desc *get_desc_for_probe(struct wipe_control *ctl,
 			rc = blkid_probe_lookup_value(pr, "PTMAGIC", &mag, len);
 		if (rc)
 			return NULL;
-		usage = N_("partition-table");
+		use = N_("partition-table");
 		ispt = 1;
 	} else
 		return NULL;
@@ -357,8 +357,8 @@ static struct wipe_desc *get_desc_for_probe(struct wipe_control *ctl,
 	if (!wp)
 		return NULL;
 
-	if (usage || blkid_probe_lookup_value(pr, "USAGE", &usage, NULL) == 0)
-		wp->usage = xstrdup(usage);
+	if (use || blkid_probe_lookup_value(pr, "USAGE", &use, NULL) == 0)
+		wp->usage = xstrdup(use);
 
 	wp->type = xstrdup(type);
 	wp->on_disk = 1;
@@ -700,7 +700,7 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "abfhiJnO:o:pqt:V", longopts, NULL)) != -1) {
 
@@ -715,9 +715,6 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			ctl.force = 1;
-			break;
-		case 'h':
-			usage();
 			break;
 		case 'J':
 			ctl.json = 1;
@@ -745,9 +742,11 @@ main(int argc, char **argv)
 		case 't':
 			ctl.type_pattern = optarg;
 			break;
+
+		case 'h':
+			usage();
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}

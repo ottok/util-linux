@@ -120,7 +120,6 @@ extern int mnt_get_filesystems(char ***filesystems, const char *pattern);
 extern void mnt_free_filesystems(char **filesystems);
 
 extern char *mnt_get_kernel_cmdline_option(const char *name);
-extern int mnt_guess_system_root(dev_t devno, struct libmnt_cache *cache, char **path);
 extern int mnt_stat_mountpoint(const char *target, struct stat *st);
 
 /* tab.c */
@@ -171,6 +170,7 @@ struct libmnt_iter {
  */
 struct libmnt_fs {
 	struct list_head ents;
+	struct libmnt_table *tab;
 
 	int		refcount;	/* reference counter */
 	int		id;		/* mountinfo[1]: ID */
@@ -404,6 +404,7 @@ extern int __mnt_fs_set_fstype_ptr(struct libmnt_fs *fs, char *fstype)
 			__attribute__((nonnull(1)));
 
 /* context.c */
+extern struct libmnt_context *mnt_copy_context(struct libmnt_context *o);
 extern int mnt_context_mtab_writable(struct libmnt_context *cxt);
 extern int mnt_context_utab_writable(struct libmnt_context *cxt);
 extern const char *mnt_context_get_writable_tabpath(struct libmnt_context *cxt);

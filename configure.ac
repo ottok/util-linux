@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="09-Jan-2019"
+LIBBLKID_DATE="14-Jun-2019"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -155,9 +155,9 @@ AC_ARG_ENABLE([asan],
 )
 AS_IF([test "x$enable_asan" = xyes], [
   UL_WARN_ADD([-fsanitize=address])
+  ASAN_LDFLAGS="-fsanitize=address"
 ])
-
-
+AC_SUBST([ASAN_LDFLAGS])
 
 dnl libtool-2
 LT_INIT
@@ -172,6 +172,7 @@ m4_ifndef([PKG_PROG_PKG_CONFIG],
     environment variable AL_OPTS="-I/other/macro/dir" before running
     ./autogen.sh or autoreconf again. Make sure pkg-config is installed.])])
 PKG_PROG_PKG_CONFIG
+PKG_INSTALLDIR(['${usrlib_execdir}/pkgconfig'])
 
 GTK_DOC_CHECK([1.10])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
@@ -544,17 +545,23 @@ AC_CHECK_FUNCS([timer_create],
 	[AC_CHECK_LIB([rt], [timer_create], [
 		have_timer="yes"
 		REALTIME_LIBS="-lrt"
+		AC_DEFINE_UNQUOTED([HAVE_TIMER_CREATE], [1], [Define if timer_create exist in -lrt])
 	],[
 		AC_SEARCH_LIBS([timer_create], [rt], [
 			AC_MSG_RESULT(yes)
 			have_timer="yes"
 			REALTIME_LIBS="-lrt -lpthread"
+			AC_DEFINE_UNQUOTED([HAVE_TIMER_CREATE], [1], [Define if timer_create exist in -lrt -lpthread])
 		],[], [-lpthread]
 		)
-		])]
+	])]
 )
 
 AC_SUBST([REALTIME_LIBS])
+
+AS_IF([test x"$have_timer" = xno], [
+       AC_CHECK_FUNCS([setitimer], [have_timer="yes"], [have_timer="no"])
+])
 
 
 AC_CHECK_LIB([rtas], [rtas_get_sysparm], [
@@ -792,7 +799,10 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #endif
 ]], [[
 char *c = crypt("abc","pw");
-]])],[],[
+]])],[
+  have_libcrypt=no
+  have_crypt=yes
+],[
   LIBS="$LIBS -lcrypt"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   #ifdef HAVE_CRYPT_H
@@ -1399,6 +1409,18 @@ UL_REQUIRES_HAVE([setpriv], [linux_securebits_h], [securebits.h header file])
 UL_REQUIRES_HAVE([setpriv], [cap_ng], [libcap-ng library])
 AM_CONDITIONAL([BUILD_SETPRIV], [test "x$build_setpriv" = xyes])
 
+PKG_CHECK_MODULES([PCRE], [libpcre2-8], [have_pcre=yes], [have_pcre=no])
+AS_IF([test "x$have_pcre" = xyes ], [
+    AC_DEFINE([HAVE_PCRE], [1], [Define if libpcre2 is available])
+])
+AM_CONDITIONAL([HAVE_PCRE], [test "x$have_pcre" = xyes])
+
+AC_ARG_ENABLE([hardlink],
+  AS_HELP_STRING([--disable-hardlink], [do not build hardlink]),
+  [], [UL_DEFAULT_ENABLE([hardlink], [check])]
+)
+UL_BUILD_INIT([hardlink])
+AM_CONDITIONAL([BUILD_HARDLINK], [test "x$build_hardlink" = xyes])
 
 AC_ARG_ENABLE([eject],
   AS_HELP_STRING([--disable-eject], [do not build eject]),
@@ -1426,7 +1448,7 @@ AS_IF([test "x$have_futimens" = xyes -a "x$have_inotify_init1" = xyes ], [
 
 
 AC_ARG_ENABLE([plymouth_support],
-  AS_HELP_STRING([--disable-plymouth_support], [don not care about plymouth in sylogin(8) and agetty(8)]),
+  AS_HELP_STRING([--disable-plymouth_support], [do not care about plymouth in sylogin(8) and agetty(8)]),
   [], [enable_plymouth_support=check]
 )
 UL_BUILD_INIT([plymouth_support])
@@ -1654,7 +1676,7 @@ AM_CONDITIONAL([BUILD_PIVOT_ROOT], [test "x$build_pivot_root" = xyes])
 
 
 UL_BUILD_INIT([flock], [check])
-UL_REQUIRES_HAVE([flock], [timer], [timer_create function])
+UL_REQUIRES_HAVE([flock], [timer], [timer_create/setitimer function])
 AM_CONDITIONAL([BUILD_FLOCK], [test "x$build_flock" = xyes])
 
 
@@ -2431,6 +2453,7 @@ AC_MSG_RESULT([
 	suid cflags:       ${SUID_CFLAGS}
 	ldflags:           ${LDFLAGS}
 	suid ldflags:      ${SUID_LDFLAGS}
+	ASAN enabled:      ${enable_asan}
 
 	Python:            ${PYTHON}
 	Python version:    ${PYTHON_VERSION}

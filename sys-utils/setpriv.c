@@ -700,8 +700,10 @@ static void do_reset_environ(struct passwd *pw)
 #else
 	environ = NULL;
 #endif
-	if (term)
+	if (term) {
 		xsetenv("TERM", term, 1);
+		free(term);
+	}
 
 	if (pw->pw_shell && *pw->pw_shell)
 		xsetenv("SHELL", pw->pw_shell, 1);
@@ -837,7 +839,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	memset(&opts, 0, sizeof(opts));
 
@@ -971,11 +973,11 @@ int main(int argc, char **argv)
 		case RESET_ENV:
 			opts.reset_env = 1;
 			break;
+
 		case 'h':
 			usage();
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}

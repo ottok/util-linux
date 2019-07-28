@@ -15,8 +15,7 @@
 #endif
 
 /* used by kernel in /proc (e.g. /proc/swaps) for deleted files */
-#define PATH_DELETED_SUFFIX	"\\040(deleted)"
-#define PATH_DELETED_SUFFIX_SZ	(sizeof(PATH_DELETED_SUFFIX) - 1)
+#define PATH_DELETED_SUFFIX	" (deleted)"
 
 /* DEFPATHs from <paths.h> don't include /usr/local */
 #undef _PATH_DEFPATH
@@ -53,6 +52,7 @@
 # define _PATH_LOGIN		"/bin/login"
 #endif
 #define _PATH_SHUTDOWN		"/sbin/shutdown"
+#define _PATH_POWEROFF		"/sbin/poweroff"
 
 #define _PATH_TERMCOLORS_DIRNAME "terminal-colors.d"
 #define _PATH_TERMCOLORS_DIR	"/etc/" _PATH_TERMCOLORS_DIRNAME
@@ -94,6 +94,8 @@
 #define _PATH_PROC_UIDMAP	"/proc/self/uid_map"
 #define _PATH_PROC_GIDMAP	"/proc/self/gid_map"
 #define _PATH_PROC_SETGROUPS	"/proc/self/setgroups"
+
+#define _PATH_PROC_FDDIR	"/proc/self/fd"
 
 #define _PATH_PROC_ATTR_CURRENT	"/proc/self/attr/current"
 #define _PATH_PROC_ATTR_EXEC	"/proc/self/attr/exec"

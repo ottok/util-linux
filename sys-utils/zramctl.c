@@ -163,10 +163,8 @@ static void zram_set_devname(struct zram *z, const char *devname, size_t n)
 
 	if (!devname)
 		snprintf(z->devname, sizeof(z->devname), "/dev/zram%zu", n);
-	else {
-		strncpy(z->devname, devname, sizeof(z->devname));
-		z->devname[sizeof(z->devname) - 1] = '\0';
-	}
+	else
+		xstrncpy(z->devname, devname, sizeof(z->devname));
 
 	DBG(fprintf(stderr, "set devname: %s", z->devname));
 	ul_unref_path(z->sysfs);
@@ -616,7 +614,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "a:bfho:nrs:t:V", longopts, NULL)) != -1) {
 
@@ -659,9 +657,9 @@ int main(int argc, char **argv)
 		case 'n':
 			no_headings = 1;
 			break;
+
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'h':
 			usage();
 		default:

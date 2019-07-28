@@ -311,9 +311,7 @@ int blkid_probe_chain_save_values(blkid_probe pr, struct blkid_chain *chn,
 		if (v->chain != chn)
 			continue;
 
-		list_del(&v->prvals);
-		INIT_LIST_HEAD(&v->prvals);
-
+		list_del_init(&v->prvals);
 		list_add_tail(&v->prvals, vals);
 	}
 	return 0;
@@ -625,7 +623,7 @@ static int hide_buffer(blkid_probe pr, uint64_t off, uint64_t len)
 
 			data = real_off ? x->data + (real_off - x->off) : x->data;
 
-			DBG(BUFFER, ul_debug("\thidding: off=%"PRIu64" len=%"PRIu64,
+			DBG(BUFFER, ul_debug("\thiding: off=%"PRIu64" len=%"PRIu64,
 						off, len));
 			memset(data, 0, len);
 			ct++;
@@ -1163,7 +1161,7 @@ int blkid_do_probe(blkid_probe pr)
  *  </programlisting>
  * </example>
  *
- * See also blkid_probe_step_back() if you cannot use this build-in wipe
+ * See also blkid_probe_step_back() if you cannot use this built-in wipe
  * function, but you want to use libblkid probing as a source for wiping.
  *
  * Returns: 0 on success, and -1 in case of error.
@@ -1886,13 +1884,6 @@ struct blkid_prval *__blkid_probe_lookup_value(blkid_probe pr, const char *name)
 
 /* converts DCE UUID (uuid[16]) to human readable string
  * - the @len should be always 37 */
-#ifdef HAVE_LIBUUID
-void blkid_unparse_uuid(const unsigned char *uuid, char *str,
-			size_t len __attribute__((__unused__)))
-{
-	uuid_unparse(uuid, str);
-}
-#else
 void blkid_unparse_uuid(const unsigned char *uuid, char *str, size_t len)
 {
 	snprintf(str, len,
@@ -1903,7 +1894,6 @@ void blkid_unparse_uuid(const unsigned char *uuid, char *str, size_t len)
 		uuid[8], uuid[9],
 		uuid[10], uuid[11], uuid[12], uuid[13], uuid[14],uuid[15]);
 }
-#endif
 
 /* like uuid_is_null() from libuuid, but works with arbitrary size of UUID */
 int blkid_uuid_is_empty(const unsigned char *buf, size_t len)

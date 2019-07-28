@@ -135,6 +135,7 @@ mnt_context_do_mount
 mnt_context_finalize_mount
 mnt_context_mount
 mnt_context_next_mount
+mnt_context_next_remount
 mnt_context_prepare_mount
 <SUBSECTION>
 MNT_MS_COMMENT
@@ -226,6 +227,7 @@ mnt_fs_get_source
 mnt_fs_get_srcpath
 mnt_fs_get_swaptype
 mnt_fs_get_tag
+mnt_fs_get_table
 mnt_fs_get_target
 mnt_fs_get_tid
 mnt_fs_get_usedsize
@@ -328,6 +330,7 @@ mnt_table_append_intro_comment
 mnt_table_append_trailing_comment
 mnt_table_enable_comments
 mnt_table_find_devno
+mnt_table_find_fs
 mnt_table_find_mountpoint
 mnt_table_find_next_fs
 mnt_table_find_pair
@@ -343,9 +346,11 @@ mnt_table_get_nents
 mnt_table_get_root_fs
 mnt_table_get_trailing_comment
 mnt_table_get_userdata
+mnt_table_insert_fs
 mnt_table_is_empty
 mnt_table_is_fs_mounted
 mnt_table_last_fs
+mnt_table_move_fs
 mnt_table_next_child_fs
 mnt_table_next_fs
 mnt_table_parse_dir
@@ -361,8 +366,8 @@ mnt_table_set_iter
 mnt_table_set_parser_errcb
 mnt_table_set_trailing_comment
 mnt_table_set_userdata
-mnt_table_with_comments
 mnt_table_uniq_fs
+mnt_table_with_comments
 </SECTION>
 
 <SECTION>
@@ -398,6 +403,7 @@ mnt_get_fstab_path
 mnt_get_mountpoint
 mnt_get_mtab_path
 mnt_get_swaps_path
+mnt_guess_system_root
 mnt_has_regular_mtab
 mnt_mangle
 mnt_match_fstype

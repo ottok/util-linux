@@ -447,7 +447,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	exit(EXIT_SUCCESS);
 }
 
-static void warn_size(const char *filename, uint64_t size)
+static void warn_size(const char *filename, uint64_t size, uint64_t offset, int flags)
 {
 	struct stat st;
 
@@ -455,6 +455,9 @@ static void warn_size(const char *filename, uint64_t size)
 		if (stat(filename, &st) || S_ISBLK(st.st_mode))
 			return;
 		size = st.st_size;
+
+		if (flags & LOOPDEV_FL_OFFSET)
+			size -= offset;
 	}
 
 	if (size < 512)
@@ -469,7 +472,8 @@ static void warn_size(const char *filename, uint64_t size)
 
 static int create_loop(struct loopdev_cxt *lc,
 		       int nooverlap, int lo_flags, int flags,
-		       const char *file, uint64_t offset, uint64_t sizelimit)
+		       const char *file, uint64_t offset, uint64_t sizelimit,
+		       uint64_t blocksize)
 {
 	int hasdev = loopcxt_has_device(lc);
 	int rc = 0;
@@ -505,7 +509,7 @@ static int create_loop(struct loopdev_cxt *lc,
 			}
 
 			lc->info.lo_flags &= ~LO_FLAGS_AUTOCLEAR;
-			if (loopcxt_set_status(lc)) {
+			if (loopcxt_ioctl_status(lc)) {
 				loopcxt_deinit(lc);
 				errx(EXIT_FAILURE, _("%s: failed to re-use loop device"), file);
 			}
@@ -557,6 +561,9 @@ static int create_loop(struct loopdev_cxt *lc,
 			loopcxt_set_sizelimit(lc, sizelimit);
 		if (lo_flags)
 			loopcxt_set_flags(lc, lo_flags);
+		if (blocksize > 0)
+			loopcxt_set_blocksize(lc, blocksize);
+
 		if ((rc = loopcxt_set_backing_file(lc, file))) {
 			warn(_("%s: failed to use backing file"), file);
 			break;
@@ -676,9 +683,6 @@ int main(int argc, char **argv)
 		case 'f':
 			act = A_FIND_FREE;
 			break;
-		case 'h':
-			usage();
-			break;
 		case 'J':
 			json = 1;
 			break;
@@ -723,13 +727,15 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 			break;
-		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
 		case OPT_SIZELIMIT:			/* --sizelimit */
 			sizelimit = strtosize_or_err(optarg, _("failed to parse size"));
 			flags |= LOOPDEV_FL_SIZELIMIT;
                         break;
+
+		case 'h':
+			usage();
+		case 'V':
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
@@ -819,7 +825,7 @@ int main(int argc, char **argv)
 	    (sizelimit || lo_flags || showdev))
 		errx(EXIT_FAILURE,
 			_("the options %s are allowed during loop device setup only"),
-			"--{sizelimit,read-only,show}");
+			"--{sizelimit,partscan,read-only,show}");
 
 	if ((flags & LOOPDEV_FL_OFFSET) &&
 	    act != A_CREATE && (act != A_SHOW || !file))
@@ -831,13 +837,14 @@ int main(int argc, char **argv)
 
 	switch (act) {
 	case A_CREATE:
-		res = create_loop(&lc, no_overlap, lo_flags, flags, file, offset, sizelimit);
+		res = create_loop(&lc, no_overlap, lo_flags, flags, file,
+				  offset, sizelimit, blocksize);
 		if (res == 0) {
 			if (showdev)
 				printf("%s\n", loopcxt_get_device(&lc));
-			warn_size(file, sizelimit);
-			if (set_dio || set_blocksize)
-				goto lo_set_post;
+			warn_size(file, sizelimit, offset, flags);
+			if (set_dio)
+				goto lo_set_dio;
 		}
 		break;
 	case A_DELETE:
@@ -884,26 +891,23 @@ int main(int argc, char **argv)
 			warn("%s", loopcxt_get_device(&lc));
 		break;
 	case A_SET_CAPACITY:
-		res = loopcxt_set_capacity(&lc);
+		res = loopcxt_ioctl_capacity(&lc);
 		if (res)
 			warn(_("%s: set capacity failed"),
 			        loopcxt_get_device(&lc));
 		break;
 	case A_SET_DIRECT_IO:
+lo_set_dio:
+		res = loopcxt_ioctl_dio(&lc, use_dio);
+		if (res)
+			warn(_("%s: set direct io failed"),
+			        loopcxt_get_device(&lc));
+		break;
 	case A_SET_BLOCKSIZE:
- lo_set_post:
-		if (set_dio) {
-			res = loopcxt_set_dio(&lc, use_dio);
-			if (res)
-				warn(_("%s: set direct io failed"),
-				        loopcxt_get_device(&lc));
-		}
-		if (set_blocksize) {
-			res = loopcxt_set_blocksize(&lc, blocksize);
-			if (res)
-				warn(_("%s: set logical block size failed"),
-				        loopcxt_get_device(&lc));
-		}
+		res = loopcxt_ioctl_blocksize(&lc, blocksize);
+		if (res)
+			warn(_("%s: set logical block size failed"),
+			        loopcxt_get_device(&lc));
 		break;
 	default:
 		warnx(_("bad usage"));

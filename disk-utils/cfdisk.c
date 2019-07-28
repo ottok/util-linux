@@ -436,9 +436,7 @@ static char *table_to_string(struct cfdisk *cf, struct fdisk_table *tb)
 	 * parno stored within struct fdisk_partition)  */
 
 	/* remove all */
-	fdisk_reset_iter(itr, FDISK_ITER_FORWARD);
-	while (fdisk_table_next_partition(tb, itr, &pa) == 0)
-		fdisk_table_remove_partition(tb, pa);
+	fdisk_reset_table(tb);
 
 	s_itr = scols_new_iter(SCOLS_ITER_FORWARD);
 	if (!s_itr)
@@ -1699,7 +1697,8 @@ static int ui_refresh(struct cfdisk *cf)
 	if (!ui_enabled)
 		return -EINVAL;
 
-	strsz = size_to_human_string(SIZE_SUFFIX_SPACE
+	strsz = size_to_human_string(SIZE_DECIMAL_2DIGITS
+				| SIZE_SUFFIX_SPACE
 				| SIZE_SUFFIX_3LETTER, bytes);
 
 	lb = fdisk_get_label(cf->cxt, NULL);
@@ -2666,7 +2665,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while((c = getopt_long(argc, argv, "L::hVz", longopts, NULL)) != -1) {
 		switch(c) {
@@ -2680,8 +2679,7 @@ int main(int argc, char *argv[])
 						_("unsupported color mode"));
 			break;
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'z':
 			cf->zero_start = 1;
 			break;
@@ -2733,6 +2731,7 @@ int main(int argc, char *argv[])
 
 	cfdisk_free_lines(cf);
 	free(cf->linesbuf);
+	free(cf->fields);
 
 	fdisk_unref_table(cf->table);
 #ifdef HAVE_LIBMOUNT

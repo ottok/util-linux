@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	if (!strcmp(program_invocation_short_name, "vigr")) {
 		program = VIGR;
@@ -335,24 +335,23 @@ int main(int argc, char *argv[])
 		xstrncpy(orig_file, PASSWD_FILE, sizeof(orig_file));
 	}
 
-	while ((c = getopt_long(argc, argv, "Vh", longopts, NULL)) != -1)
+	while ((c = getopt_long(argc, argv, "Vh", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		case 'h':
 			usage();
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
+	}
 
 	edit_file(0);
 
-	if (program == VIGR) {
-		strncpy(orig_file, SGROUP_FILE, FILENAMELEN - 1);
-	} else {
-		strncpy(orig_file, SHADOW_FILE, FILENAMELEN - 1);
-	}
+	if (program == VIGR)
+		xstrncpy(orig_file, SGROUP_FILE, sizeof(orig_file));
+	else
+		xstrncpy(orig_file, SHADOW_FILE, sizeof(orig_file));
 
 	if (access(orig_file, F_OK) == 0) {
 		char response[80];

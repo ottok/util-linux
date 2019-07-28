@@ -218,6 +218,8 @@ static int pencode(char *s)
 	int facility, level;
 	char *separator;
 
+	assert(s);
+
 	separator = strchr(s, '.');
 	if (separator) {
 		*separator = '\0';
@@ -237,7 +239,7 @@ static int pencode(char *s)
 
 static int unix_socket(struct logger_ctl *ctl, const char *path, int *socket_type)
 {
-	int fd, i, type = -1;
+	int fd = -1, i, type = -1;
 	static struct sockaddr_un s_addr;	/* AF_UNIX address of local logger */
 
 	if (strlen(path) >= sizeof(s_addr.sun_path))
@@ -336,11 +338,11 @@ static int journald_entry(struct logger_ctl *ctl, FILE *fp)
 	struct iovec *iovec;
 	char *buf = NULL;
 	ssize_t sz;
-	int n, lines, vectors = 8, ret = 0;
+	int n, lines = 0, vectors = 8, ret = 0, msgline = -1;
 	size_t dummy = 0;
 
 	iovec = xmalloc(vectors * sizeof(struct iovec));
-	for (lines = 0; /* nothing */ ; lines++) {
+	while (1) {
 		buf = NULL;
 		sz = getline(&buf, &dummy, fp);
 		if (sz == -1 ||
@@ -348,6 +350,25 @@ static int journald_entry(struct logger_ctl *ctl, FILE *fp)
 			free(buf);
 			break;
 		}
+
+		if (strncmp(buf, "MESSAGE=", 8) == 0) {
+			if (msgline == -1)
+				msgline = lines;	/* remember the first message */
+			else {
+				char *p = xrealloc(iovec[msgline].iov_base,
+						   iovec[msgline].iov_len + sz - 8 + 2);
+
+				iovec[msgline].iov_base = p;
+				p += iovec[msgline].iov_len;
+				*p++ = '\n';
+				memcpy(p, buf + 8, sz - 8);
+				free(buf);
+
+				iovec[msgline].iov_len += sz - 8 + 1;
+				continue;
+			}
+		}
+
 		if (lines == vectors) {
 			vectors *= 2;
 			if (IOV_MAX < vectors)
@@ -356,6 +377,7 @@ static int journald_entry(struct logger_ctl *ctl, FILE *fp)
 		}
 		iovec[lines].iov_base = buf;
 		iovec[lines].iov_len = sz;
+		++lines;
 	}
 
 	if (!ctl->noact)
@@ -1135,7 +1157,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	INIT_LIST_HEAD(&ctl.user_sds);
 	INIT_LIST_HEAD(&ctl.reserved_sds);
@@ -1192,11 +1214,6 @@ int main(int argc, char **argv)
 		case 'P':
 			ctl.port = optarg;
 			break;
-		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			exit(EXIT_SUCCESS);
-		case 'h':
-			usage();
 		case OPT_OCTET_COUNT:
 			ctl.octet_count = 1;
 			break;
@@ -1243,6 +1260,11 @@ int main(int argc, char **argv)
 				errx(EXIT_FAILURE, _("invalid structured data parameter: '%s'"), optarg);
 			add_structured_data_param(get_user_structured_data(&ctl), optarg);
 			break;
+
+		case 'V':
+			print_version(EXIT_SUCCESS);
+		case 'h':
+			usage();
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
@@ -1262,7 +1284,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	/* user overwrites build-in SD-ELEMENT */
+	/* user overwrites built-in SD-ELEMENT */
 	if (has_structured_data_id(get_user_structured_data(&ctl), "timeQuality"))
 		ctl.rfc5424_tq = 0;
 

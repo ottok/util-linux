@@ -209,10 +209,8 @@ static int blkzone_report(struct blkzone_control *ctl)
 			printf(_("Found %d zones from 0x%"PRIx64"\n"),
 				zi->nr_zones, ctl->offset);
 
-		if (!zi->nr_zones) {
-			nr_zones = 0;
+		if (!zi->nr_zones)
 			break;
-		}
 
 		for (i = 0; i < zi->nr_zones; i++) {
 			const struct blk_zone *entry = &zi->zones[i];
@@ -357,7 +355,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	if (argc >= 2 && *argv[1] != '-') {
 		ctl.command = name_to_command(argv[1]);
@@ -372,9 +370,6 @@ int main(int argc, char **argv)
 		err_exclusive_options(c, longopts, excl, excl_st);
 
 		switch (c) {
-		case 'h':
-			usage();
-			break;
 		case 'c':
 			ctl.count = strtou32_or_err(optarg,
 					_("failed to parse number of zones"));
@@ -390,9 +385,11 @@ int main(int argc, char **argv)
 		case 'v':
 			ctl.verbose = 1;
 			break;
+
+		case 'h':
+			usage();
 		case 'V':
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
+			print_version(EXIT_SUCCESS);
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}

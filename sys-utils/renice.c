@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	argc--;
 	argv++;
@@ -131,10 +131,8 @@ int main(int argc, char **argv)
 
 		if (strcmp(*argv, "-v") == 0 ||
 		    strcmp(*argv, "-V") == 0 ||
-		    strcmp(*argv, "--version") == 0) {
-			printf(UTIL_LINUX_VERSION);
-			return EXIT_SUCCESS;
-		}
+		    strcmp(*argv, "--version") == 0)
+			print_version(EXIT_SUCCESS);
 	}
 
 	if (*argv && (strcmp(*argv, "-n") == 0 || strcmp(*argv, "--priority") == 0)) {
@@ -142,7 +140,7 @@ int main(int argc, char **argv)
 		argv++;
 	}
 
-	if (argc < 2) {
+	if (argc < 2 || !*argv) {
 		warnx(_("not enough arguments"));
 		errtryhelp(EXIT_FAILURE);
 	}

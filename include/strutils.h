@@ -121,9 +121,10 @@ extern char *xstrmode(mode_t mode, char *str);
 /* Options for size_to_human_string() */
 enum
 {
-        SIZE_SUFFIX_1LETTER = 0,
-        SIZE_SUFFIX_3LETTER = 1,
-        SIZE_SUFFIX_SPACE   = 2
+	SIZE_SUFFIX_1LETTER  = 0,
+	SIZE_SUFFIX_3LETTER  = (1 << 0),
+	SIZE_SUFFIX_SPACE    = (1 << 1),
+	SIZE_DECIMAL_2DIGITS = (1 << 2)
 };
 
 extern char *size_to_human_string(int options, uint64_t bytes);
@@ -245,6 +246,25 @@ static inline size_t ltrim_whitespace(unsigned char *str)
 		memmove(str, p, len + 1);
 
 	return len;
+}
+
+static inline void strrep(char *s, int find, int replace)
+{
+	while (s && *s && (s = strchr(s, find)) != NULL)
+		*s++ = replace;
+}
+
+static inline void strrem(char *s, int rem)
+{
+	char *p;
+
+	if (!s)
+		return;
+	for (p = s; *s; s++) {
+		if (*s != rem)
+			*p++ = *s;
+	}
+	*p = '\0';
 }
 
 extern char *strnappend(const char *s, const char *suffix, size_t b);
