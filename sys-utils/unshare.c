@@ -36,6 +36,7 @@
 
 #include "nls.h"
 #include "c.h"
+#include "caputils.h"
 #include "closestream.h"
 #include "namespace.h"
 #include "exec_shell.h"
@@ -69,11 +70,16 @@ static struct namespace_file {
 
 static int npersists;	/* number of persistent namespaces */
 
-
 enum {
 	SETGROUPS_NONE = -1,
 	SETGROUPS_DENY = 0,
 	SETGROUPS_ALLOW = 1,
+};
+
+enum {
+	MAP_USER_NONE,
+	MAP_USER_ROOT,
+	MAP_USER_CURRENT,
 };
 
 static const char *setgroups_strings[] =
@@ -264,6 +270,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -f, --fork                fork before launching <program>\n"), out);
 	fputs(_(" -r, --map-root-user       map current user to root (implies --user)\n"), out);
+	fputs(_(" -c, --map-current-user    map current user to itself (implies --user)\n"), out);
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" --kill-child[=<signame>]  when dying, kill the forked child (implies --fork)\n"
 		"                             defaults to SIGKILL\n"), out);
@@ -271,6 +278,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" --propagation slave|shared|private|unchanged\n"
 	        "                           modify mount propagation in mount namespace\n"), out);
 	fputs(_(" --setgroups allow|deny    control the setgroups syscall in user namespaces\n"), out);
+	fputs(_(" --keep-caps               retain capabilities granted in user namespaces\n"), out);
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -R, --root=<dir>	    run the command with root directory set to <dir>\n"), out);
 	fputs(_(" -w, --wd=<dir>	    change working directory to <dir>\n"), out);
@@ -291,6 +299,7 @@ int main(int argc, char *argv[])
 		OPT_PROPAGATION,
 		OPT_SETGROUPS,
 		OPT_KILLCHILD,
+		OPT_KEEPCAPS,
 	};
 	static const struct option longopts[] = {
 		{ "help",          no_argument,       NULL, 'h'             },
@@ -308,8 +317,10 @@ int main(int argc, char *argv[])
 		{ "kill-child",    optional_argument, NULL, OPT_KILLCHILD   },
 		{ "mount-proc",    optional_argument, NULL, OPT_MOUNTPROC   },
 		{ "map-root-user", no_argument,       NULL, 'r'             },
+		{ "map-current-user", no_argument,    NULL, 'c'             },
 		{ "propagation",   required_argument, NULL, OPT_PROPAGATION },
 		{ "setgroups",     required_argument, NULL, OPT_SETGROUPS   },
+		{ "keep-caps",     no_argument,       NULL, OPT_KEEPCAPS    },
 		{ "setuid",	   required_argument, NULL, 'S'		    },
 		{ "setgid",	   required_argument, NULL, 'G'		    },
 		{ "root",	   required_argument, NULL, 'R'		    },
@@ -319,7 +330,7 @@ int main(int argc, char *argv[])
 
 	int setgrpcmd = SETGROUPS_NONE;
 	int unshare_flags = 0;
-	int c, forkit = 0, maproot = 0;
+	int c, forkit = 0, mapuser = MAP_USER_NONE;
 	int kill_child_signo = 0; /* 0 means --kill-child was not used */
 	const char *procmnt = NULL;
 	const char *newroot = NULL;
@@ -331,13 +342,14 @@ int main(int argc, char *argv[])
 	int force_uid = 0, force_gid = 0;
 	uid_t uid = 0, real_euid = geteuid();
 	gid_t gid = 0, real_egid = getegid();
+	int keepcaps = 0;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	close_stdout_atexit();
 
-	while ((c = getopt_long(argc, argv, "+fhVmuinpCUrR:w:S:G:", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "+fhVmuinpCUrR:w:S:G:c", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			forkit = 1;
@@ -382,8 +394,20 @@ int main(int argc, char *argv[])
 			procmnt = optarg ? optarg : "/proc";
 			break;
 		case 'r':
+			if (mapuser == MAP_USER_CURRENT)
+			        errx(EXIT_FAILURE, _("options --map-root-user and "
+					"--map-current-user are mutually exclusive"));
+
 			unshare_flags |= CLONE_NEWUSER;
-			maproot = 1;
+			mapuser = MAP_USER_ROOT;
+			break;
+		case 'c':
+			if (mapuser == MAP_USER_ROOT)
+			        errx(EXIT_FAILURE, _("options --map-root-user and "
+					"--map-current-user are mutually exclusive"));
+
+			unshare_flags |= CLONE_NEWUSER;
+			mapuser = MAP_USER_CURRENT;
 			break;
 		case OPT_SETGROUPS:
 			setgrpcmd = setgroups_str2id(optarg);
@@ -400,6 +424,10 @@ int main(int argc, char *argv[])
 			} else {
 				kill_child_signo = SIGKILL;
 			}
+			break;
+                case OPT_KEEPCAPS:
+			keepcaps = 1;
+			cap_last_cap(); /* Force last cap to be cached before we fork. */
 			break;
 		case 'S':
 			uid = strtoul_or_err(optarg, _("failed to parse uid"));
@@ -480,21 +508,33 @@ int main(int argc, char *argv[])
 	if (kill_child_signo != 0 && prctl(PR_SET_PDEATHSIG, kill_child_signo) < 0)
 		err(EXIT_FAILURE, "prctl failed");
 
-	if (maproot) {
+        /* Since Linux 3.19 unprivileged writing of /proc/self/gid_map
+         * has been disabled unless /proc/self/setgroups is written
+         * first to permanently disable the ability to call setgroups
+         * in that user namespace. */
+        switch (mapuser) {
+        case MAP_USER_ROOT:
 		if (setgrpcmd == SETGROUPS_ALLOW)
 			errx(EXIT_FAILURE, _("options --setgroups=allow and "
 					"--map-root-user are mutually exclusive"));
 
-		/* since Linux 3.19 unprivileged writing of /proc/self/gid_map
-		 * has s been disabled unless /proc/self/setgroups is written
-		 * first to permanently disable the ability to call setgroups
-		 * in that user namespace. */
 		setgroups_control(SETGROUPS_DENY);
 		map_id(_PATH_PROC_UIDMAP, 0, real_euid);
 		map_id(_PATH_PROC_GIDMAP, 0, real_egid);
+                break;
+        case MAP_USER_CURRENT:
+		if (setgrpcmd == SETGROUPS_ALLOW)
+			errx(EXIT_FAILURE, _("options --setgroups=allow and "
+					"--map-current-user are mutually exclusive"));
 
-	} else if (setgrpcmd != SETGROUPS_NONE)
-		setgroups_control(setgrpcmd);
+		setgroups_control(SETGROUPS_DENY);
+		map_id(_PATH_PROC_UIDMAP, real_euid, real_euid);
+		map_id(_PATH_PROC_GIDMAP, real_egid, real_egid);
+                break;
+        case MAP_USER_NONE:
+	        if (setgrpcmd != SETGROUPS_NONE)
+		        setgroups_control(setgrpcmd);
+        }
 
 	if ((unshare_flags & CLONE_NEWNS) && propagation)
 		set_propagation(propagation);
@@ -523,6 +563,44 @@ int main(int argc, char *argv[])
 	}
 	if (force_uid && setuid(uid) < 0)	/* change UID */
 		err(EXIT_FAILURE, _("setuid failed"));
+
+	/* We use capabilities system calls to propagate the permitted
+	 * capabilities into the ambient set because we have already
+	 * forked so are in async-signal-safe context. */
+	if (keepcaps && (unshare_flags & CLONE_NEWUSER)) {
+		struct __user_cap_header_struct header = {
+			.version = _LINUX_CAPABILITY_VERSION_3,
+			.pid = 0,
+		};
+
+		struct __user_cap_data_struct payload[_LINUX_CAPABILITY_U32S_3] = { 0 };
+		int cap;
+		uint64_t effective;
+
+		if (capget(&header, payload) < 0)
+			err(EXIT_FAILURE, _("capget failed"));
+
+		/* In order the make capabilities ambient, we first need to ensure
+		 * that they are all inheritable. */
+		payload[0].inheritable = payload[0].permitted;
+		payload[1].inheritable = payload[1].permitted;
+
+		if (capset(&header, payload) < 0)
+			err(EXIT_FAILURE, _("capset failed"));
+
+		effective = ((uint64_t)payload[1].effective << 32) |  (uint64_t)payload[0].effective;
+
+		for (cap = 0; cap < 64; cap++) {
+			/* This is the same check as cap_valid(), but using
+			 * the runtime value for the last valid cap. */
+			if (cap > cap_last_cap())
+				continue;
+
+			if ((effective & (1 << cap))
+			    && prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, cap, 0, 0) < 0)
+					err(EXIT_FAILURE, _("prctl(PR_CAP_AMBIENT) failed"));
+                }
+        }
 
 	if (optind < argc) {
 		execvp(argv[optind], argv + optind);

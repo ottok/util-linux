@@ -32,7 +32,7 @@ function num_cpus()
 	local num
 
 	# coreutils
-	if num=$(nproc --all 2>/dev/null); then
+	if num=$(nproc 2>/dev/null); then
 		:
 	# BSD, OSX
 	elif num=$(sysctl -n hw.ncpu 2>/dev/null); then
@@ -101,6 +101,9 @@ while [ -n "$1" ]; do
 	--parallel)
 		paraller_jobs=$(num_cpus)
 		;;
+	--parsable)
+		OPTS="$OPTS $1"
+		;;
 	--exclude=*)
 		EXCLUDETESTS="${1##--exclude=}"
 		;;
@@ -122,6 +125,7 @@ while [ -n "$1" ]; do
 		echo "  --srcdir=<path>       autotools top source directory"
 		echo "  --builddir=<path>     autotools top build directory"
 		echo "  --parallel=<num>      number of parallel test jobs, default: num cpus"
+		echo "  --parsable            use parsable output (default on --parallel)"
 		echo "  --exclude=<list>      exclude tests by list '<utilname>/<testname> ..'"
 		echo
 		exit 1

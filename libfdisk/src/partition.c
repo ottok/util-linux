@@ -82,25 +82,51 @@ void fdisk_reset_partition(struct fdisk_partition *pa)
 static struct fdisk_partition *__copy_partition(struct fdisk_partition *o)
 {
 	struct fdisk_partition *n = fdisk_new_partition();
+	int rc;
 
 	if (!n)
 		return NULL;
+
 	memcpy(n, o, sizeof(*n));
+
+	/* do not copy reference to lists, etc.*/
+	n->refcount = 1;
+	INIT_LIST_HEAD(&n->parts);
+
 	if (n->type)
 		fdisk_ref_parttype(n->type);
-	if (o->name)
-		n->name = strdup(o->name);
-	if (o->uuid)
-		n->uuid = strdup(o->uuid);
-	if (o->attrs)
-		n->attrs = strdup(o->attrs);
-	if (o->fstype)
-		n->fstype = strdup(o->fstype);
-	if (o->fsuuid)
-		n->fsuuid = strdup(o->fsuuid);
-	if (o->fslabel)
-		n->fslabel = strdup(o->fslabel);
 
+	/* note that strdup_between_structs() deallocates destination pointer,
+	 * so make sure it's NULL as we call memcpy() before ... */
+	n->name = NULL;
+	rc = strdup_between_structs(n, o, name);
+
+	n->uuid = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, uuid);
+	n->attrs = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, attrs);
+	n->fstype = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, fstype);
+	n->fsuuid = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, fsuuid);
+	n->fslabel = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, fslabel);
+	n->start_chs = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, start_chs);
+	n->end_chs = NULL;
+	if (!rc)
+		rc = strdup_between_structs(n, o, end_chs);
+
+	if (rc) {
+		fdisk_unref_partition(n);
+		n = NULL;
+	}
 	return n;
 }
 
@@ -476,18 +502,9 @@ struct fdisk_parttype *fdisk_partition_get_type(struct fdisk_partition *pa)
 
 int fdisk_partition_set_name(struct fdisk_partition *pa, const char *name)
 {
-	char *p = NULL;
-
 	if (!pa)
 		return -EINVAL;
-	if (name) {
-	       p = strdup(name);
-	       if (!p)
-		       return -ENOMEM;
-	}
-	free(pa->name);
-	pa->name = p;
-	return 0;
+	return strdup_to_struct_member(pa, name, name);
 }
 
 const char *fdisk_partition_get_name(struct fdisk_partition *pa)
@@ -497,18 +514,9 @@ const char *fdisk_partition_get_name(struct fdisk_partition *pa)
 
 int fdisk_partition_set_uuid(struct fdisk_partition *pa, const char *uuid)
 {
-	char *p = NULL;
-
 	if (!pa)
 		return -EINVAL;
-	if (uuid) {
-	       p = strdup(uuid);
-	       if (!p)
-		       return -ENOMEM;
-	}
-	free(pa->uuid);
-	pa->uuid = p;
-	return 0;
+	return strdup_to_struct_member(pa, uuid, uuid);
 }
 
 /**
@@ -602,18 +610,9 @@ const char *fdisk_partition_get_attrs(struct fdisk_partition *pa)
  */
 int fdisk_partition_set_attrs(struct fdisk_partition *pa, const char *attrs)
 {
-	char *p = NULL;
-
 	if (!pa)
 		return -EINVAL;
-	if (attrs) {
-	       p = strdup(attrs);
-	       if (!p)
-		       return -ENOMEM;
-	}
-	free(pa->attrs);
-	pa->attrs = p;
-	return 0;
+	return strdup_to_struct_member(pa, attrs, attrs);
 }
 
 /**
@@ -1150,8 +1149,15 @@ static int recount_resize(
 	FDISK_INIT_UNDEF(size);
 
 	rc = fdisk_get_partitions(cxt, &tb);
-	if (!rc)
+	if (!rc) {
+		/* For resize we do not follow grain to detect free-space, but
+		 * we allow to resize with very small granulation. */
+		unsigned long org = cxt->grain;
+
+		cxt->grain = cxt->sector_size;
 		rc = fdisk_get_freespaces(cxt, &tb);
+		cxt->grain = org;
+	}
 	if (rc) {
 		fdisk_unref_table(tb);
 		return rc;
@@ -1248,7 +1254,7 @@ static int recount_resize(
 			goto erange;
 	}
 
-	if (!FDISK_IS_UNDEF(size)) {
+	if (FDISK_IS_UNDEF(size)) {
 		DBG(PART, ul_debugobj(tpl, "resize: size unchanged (undefined)"));
 	}
 

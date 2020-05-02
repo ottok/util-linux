@@ -24,7 +24,7 @@
  * from this software without specific prior written permission.
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <sys/param.h>
 #include <stdio.h>
@@ -1116,14 +1116,15 @@ static void __attribute__((__noreturn__)) usage(void)
 int main(int argc, char **argv)
 {
 	int c;
-	int cnt;
 	char *childArgv[10];
 	char *buff;
 	int childArgc = 0;
 	int retcode;
 	struct sigaction act;
 	struct passwd *pwd;
-
+	static const int wanted_fds[] = {
+		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
+	};
 	struct login_context cxt = {
 		.tty_mode = TTY_MODE,		  /* tty chmod() */
 		.pid = getpid(),		  /* PID */
@@ -1218,8 +1219,7 @@ int main(int argc, char **argv)
 			*p++ = ' ';
 	}
 
-	for (cnt = get_fd_tabsize() - 1; cnt > 2; cnt--)
-		close(cnt);
+	close_all_fds(wanted_fds, ARRAY_SIZE(wanted_fds));
 
 	setpgrp();	 /* set pgid to pid this means that setsid() will fail */
 	init_tty(&cxt);
@@ -1355,10 +1355,7 @@ int main(int argc, char **argv)
 
 	/* if the shell field has a space: treat it like a shell script */
 	if (strchr(pwd->pw_shell, ' ')) {
-		buff = xmalloc(strlen(pwd->pw_shell) + 6);
-
-		strcpy(buff, "exec ");
-		strcat(buff, pwd->pw_shell);
+		xasprintf(&buff, "exec %s", pwd->pw_shell);
 		childArgv[childArgc++] = "/bin/sh";
 		childArgv[childArgc++] = "-sh";
 		childArgv[childArgc++] = "-c";

@@ -40,6 +40,7 @@ mnt_context_enable_rwonly_mount
 mnt_context_enable_sloppy
 mnt_context_enable_verbose
 mnt_context_forced_rdonly
+mnt_context_force_unrestricted
 mnt_context_get_cache
 mnt_context_get_excode
 mnt_context_get_fs
@@ -61,6 +62,7 @@ mnt_context_get_syscall_errno
 mnt_context_get_table
 mnt_context_get_target
 mnt_context_get_target_ns
+mnt_context_get_target_prefix
 mnt_context_get_user_mflags
 mnt_context_helper_executed
 mnt_context_helper_setopt
@@ -99,6 +101,7 @@ mnt_context_set_syscall_status
 mnt_context_set_tables_errcb
 mnt_context_set_target
 mnt_context_set_target_ns
+mnt_context_set_target_prefix
 mnt_context_set_user_mflags
 mnt_context_strerror
 mnt_context_switch_ns
@@ -154,6 +157,13 @@ MNT_MS_USER
 MNT_MS_USERS
 MNT_MS_XCOMMENT
 MNT_MS_XFSTABCOMM
+MNT_MS_HASH_DEVICE
+MNT_MS_ROOT_HASH
+MNT_MS_HASH_OFFSET
+MNT_MS_ROOT_HASH_FILE
+MNT_MS_FEC_DEVICE
+MNT_MS_FEC_OFFSET
+MNT_MS_FEC_ROOTS
 <SUBSECTION>
 MS_BIND
 MS_DIRSYNC

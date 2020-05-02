@@ -394,8 +394,7 @@ static int list(const struct last_control *ctl, struct utmpx *p, time_t logout_t
 	/*
 	 *	uucp and ftp have special-type entries
 	 */
-	utline[0] = 0;
-	strncat(utline, p->ut_line, sizeof(utline) - 1);
+	mem2strcpy(utline, p->ut_line, sizeof(p->ut_line), sizeof(utline));
 	if (strncmp(utline, "ftp", 3) == 0 && isdigit(utline[3]))
 		utline[3] = 0;
 	if (strncmp(utline, "uucp", 4) == 0 && isdigit(utline[4]))
@@ -458,7 +457,7 @@ static int list(const struct last_control *ctl, struct utmpx *p, time_t logout_t
 	} else if (hours) {
 		sprintf(length, " (%02d:%02d)", hours, abs(mins));  /* mins always shown as positive (w/o minus sign!) even if secs < 0 */
 	} else if (secs >= 0) {
-		sprintf(length, " (%02d:%02d)", hours, mins); 
+		sprintf(length, " (%02d:%02d)", hours, mins);
 	} else {
 		sprintf(length, " (-00:%02d)", abs(mins));  /* mins always shown as positive (w/o minus sign!) even if secs < 0 */
 	}

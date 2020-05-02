@@ -1,10 +1,11 @@
 /*
- * General purpose random utilities
+ * SPDX-License-Identifier: BSD-3-Clause
  *
- * Based on libuuid code.
+ * General purpose random utilities. Based on libuuid code.
  *
- * This file may be redistributed under the terms of the
- * GNU Lesser General Public License.
+ * This code is free software; you can redistribute it and/or modify it under
+ * the terms of the Modified BSD License. The complete text of the license is
+ * available in the Documentation/licenses/COPYING.BSD-3-Clause file.
  */
 #include <stdio.h>
 #include <unistd.h>
@@ -59,9 +60,12 @@ static void crank_random(void)
 {
 	int i;
 	struct timeval tv;
+	unsigned int n_pid, n_uid;
 
 	gettimeofday(&tv, NULL);
-	srand((getpid() << 16) ^ getuid() ^ tv.tv_sec ^ tv.tv_usec);
+	n_pid = getpid();
+	n_uid = getuid();
+	srand((n_pid << 16) ^ n_uid ^ tv.tv_sec ^ tv.tv_usec);
 
 #ifdef DO_JRAND_MIX
 	ul_jrand_seed[0] = getpid() ^ (tv.tv_sec & 0xFFFF);

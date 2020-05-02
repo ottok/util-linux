@@ -1,7 +1,6 @@
 /*
- * Vaguely based on
- *	@(#)pathnames.h	5.3 (Berkeley) 5/9/89
- * This code is in the public domain.
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
  */
 #ifndef PATHNAMES_H
 #define PATHNAMES_H
@@ -64,12 +63,19 @@
 #define _PATH_SHADOW_PASSWD	"/etc/shadow"
 #define _PATH_SHELLS		"/etc/shells"
 
+#ifndef _PATH_TMP
+# define _PATH_TMP		"/tmp/"
+#endif
+
 #ifndef _PATH_BTMP
 # define _PATH_BTMP		"/var/log/btmp"
 #endif
 
-#define _PATH_ISSUE		"/etc/issue"
-#define _PATH_ISSUEDIR		_PATH_ISSUE ".d"
+#define _PATH_ISSUE_FILENAME	"issue"
+#define _PATH_ISSUE_DIRNAME	_PATH_ISSUE_FILENAME ".d"
+
+#define _PATH_ISSUE		"/etc/" _PATH_ISSUE_FILENAME
+#define _PATH_ISSUEDIR		"/etc/" _PATH_ISSUE_DIRNAME
 
 #define _PATH_OS_RELEASE_ETC	"/etc/os-release"
 #define _PATH_OS_RELEASE_USR	"/usr/lib/os-release"
@@ -104,6 +110,7 @@
 
 #define _PATH_SYS_BLOCK		"/sys/block"
 #define _PATH_SYS_DEVBLOCK	"/sys/dev/block"
+#define _PATH_SYS_DEVCHAR	"/sys/dev/char"
 #define _PATH_SYS_CLASS		"/sys/class"
 #define _PATH_SYS_SCSI		"/sys/bus/scsi"
 
@@ -166,9 +173,6 @@
 #define _PATH_RAWDEVCTL		_PATH_RAWDEVDIR "rawctl"
 /* deprecated */
 #define _PATH_RAWDEVCTL_OLD	"/dev/rawctl"
-
-/* wdctl path */
-#define _PATH_WATCHDOG_DEV	"/dev/watchdog"
 
 /* ipc paths */
 #define _PATH_PROC_SYSV_MSG	"/proc/sysvipc/msg"

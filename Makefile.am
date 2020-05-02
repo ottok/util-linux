@@ -2,7 +2,9 @@ AM_CPPFLAGS = \
 	-include config.h \
 	-I$(top_srcdir)/include \
 	-DLOCALEDIR=\"$(localedir)\" \
-	-D_PATH_RUNSTATEDIR=\"${runstatedir}\"
+	-D_PATH_RUNSTATEDIR=\"${runstatedir}\" \
+	-D_PATH_SYSCONFSTATICDIR=\"${sysconfstaticdir}\"
+
 AM_CFLAGS = -fsigned-char $(WARN_CFLAGS)
 AM_LDFLAGS = $(ASAN_LDFLAGS)
 
@@ -135,6 +137,18 @@ edit_cmd = sed \
 	 -e 's|@LIBFDISK_MINOR_VERSION[@]|$(LIBFDISK_MINOR_VERSION)|g' \
 	 -e 's|@LIBFDISK_PATCH_VERSION[@]|$(LIBFDISK_PATCH_VERSION)|g' \
 	 -e 's|@LIBBLKID_VERSION[@]|$(LIBBLKID_VERSION)|g'
+
+if HAVE_SELINUX
+edit_cmd += -e 's|@LIBSELINUX[@]|libselinux|g'
+else
+edit_cmd += -e 's|@LIBSELINUX[@]||g'
+endif
+
+if HAVE_CRYPTSETUP
+edit_cmd += -e 's|@LIBCRYPTSETUP[@]|libcryptsetup|g'
+else
+edit_cmd += -e 's|@LIBCRYPTSETUP[@]||g'
+endif
 
 CLEANFILES += $(PATHFILES)
 EXTRA_DIST += $(PATHFILES:=.in)

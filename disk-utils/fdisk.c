@@ -109,6 +109,7 @@ int get_user_reply(const char *prompt, char *buf, size_t bufsz)
 	if (is_interactive)
 		rl_callback_handler_install(prompt, reply_linehandler);
 #endif
+	errno = 0;
 	reply_running = 1;
 	do {
 		int rc;
@@ -158,6 +159,7 @@ int get_user_reply(const char *prompt, char *buf, size_t bufsz)
 	if (!*buf) {
 		DBG(ASK, ul_debug("cancel by CTRL+D"));
 		ret = -ECANCELED;
+		clearerr(stdin);
 		goto done;
 	}
 
@@ -168,13 +170,13 @@ int get_user_reply(const char *prompt, char *buf, size_t bufsz)
 	if (sz && *(buf + sz - 1) == '\n')
 		*(buf + sz - 1) = '\0';
 
-	DBG(ASK, ul_debug("user's reply: >>>%s<<<", buf));
 done:
 #ifdef HAVE_LIBREADLINE
 	if (is_interactive)
 		rl_callback_handler_remove();
 #endif
 	sigaction(SIGINT, &oldact, NULL);
+	DBG(ASK, ul_debug("user's reply: >>>%s<<< [rc=%d]", buf, ret));
 	return ret;
 }
 
@@ -797,11 +799,12 @@ void follow_wipe_mode(struct fdisk_context *cxt)
 	fdisk_enable_wipe(cxt, dowipe);
 	if (dowipe)
 		fdisk_warnx(cxt, _(
-			"The old %s signature will be removed by a write command."),
+			"The device contains '%s' signature and it will be removed by a write command. "
+			"See fdisk(8) man page and --wipe option for more details."),
 			fdisk_get_collision(cxt));
 	else
 		fdisk_warnx(cxt, _(
-			"The old %s signature may remain on the device. "
+			"The device contains '%s' signature and it may remain on the device. "
 			"It is recommended to wipe the device with wipefs(8) or "
 			"fdisk --wipe, in order to avoid possible collisions."),
 			fdisk_get_collision(cxt));
@@ -825,7 +828,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -b, --sector-size <size>      physical and logical sector size\n"), out);
 	fputs(_(" -B, --protect-boot            don't erase bootbits when creating a new label\n"), out);
 	fputs(_(" -c, --compatibility[=<mode>]  mode is 'dos' or 'nondos' (default)\n"), out);
-	fputs(_(" -L, --color[=<when>]          colorize output (auto, always or never)\n"), out);
+	fprintf(out,
+	      _(" -L, --color[=<when>]          colorize output (%s, %s or %s)\n"), "auto", "always", "never");
 	fprintf(out,
 	        "                                 %s\n", USAGE_COLORS_DEFAULT);
 	fputs(_(" -l, --list                    display partitions and exit\n"), out);
@@ -834,8 +838,10 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -u, --units[=<unit>]          display units: 'cylinders' or 'sectors' (default)\n"), out);
 	fputs(_(" -s, --getsz                   display device size in 512-byte sectors [DEPRECATED]\n"), out);
 	fputs(_("     --bytes                   print SIZE in bytes rather than in human readable format\n"), out);
-	fputs(_(" -w, --wipe <mode>             wipe signatures (auto, always or never)\n"), out);
-	fputs(_(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (auto, always or never)\n"), out);
+	fprintf(out,
+	      _(" -w, --wipe <mode>             wipe signatures (%s, %s or %s)\n"), "auto", "always", "never");
+	fprintf(out,
+	      _(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (%s, %s or %s)\n"), "auto", "always", "never");
 
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -C, --cylinders <number>      specify the number of cylinders\n"), out);
