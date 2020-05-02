@@ -8,6 +8,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  FDISK_2.31@FDISK_2.31 2.31.1
  FDISK_2.32@FDISK_2.32 2.32
  FDISK_2.33@FDISK_2.33 2.33
+ FDISK_2.35@FDISK_2.35 2.35
  fdisk_add_partition@FDISK_2.26 2.26.2
  fdisk_align_lba@FDISK_2.26 2.26.2
  fdisk_align_lba_in_range@FDISK_2.26 2.26.2
@@ -43,6 +44,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_ask_yesno_get_result@FDISK_2.26 2.26.2
  fdisk_ask_yesno_set_result@FDISK_2.26 2.26.2
  fdisk_assign_device@FDISK_2.26 2.26.2
+ fdisk_assign_device_by_fd@FDISK_2.35 2.35.1
  fdisk_bsd_edit_disklabel@FDISK_2.26 2.26.2
  fdisk_bsd_link_partition@FDISK_2.26 2.26.2
  fdisk_bsd_write_bootstrap@FDISK_2.26 2.26.2
@@ -237,6 +239,7 @@ libfdisk.so.1 libfdisk1 #MINVER#
  fdisk_script_read_line@FDISK_2.26 2.26.2
  fdisk_script_set_fgets@FDISK_2.27 2.27~rc1
  fdisk_script_set_header@FDISK_2.26 2.26.2
+ fdisk_script_set_table@FDISK_2.35 2.35.1
  fdisk_script_set_userdata@FDISK_2.27 2.27~rc1
  fdisk_script_write_file@FDISK_2.26 2.26.2
  fdisk_set_ask@FDISK_2.26 2.26.2
