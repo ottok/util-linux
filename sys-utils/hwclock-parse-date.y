@@ -1,5 +1,7 @@
 %{
 /**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
  * Parse a string into an internal timestamp.
  *
  * This file is based on gnulib parse-datetime.y-dd7a871 with
@@ -42,6 +44,7 @@
 
 #include "c.h"
 #include "timeutils.h"
+#include "hwclock.h"
 
 /**
  * There's no need to extend the stack, so there's no need to involve

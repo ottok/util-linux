@@ -178,6 +178,11 @@ enum {
 	COL_CACHE_ONESIZE,
 	COL_CACHE_TYPE,
 	COL_CACHE_WAYS,
+	COL_CACHE_ALLOCPOL,
+	COL_CACHE_WRITEPOL,
+	COL_CACHE_PHYLINE,
+	COL_CACHE_SETS,
+	COL_CACHE_COHERENCYSIZE
 };
 
 
@@ -215,7 +220,12 @@ static struct lscpu_coldesc coldescs_cache[] =
 	[COL_CACHE_NAME]       = { "NAME", N_("cache name") },
 	[COL_CACHE_ONESIZE]    = { "ONE-SIZE", N_("size of one cache"), SCOLS_FL_RIGHT },
 	[COL_CACHE_TYPE]       = { "TYPE", N_("cache type") },
-	[COL_CACHE_WAYS]       = { "WAYS", N_("ways of associativity"), SCOLS_FL_RIGHT }
+	[COL_CACHE_WAYS]       = { "WAYS", N_("ways of associativity"), SCOLS_FL_RIGHT },
+	[COL_CACHE_ALLOCPOL]   = { "ALLOC-POLICY", N_("allocation policy") },
+	[COL_CACHE_WRITEPOL]   = { "WRITE-POLICY", N_("write policy") },
+	[COL_CACHE_PHYLINE]    = { "PHY-LINE", N_("number of physical cache line per cache t"), SCOLS_FL_RIGHT },
+	[COL_CACHE_SETS]       = { "SETS", N_("number of sets in the cache; set lines has the same cache index"), SCOLS_FL_RIGHT },
+	[COL_CACHE_COHERENCYSIZE] = { "COHERENCY-SIZE", N_("minimum amount of data in bytes transferred from memory to cache"), SCOLS_FL_RIGHT }
 };
 
 
@@ -934,10 +944,11 @@ read_hypervisor(struct lscpu_desc *desc, struct lscpu_modifier *mod)
 			if (fd)
 				fclose(fd);
 		}
-	} else if (read_hypervisor_powerpc(desc) > 0) {}
-
+	} else if (read_hypervisor_powerpc(desc) > 0) {
+		/* read_hypervisor_powerpc() sets all necessary stuff to @desc */
+		;
 	/* Xen para-virt or dom0 */
-	else if (ul_path_access(desc->procfs, F_OK, "xen") == 0) {
+	} else if (ul_path_access(desc->procfs, F_OK, "xen") == 0) {
 		int dom0 = 0;
 
 		fd = ul_path_fopen(desc->procfs, "r", "xen/capabilities");
@@ -1354,9 +1365,19 @@ read_cache(struct lscpu_desc *desc, int idx)
 
 			ca->name = xstrdup(buf);
 
-			/* cache ways */
-			ul_path_readf_s32(desc->syscpu, &ca->ways,
+			ul_path_readf_u32(desc->syscpu, &ca->ways_of_associativity,
 					"cpu%d/cache/index%d/ways_of_associativity", num, i);
+			ul_path_readf_u32(desc->syscpu, &ca->physical_line_partition,
+					"cpu%d/cache/index%d/physical_line_partition", num, i);
+			ul_path_readf_u32(desc->syscpu, &ca->number_of_sets,
+					"cpu%d/cache/index%d/number_of_sets", num, i);
+			ul_path_readf_u32(desc->syscpu, &ca->coherency_line_size,
+					"cpu%d/cache/index%d/coherency_line_size", num, i);
+
+			ul_path_readf_string(desc->syscpu, &ca->allocation_policy,
+					"cpu%d/cache/index%d/allocation_policy", num, i);
+			ul_path_readf_string(desc->syscpu, &ca->write_policy,
+					"cpu%d/cache/index%d/write_policy", num, i);
 
 			/* cache size */
 			if (ul_path_readf_buffer(desc->syscpu, buf, sizeof(buf),
@@ -1682,9 +1703,10 @@ print_caches_readable(struct lscpu_desc *desc, int cols[], int ncols,
 				break;
 			}
 			case COL_CACHE_WAYS:
-				if (ca->ways)
-					xasprintf(&data, "%d", ca->ways);
+				if (ca->ways_of_associativity)
+					xasprintf(&data, "%u", ca->ways_of_associativity);
 				break;
+
 			case COL_CACHE_TYPE:
 				if (ca->type)
 					data = xstrdup(ca->type);
@@ -1692,6 +1714,26 @@ print_caches_readable(struct lscpu_desc *desc, int cols[], int ncols,
 			case COL_CACHE_LEVEL:
 				if (ca->level)
 					xasprintf(&data, "%d", ca->level);
+				break;
+			case COL_CACHE_ALLOCPOL:
+				if (ca->allocation_policy)
+					data = xstrdup(ca->allocation_policy);
+				break;
+			case COL_CACHE_WRITEPOL:
+				if (ca->write_policy)
+					data = xstrdup(ca->write_policy);
+				break;
+			case COL_CACHE_PHYLINE:
+				if (ca->physical_line_partition)
+					xasprintf(&data, "%u", ca->physical_line_partition);
+				break;
+			case COL_CACHE_SETS:
+				if (ca->number_of_sets)
+					xasprintf(&data, "%u", ca->number_of_sets);
+				break;
+			case COL_CACHE_COHERENCYSIZE:
+				if (ca->coherency_line_size)
+					xasprintf(&data, "%u", ca->coherency_line_size);
 				break;
 			}
 
@@ -2255,7 +2297,7 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	while ((c = getopt_long(argc, argv, "aBbC::ce::hJp::s:xyV", longopts, NULL)) != -1) {
 
@@ -2414,6 +2456,9 @@ int main(int argc, char *argv[])
 			columns[ncolumns++] = COL_CACHE_WAYS;
 			columns[ncolumns++] = COL_CACHE_TYPE;
 			columns[ncolumns++] = COL_CACHE_LEVEL;
+			columns[ncolumns++] = COL_CACHE_SETS;
+			columns[ncolumns++] = COL_CACHE_PHYLINE;
+			columns[ncolumns++] = COL_CACHE_COHERENCYSIZE;
 		}
 		print_caches_readable(desc, columns, ncolumns, mod);
 		break;

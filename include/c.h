@@ -1,7 +1,9 @@
 /*
  * Fundamental C definitions.
+ *
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
  */
-
 #ifndef UTIL_LINUX_C_H
 #define UTIL_LINUX_C_H
 
@@ -64,7 +66,7 @@
 
 /*
  * It evaluates to 1 if the attribute/feature is supported by the current
- * compilation targed. Fallback for old compilers.
+ * compilation target. Fallback for old compilers.
  */
 #ifndef __has_attribute
   #define __has_attribute(x) 0

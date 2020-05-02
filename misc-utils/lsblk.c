@@ -72,12 +72,14 @@ enum {
 	COL_FSTYPE,
 	COL_FSUSED,
 	COL_FSUSEPERC,
+	COL_FSVERSION,
 	COL_TARGET,
 	COL_LABEL,
 	COL_UUID,
 	COL_PTUUID,
 	COL_PTTYPE,
 	COL_PARTTYPE,
+	COL_PARTTYPENAME,
 	COL_PARTLABEL,
 	COL_PARTUUID,
 	COL_PARTFLAGS,
@@ -158,6 +160,7 @@ static struct colinfo infos[] = {
 	[COL_FSTYPE]    = { "FSTYPE", 0.1, SCOLS_FL_TRUNC, N_("filesystem type") },
 	[COL_FSUSED]    = { "FSUSED", 5, SCOLS_FL_RIGHT, N_("filesystem size used") },
 	[COL_FSUSEPERC] = { "FSUSE%", 3, SCOLS_FL_RIGHT, N_("filesystem use percentage") },
+	[COL_FSVERSION] = { "FSVER", 0.1, SCOLS_FL_TRUNC, N_("filesystem version") },
 
 	[COL_TARGET] = { "MOUNTPOINT", 0.10, SCOLS_FL_TRUNC, N_("where the device is mounted") },
 	[COL_LABEL]  = { "LABEL",   0.1, 0, N_("filesystem LABEL") },
@@ -166,7 +169,8 @@ static struct colinfo infos[] = {
 	[COL_PTUUID] = { "PTUUID",  36,  0, N_("partition table identifier (usually UUID)") },
 	[COL_PTTYPE] = { "PTTYPE",  0.1, 0, N_("partition table type") },
 
-	[COL_PARTTYPE]  = { "PARTTYPE",  36,  0, N_("partition type UUID") },
+	[COL_PARTTYPE]  = { "PARTTYPE",  36,  0, N_("partition type code or UUID") },
+	[COL_PARTTYPENAME]  = { "PARTTYPENAME",  0.1,  0, N_("partition type name") },
 	[COL_PARTLABEL] = { "PARTLABEL", 0.1, 0, N_("partition LABEL") },
 	[COL_PARTUUID]  = { "PARTUUID",  36,  0, N_("partition UUID") },
 	[COL_PARTFLAGS] = { "PARTFLAGS",  36,  0, N_("partition flags") },
@@ -711,7 +715,7 @@ static char *device_get_data(
 		int id,					/* column ID (COL_*) */
 		uint64_t *sortdata)			/* returns sort data as number */
 {
-	struct lsblk_devprop *prop;
+	struct lsblk_devprop *prop = NULL;
 	char *str = NULL;
 
 	switch(id) {
@@ -730,30 +734,42 @@ static char *device_get_data(
 			str = xstrdup(dev->filename);
 		break;
 	case COL_OWNER:
-	{
-		struct stat *st = device_get_stat(dev);
-		struct passwd *pw = st ? getpwuid(st->st_uid) : NULL;
-		if (pw)
-			str = xstrdup(pw->pw_name);
+		if (lsblk->sysroot)
+			prop = lsblk_device_get_properties(dev);
+		if (prop && prop->owner) {
+			str = xstrdup(prop->owner);
+		} else {
+			struct stat *st = device_get_stat(dev);
+			struct passwd *pw = st ? getpwuid(st->st_uid) : NULL;
+			if (pw)
+				str = xstrdup(pw->pw_name);
+		}
 		break;
-	}
 	case COL_GROUP:
-	{
-		struct stat *st = device_get_stat(dev);
-		struct group *gr = st ? getgrgid(st->st_gid) : NULL;
-		if (gr)
-			str = xstrdup(gr->gr_name);
+		if (lsblk->sysroot)
+			prop = lsblk_device_get_properties(dev);
+		if (prop && prop->group) {
+			str = xstrdup(prop->group);
+		} else {
+			struct stat *st = device_get_stat(dev);
+			struct group *gr = st ? getgrgid(st->st_gid) : NULL;
+			if (gr)
+				str = xstrdup(gr->gr_name);
+		}
 		break;
-	}
 	case COL_MODE:
-	{
-		struct stat *st = device_get_stat(dev);
-		char md[11] = { '\0' };
+		if (lsblk->sysroot)
+			prop = lsblk_device_get_properties(dev);
+		if (prop && prop->mode) {
+			str = xstrdup(prop->mode);
+		} else {
+			struct stat *st = device_get_stat(dev);
+			char md[11] = { '\0' };
 
-		if (st)
-			str = xstrdup(xstrmode(st->st_mode, md));
+			if (st)
+				str = xstrdup(xstrmode(st->st_mode, md));
+		}
 		break;
-	}
 	case COL_MAJMIN:
 		if (is_parsable(lsblk))
 			xasprintf(&str, "%u:%u", dev->maj, dev->min);
@@ -773,9 +789,20 @@ static char *device_get_data(
 	case COL_FSUSEPERC:
 		str = get_vfs_attribute(dev, id);
 		break;
-	case COL_TARGET:
-		str = xstrdup(lsblk_device_get_mountpoint(dev));
+	case COL_FSVERSION:
+		prop = lsblk_device_get_properties(dev);
+		if (prop && prop->fsversion)
+			str = xstrdup(prop->fsversion);
 		break;
+	case COL_TARGET:
+	{
+		char *s = lsblk_device_get_mountpoint(dev);
+		if (s)
+			str = xstrdup(s);
+		else
+			str = NULL;
+		break;
+	}
 	case COL_LABEL:
 		prop = lsblk_device_get_properties(dev);
 		if (prop && prop->label)
@@ -800,6 +827,15 @@ static char *device_get_data(
 		prop = lsblk_device_get_properties(dev);
 		if (prop && prop->parttype)
 			str = xstrdup(prop->parttype);
+		break;
+	case COL_PARTTYPENAME:
+		prop = lsblk_device_get_properties(dev);
+		if (prop && prop->parttype && prop->pttype) {
+			const char *x = lsblk_parttype_code_to_string(
+						prop->parttype, prop->pttype);
+			if (x)
+				str = xstrdup(x);
+		}
 		break;
 	case COL_PARTLABEL:
 		prop = lsblk_device_get_properties(dev);
@@ -1018,6 +1054,9 @@ static void device_to_scols(
 
 	DBG(DEV, ul_debugobj(dev, "add '%s' to scols", dev->name));
 	ON_DBG(DEV, if (ul_path_isopen_dirfd(dev->sysfs)) ul_debugobj(dev, " %s ---> is open!", dev->name));
+
+	if (!parent && dev->wholedisk)
+		parent = dev->wholedisk;
 
 	/* Do not print device more than one in --list mode */
 	if (!(lsblk->flags & LSBLK_TREE) && dev->is_printed)
@@ -1909,6 +1948,7 @@ int main(int argc, char *argv[])
 		case 'f':
 			add_uniq_column(COL_NAME);
 			add_uniq_column(COL_FSTYPE);
+			add_uniq_column(COL_FSVERSION);
 			add_uniq_column(COL_LABEL);
 			add_uniq_column(COL_UUID);
 			add_uniq_column(COL_FSAVAIL);

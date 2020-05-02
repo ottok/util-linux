@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2010 Karel Zak <kzak@redhat.com>
  * Copyright (C) 2010 Davidlohr Bueso <dave@gnu.org>
+ *
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -16,6 +18,7 @@
 #include "nls.h"
 #include "strutils.h"
 #include "bitops.h"
+#include "pathnames.h"
 
 static int STRTOXX_EXIT_CODE = EXIT_FAILURE;
 
@@ -1011,6 +1014,7 @@ int skip_fline(FILE *fp)
 }
 
 #ifdef TEST_PROGRAM_STRUTILS
+#include <stdio.h>
 
 static int test_strutils_sizes(int argc, char *argv[])
 {

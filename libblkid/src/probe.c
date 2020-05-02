@@ -203,7 +203,7 @@ blkid_probe blkid_new_probe_from_filename(const char *filename)
 	int fd;
 	blkid_probe pr = NULL;
 
-	fd = open(filename, O_RDONLY|O_CLOEXEC);
+	fd = open(filename, O_RDONLY|O_CLOEXEC|O_NONBLOCK);
 	if (fd < 0)
 		return NULL;
 
@@ -217,8 +217,7 @@ blkid_probe blkid_new_probe_from_filename(const char *filename)
 	pr->flags |= BLKID_FL_PRIVATE_FD;
 	return pr;
 err:
-	if (fd >= 0)
-		close(fd);
+	close(fd);
 	blkid_free_probe(pr);
 	return NULL;
 }
@@ -846,10 +845,15 @@ failed:
  * @off: begin of probing area
  * @size: size of probing area (zero means whole device/file)
  *
- * Assigns the device to probe control struct, resets internal buffers and
- * resets the current probing.
+ * Assigns the device to probe control struct, resets internal buffers, resets
+ * the current probing, and close previously associated device (if open by
+ * libblkid).
  *
- * Returns: -1 in case of failure, or 0 on success.
+ * If @fd is < 0 than only resets the prober and returns 1. Note that
+ * blkid_reset_probe() keeps the device associated with the prober, but
+ * blkid_probe_set_device() does complete reset.
+ *
+ * Returns: -1 in case of failure, 0 on success and 1 on reset.
  */
 int blkid_probe_set_device(blkid_probe pr, int fd,
 		blkid_loff_t off, blkid_loff_t size)
@@ -863,6 +867,11 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 
 	if ((pr->flags & BLKID_FL_PRIVATE_FD) && pr->fd >= 0)
 		close(pr->fd);
+
+	if (pr->disk_probe) {
+		blkid_free_probe(pr->disk_probe);
+		pr->disk_probe = NULL;
+	}
 
 	pr->flags &= ~BLKID_FL_PRIVATE_FD;
 	pr->flags &= ~BLKID_FL_TINY_DEV;
@@ -878,6 +887,9 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	pr->wipe_off = 0;
 	pr->wipe_size = 0;
 	pr->wipe_chain = NULL;
+
+	if (fd < 0)
+		return 1;
 
 #if defined(POSIX_FADV_RANDOM) && defined(HAVE_POSIX_FADVISE)
 	/* Disable read-ahead */
@@ -933,6 +945,14 @@ int blkid_probe_set_device(blkid_probe pr, int fd,
 	    blkid_probe_is_wholedisk(pr) &&
 	    ioctl(fd, CDROM_GET_CAPABILITY, NULL) >= 0) {
 
+# ifdef CDROM_DRIVE_STATUS
+		switch (ioctl(fd, CDROM_DRIVE_STATUS, CDSL_CURRENT)) {
+		case CDS_TRAY_OPEN:
+		case CDS_NO_DISC:
+			errno = ENOMEDIUM;
+			goto err;
+		}
+# endif
 		pr->flags |= BLKID_FL_CDROM_DEV;
 		cdrom_size_correction(pr);
 	}

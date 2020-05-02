@@ -225,9 +225,11 @@ static int fix_optstr(struct libmnt_context *cxt)
 	if (!cxt->fs || (cxt->flags & MNT_FL_MOUNTOPTS_FIXED))
 		return 0;
 
-	DBG(CXT, ul_debugobj(cxt, "mount: fixing optstr"));
-
 	fs = cxt->fs;
+
+	DBG(CXT, ul_debugobj(cxt, "mount: fixing options, current "
+		"vfs: '%s' fs: '%s' user: '%s', optstr: '%s'",
+		fs->vfs_optstr, fs->fs_optstr, fs->user_optstr, fs->optstr));
 
 	/*
 	 * The "user" options is our business (so we can modify the option),
@@ -352,7 +354,7 @@ static int fix_optstr(struct libmnt_context *cxt)
 	}
 
 
-	if (!rc && cxt->restricted && (cxt->user_mountflags & MNT_MS_USER)) {
+	if (!rc && mnt_context_is_restricted(cxt) && (cxt->user_mountflags & MNT_MS_USER)) {
 		ns_old = mnt_context_switch_origin_ns(cxt);
 		if (!ns_old)
 			return -MNT_ERR_NAMESPACE;
@@ -991,9 +993,9 @@ int mnt_context_prepare_mount(struct libmnt_context *cxt)
 	if (!rc)
 		rc = mnt_context_prepare_srcpath(cxt);
 	if (!rc)
-		rc = mnt_context_prepare_target(cxt);
-	if (!rc)
 		rc = mnt_context_guess_fstype(cxt);
+	if (!rc)
+		rc = mnt_context_prepare_target(cxt);
 	if (!rc)
 		rc = mnt_context_prepare_helper(cxt, "mount", NULL);
 	if (rc) {
@@ -1106,6 +1108,11 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 		}
 	}
 #endif
+
+	/* Cleanup will be immediate on failure, and deferred to umount on success */
+	if (mnt_context_is_veritydev(cxt))
+		mnt_context_deferred_delete_veritydev(cxt);
+
 	if (!mnt_context_switch_ns(cxt, ns_old))
 		return -MNT_ERR_NAMESPACE;
 
@@ -1281,7 +1288,6 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 {
 	struct libmnt_table *fstab, *mtab;
 	const char *o, *tgt;
-	char *pattern;
 	int rc, mounted = 0;
 
 	if (ignored)
@@ -1291,11 +1297,6 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 
 	if (!cxt || !fs || !itr)
 		return -EINVAL;
-
-	mtab = cxt->mtab;
-	cxt->mtab = NULL;		/* do not reset mtab */
-	mnt_reset_context(cxt);
-	cxt->mtab = mtab;
 
 	rc = mnt_context_get_fstab(cxt, &fstab);
 	if (rc)
@@ -1347,6 +1348,23 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 		return 0;
 	}
 
+	/* Save mount options, etc. -- this is effective for the first
+	 * mnt_context_next_mount() call only. Make sure that cxt has not set
+	 * source, target or fstype.
+	 */
+	if (!mnt_context_has_template(cxt)) {
+		mnt_context_set_source(cxt, NULL);
+		mnt_context_set_target(cxt, NULL);
+		mnt_context_set_fstype(cxt, NULL);
+		mnt_context_save_template(cxt);
+	}
+
+	/* reset context, but protect mtab */
+	mtab = cxt->mtab;
+	cxt->mtab = NULL;
+	mnt_reset_context(cxt);
+	cxt->mtab = mtab;
+
 	if (mnt_context_is_fork(cxt)) {
 		rc = mnt_fork_context(cxt);
 		if (rc)
@@ -1357,16 +1375,19 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
 		}
 	}
 
-	/* child or non-forked */
+	/*
+	 * child or non-forked
+	 */
 
-	rc = mnt_context_set_fs(cxt, *fs);
+	/* copy stuff from fstab to context */
+	rc = mnt_context_apply_fs(cxt, *fs);
 	if (!rc) {
 		/*
 		 * "-t <pattern>" is used to filter out fstab entries, but for ordinary
 		 * mount operation -t means "-t <type>". We have to zeroize the pattern
 		 * to avoid misinterpretation.
 		 */
-		pattern = cxt->fstype_pattern;
+		char *pattern = cxt->fstype_pattern;
 		cxt->fstype_pattern = NULL;
 
 		rc = mnt_context_mount(cxt);
@@ -1405,6 +1426,11 @@ int mnt_context_next_mount(struct libmnt_context *cxt,
  * mnt_context_next_remount() function returns zero, but the @ignored is
  * non-zero.
  *
+ * IMPORTANT -- the mount operation is performed in the current context.
+ * The context is reset before the next mount (see mnt_reset_context()).
+ * The context setting related to the filesystem (e.g. mount options,
+ * etc.) are protected.
+
  * If mount(2) syscall or mount.type helper failed, then the
  * mnt_context_next_mount() function returns zero, but the @mntrc is non-zero.
  * Use also mnt_context_get_status() to check if the filesystem was
@@ -1424,7 +1450,6 @@ int mnt_context_next_remount(struct libmnt_context *cxt,
 			   int *mntrc,
 			   int *ignored)
 {
-	struct libmnt_context *remount_cxt = NULL;
 	struct libmnt_table *mtab;
 	const char *tgt;
 	int rc;
@@ -1467,30 +1492,42 @@ int mnt_context_next_remount(struct libmnt_context *cxt,
 		return 0;
 	}
 
-	/* make sure fstab is already read to avoid fstab parsing in cloned context */
-	mnt_context_get_fstab(cxt, NULL);
+	/* Save mount options, etc. -- this is effective for the first
+	 * mnt_context_next_remount() call only. Make sure that cxt has not set
+	 * source, target or fstype.
+	 */
+	if (!mnt_context_has_template(cxt)) {
+		mnt_context_set_source(cxt, NULL);
+		mnt_context_set_target(cxt, NULL);
+		mnt_context_set_fstype(cxt, NULL);
+		mnt_context_save_template(cxt);
+	}
 
-	/* clone context */
-	remount_cxt = mnt_copy_context(cxt);
-	if (!remount_cxt)
-		return -ENOMEM;
+	/* restore original, but protect mtab */
+	cxt->mtab = NULL;
+	mnt_reset_context(cxt);
+	cxt->mtab = mtab;
 
-	rc = mnt_context_set_target(remount_cxt, tgt);
+	rc = mnt_context_set_target(cxt, tgt);
 	if (!rc) {
 		/*
 		 * "-t <pattern>" is used to filter out fstab entries, but for ordinary
 		 * mount operation -t means "-t <type>". We have to zeroize the pattern
 		 * to avoid misinterpretation.
 		 */
-		remount_cxt->fstype_pattern = NULL;
-		rc = mnt_context_mount(remount_cxt);
+		char *pattern = cxt->fstype_pattern;
+		cxt->fstype_pattern = NULL;
+
+		rc = mnt_context_mount(cxt);
+
+		cxt->fstype_pattern = pattern;
 
 		if (mntrc)
 			*mntrc = rc;
+		rc = 0;
 	}
 
-	mnt_free_context(remount_cxt);
-	return 0;
+	return rc;
 }
 
 /*

@@ -247,7 +247,8 @@ const struct fdisk_field *fdisk_label_get_field_by_name(
  * fdisk_write_disklabel:
  * @cxt: fdisk context
  *
- * Write in-memory changes to disk. Be careful!
+ * This function wipes the device (if enabled by fdisk_enable_wipe()) and then
+ * it writes in-memory changes to disk. Be careful!
  *
  * Returns: 0 on success, otherwise, a corresponding error.
  */
@@ -636,7 +637,7 @@ int fdisk_label_is_disabled(const struct fdisk_label *lb)
  * @ma: maximal number
  *
  * The function provides minimal and maximal geometry supported for the label,
- * if no range defined by library than returns -ENOSYS.
+ * if no range defined by library then returns -ENOSYS.
  *
  * Since: 2.32
  *
@@ -661,7 +662,7 @@ int fdisk_label_get_geomrange_sectors(const struct fdisk_label *lb,
  * @ma: maximal number
  *
  * The function provides minimal and maximal geometry supported for the label,
- * if no range defined by library than returns -ENOSYS.
+ * if no range defined by library then returns -ENOSYS.
  *
  * Since: 2.32
  *
@@ -686,7 +687,7 @@ int fdisk_label_get_geomrange_heads(const struct fdisk_label *lb,
  * @ma: maximal number
  *
  * The function provides minimal and maximal geometry supported for the label,
- * if no range defined by library than returns -ENOSYS.
+ * if no range defined by library then returns -ENOSYS.
  *
  * Since: 2.32
  *

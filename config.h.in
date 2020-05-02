@@ -45,6 +45,9 @@
 /* Define to 1 if the system has the type `cpu_set_t'. */
 #undef HAVE_CPU_SET_T
 
+/* Define if cryptsetup is available */
+#undef HAVE_CRYPTSETUP
+
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
@@ -106,6 +109,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `fmemopen' function. */
+#undef HAVE_FMEMOPEN
 
 /* Define to 1 if you have the `fpurge' function. */
 #undef HAVE_FPURGE
@@ -254,6 +260,9 @@
 /* Define to 1 if you have the <linux/btrfs.h> header file. */
 #undef HAVE_LINUX_BTRFS_H
 
+/* Define to 1 if you have the <linux/capability.h> header file. */
+#undef HAVE_LINUX_CAPABILITY_H
+
 /* Define to 1 if you have the <linux/cdrom.h> header file. */
 #undef HAVE_LINUX_CDROM_H
 
@@ -368,6 +377,12 @@
 /* Define to 1 if you have the `personality' function. */
 #undef HAVE_PERSONALITY
 
+/* Define to 1 if you have the `pidfd_open' function. */
+#undef HAVE_PIDFD_OPEN
+
+/* Define to 1 if you have the `pidfd_send_signal' function. */
+#undef HAVE_PIDFD_SEND_SIGNAL
+
 /* Define to 1 if you have the `posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
@@ -382,6 +397,9 @@
 
 /* Define if program_invocation_short_name is defined */
 #undef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+
+/* have PTY support */
+#undef HAVE_PTY
 
 /* Define to 1 if you have the <pty.h> header file. */
 #undef HAVE_PTY_H
@@ -745,6 +763,12 @@
 /* Fallback syscall number for ioprio_set */
 #undef SYS_ioprio_set
 
+/* Fallback syscall number for pidfd_open */
+#undef SYS_pidfd_open
+
+/* Fallback syscall number for pidfd_send_signal */
+#undef SYS_pidfd_send_signal
+
 /* Fallback syscall number for pivot_root */
 #undef SYS_pivot_root
 
@@ -774,6 +798,12 @@
 
 /* Enables colorized output from utils by default */
 #undef USE_COLORS_BY_DEFAULT
+
+/* Define to 1 if want to use CMOS clock. */
+#undef USE_HWCLOCK_CMOS
+
+/* use datetime parsing GPLv3 code to hwclock */
+#undef USE_HWCLOCK_GPLv3_DATETIME
 
 /* Define to 1 if want to support mtab. */
 #undef USE_LIBMOUNT_SUPPORT_MTAB

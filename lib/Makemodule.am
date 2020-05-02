@@ -17,7 +17,6 @@ libcommon_la_SOURCES = \
 	lib/mbsedit.c\
 	lib/md5.c \
 	lib/pager.c \
-	lib/parse-date.y \
 	lib/pwdutils.c \
 	lib/randutils.c \
 	lib/setproctitle.c \
@@ -31,6 +30,7 @@ libcommon_la_SOURCES = \
 
 if LINUX
 libcommon_la_SOURCES += \
+	lib/caputils.c \
 	lib/linux_version.c \
 	lib/loopdev.c
 endif
@@ -87,7 +87,6 @@ check_PROGRAMS += \
 	test_timeutils
 
 
-
 if LINUX
 if HAVE_CPU_SET_T
 check_PROGRAMS += test_cpuset
@@ -141,6 +140,15 @@ endif
 test_path_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM_PATH
 test_path_LDADD = $(LDADD)
 endif
+endif
+
+if HAVE_PTY
+check_PROGRAMS += test_pty
+test_pty_SOURCES = lib/pty-session.c \
+		   include/pty-session.h \
+		   lib/monotonic.c
+test_pty_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM_PTY
+test_pty_LDADD = $(LDADD) libcommon.la $(MATH_LIBS) $(REALTIME_LIBS) -lutil
 endif
 
 if LINUX

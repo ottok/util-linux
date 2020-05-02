@@ -132,6 +132,7 @@ fdisk_ref_script
 fdisk_script_enable_json
 fdisk_script_get_header
 fdisk_script_get_nlines
+fdisk_script_set_table
 fdisk_script_get_table
 fdisk_script_has_force_label
 fdisk_script_read_context
@@ -290,6 +291,7 @@ fdisk_unref_table
 <FILE>context</FILE>
 fdisk_context
 fdisk_assign_device
+fdisk_assign_device_by_fd
 fdisk_deassign_device
 fdisk_reassign_device
 fdisk_device_is_used

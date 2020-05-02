@@ -45,32 +45,26 @@
 #define OPTUTILS_EXIT_CODE MNT_EX_USAGE
 #include "optutils.h"
 
-/*** TODO: DOCS:
- *
- *  --options-mode={ignore,append,prepend,replace}	MNT_OMODE_{IGNORE, ...}
- *  --options-source={fstab,mtab,disable}		MNT_OMODE_{FSTAB,MTAB,NOTAB}
- *  --options-source-force				MNT_OMODE_FORCE
- */
-
 static int mk_exit_code(struct libmnt_context *cxt, int rc);
 
-static void __attribute__((__noreturn__)) exit_non_root(const char *option)
+static void suid_drop(struct libmnt_context *cxt)
 {
 	const uid_t ruid = getuid();
 	const uid_t euid = geteuid();
 
-	if (ruid == 0 && euid != 0) {
-		/* user is root, but setuid to non-root */
-		if (option)
-			errx(MNT_EX_USAGE, _("only root can use \"--%s\" option "
-					 "(effective UID is %u)"),
-					option, euid);
-		errx(MNT_EX_USAGE, _("only root can do that "
-				 "(effective UID is %u)"), euid);
+	if (ruid != 0 && euid == 0) {
+		if (setgid(getgid()) < 0)
+			err(MNT_EX_FAIL, _("setgid() failed"));
+
+		if (setuid(getuid()) < 0)
+			err(MNT_EX_FAIL, _("setuid() failed"));
 	}
-	if (option)
-		errx(MNT_EX_USAGE, _("only root can use \"--%s\" option"), option);
-	errx(MNT_EX_USAGE, _("only root can do that"));
+
+	/* be paranoid and check it, setuid(0) has to fail */
+	if (ruid != 0 && setuid(0) == 0)
+		errx(MNT_EX_FAIL, _("drop permissions failed."));
+
+	mnt_context_force_unrestricted(cxt);
 }
 
 static void __attribute__((__noreturn__)) mount_print_version(void)
@@ -201,7 +195,7 @@ static int mount_all(struct libmnt_context *cxt)
 				/* Note that MNT_EX_SUCCESS return code does
 				 * not mean that FS has been really mounted
 				 * (e.g. nofail option) */
-				if (mnt_context_get_status(cxt) 
+				if (mnt_context_get_status(cxt)
 				    && mnt_context_is_verbose(cxt))
 					printf("%-25s: successfully mounted\n", tgt);
 			} else
@@ -390,19 +384,19 @@ static struct libmnt_table *append_fstab(struct libmnt_context *cxt,
  * Check source and target paths -- non-root user should not be able to
  * resolve paths which are unreadable for him.
  */
-static void sanitize_paths(struct libmnt_context *cxt)
+static int sanitize_paths(struct libmnt_context *cxt)
 {
 	const char *p;
 	struct libmnt_fs *fs = mnt_context_get_fs(cxt);
 
 	if (!fs)
-		return;
+		return 0;
 
 	p = mnt_fs_get_target(fs);
 	if (p) {
 		char *np = canonicalize_path_restricted(p);
 		if (!np)
-			err(MNT_EX_USAGE, "%s", p);
+			return -EPERM;
 		mnt_fs_set_target(fs, np);
 		free(np);
 	}
@@ -411,10 +405,11 @@ static void sanitize_paths(struct libmnt_context *cxt)
 	if (p) {
 		char *np = canonicalize_path_restricted(p);
 		if (!np)
-			err(MNT_EX_USAGE, "%s", p);
+			return -EPERM;
 		mnt_fs_set_source(fs, np);
 		free(np);
 	}
+	return 0;
 }
 
 static void append_option(struct libmnt_context *cxt, const char *opt)
@@ -478,6 +473,9 @@ static void __attribute__((__noreturn__)) usage(void)
 	fprintf(out, _(
 	"     --source <src>      explicitly specifies source (path, label, uuid)\n"
 	"     --target <target>   explicitly specifies mountpoint\n"));
+	fprintf(out, _(
+	"     --target-prefix <path>\n"
+	"                         specifies path use for all mountpoints\n"));
 	fprintf(out, _(
 	" -v, --verbose           say what is being done\n"));
 	fprintf(out, _(
@@ -597,6 +595,7 @@ int main(int argc, char **argv)
 		MOUNT_OPT_RPRIVATE,
 		MOUNT_OPT_RUNBINDABLE,
 		MOUNT_OPT_TARGET,
+		MOUNT_OPT_TARGET_PREFIX,
 		MOUNT_OPT_SOURCE,
 		MOUNT_OPT_OPTMODE,
 		MOUNT_OPT_OPTSRC,
@@ -636,6 +635,7 @@ int main(int argc, char **argv)
 		{ "internal-only",    no_argument,       NULL, 'i'                   },
 		{ "show-labels",      no_argument,       NULL, 'l'                   },
 		{ "target",           required_argument, NULL, MOUNT_OPT_TARGET      },
+		{ "target-prefix",    required_argument, NULL, MOUNT_OPT_TARGET_PREFIX },
 		{ "source",           required_argument, NULL, MOUNT_OPT_SOURCE      },
 		{ "options-mode",     required_argument, NULL, MOUNT_OPT_OPTMODE     },
 		{ "options-source",   required_argument, NULL, MOUNT_OPT_OPTSRC      },
@@ -674,7 +674,7 @@ int main(int argc, char **argv)
 		    !strchr("hlLUVvrist", c) &&
 		    c != MOUNT_OPT_TARGET &&
 		    c != MOUNT_OPT_SOURCE)
-			exit_non_root(option_to_longopt(c, longopts));
+			suid_drop(cxt);
 
 		err_exclusive_options(c, longopts, excl, excl_st);
 
@@ -799,6 +799,9 @@ int main(int argc, char **argv)
 			mnt_context_disable_swapmatch(cxt, 1);
 			mnt_context_set_target(cxt, optarg);
 			break;
+		case MOUNT_OPT_TARGET_PREFIX:
+			mnt_context_set_target_prefix(cxt, optarg);
+			break;
 		case MOUNT_OPT_SOURCE:
 			mnt_context_disable_swapmatch(cxt, 1);
 			mnt_context_set_source(cxt, optarg);
@@ -871,7 +874,7 @@ int main(int argc, char **argv)
 	/* Non-root users are allowed to use -t to print_all(),
 	   but not to mount */
 	if (mnt_context_is_restricted(cxt) && types)
-		exit_non_root("types");
+		suid_drop(cxt);
 
 	if (oper && (types || all || mnt_context_get_source(cxt))) {
 		warnx(_("bad usage"));
@@ -904,7 +907,7 @@ int main(int argc, char **argv)
 		if (mnt_context_is_restricted(cxt) &&
 		    mnt_context_get_source(cxt) &&
 		    mnt_context_get_target(cxt))
-			exit_non_root(NULL);
+			suid_drop(cxt);
 
 	} else if (argc == 1 && (!mnt_context_get_source(cxt) ||
 				 !mnt_context_get_target(cxt))) {
@@ -932,7 +935,7 @@ int main(int argc, char **argv)
 		if (mnt_context_is_restricted(cxt) &&
 		    mnt_context_get_source(cxt) &&
 		    mnt_context_get_target(cxt))
-			exit_non_root(NULL);
+			suid_drop(cxt);
 
 	} else if (argc == 2 && !mnt_context_get_source(cxt)
 			     && !mnt_context_get_target(cxt)) {
@@ -940,7 +943,7 @@ int main(int argc, char **argv)
 		 * D) mount <source> <target>
 		 */
 		if (mnt_context_is_restricted(cxt))
-			exit_non_root(NULL);
+			suid_drop(cxt);
 
 		mnt_context_set_source(cxt, argv[0]);
 		mnt_context_set_target(cxt, argv[1]);
@@ -950,8 +953,8 @@ int main(int argc, char **argv)
 		errtryhelp(MNT_EX_USAGE);
 	}
 
-	if (mnt_context_is_restricted(cxt))
-		sanitize_paths(cxt);
+	if (mnt_context_is_restricted(cxt) && sanitize_paths(cxt) != 0)
+		suid_drop(cxt);
 
 	if (is_move)
 		/* "move" as option string is not supported by libmount */
@@ -962,6 +965,14 @@ int main(int argc, char **argv)
 		mnt_context_set_optsmode(cxt, MNT_OMODE_NOTAB);
 
 	rc = mnt_context_mount(cxt);
+
+	if (rc == -EPERM
+	    && mnt_context_is_restricted(cxt)
+	    && !mnt_context_syscall_called(cxt)) {
+		/* Try it again without permissions */
+		suid_drop(cxt);
+		rc = mnt_context_mount(cxt);
+	}
 	rc = mk_exit_code(cxt, rc);
 
 	if (rc == MNT_EX_SUCCESS && mnt_context_is_verbose(cxt))

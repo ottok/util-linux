@@ -419,7 +419,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -o, --offset <num>            start at offset <num> into file\n"), out);
 	fputs(_("     --sizelimit <num>         device is limited to <num> bytes of the file\n"), out);
-	fputs(_(" -b  --sector-size <num>       set the logical sector size to <num>\n"), out);
+	fputs(_(" -b, --sector-size <num>       set the logical sector size to <num>\n"), out);
 	fputs(_(" -P, --partscan                create a partitioned loop device\n"), out);
 	fputs(_(" -r, --read-only               set up a read-only loop device\n"), out);
 	fputs(_("     --direct-io[=<on|off>]    open backing file with O_DIRECT\n"), out);
@@ -642,7 +642,7 @@ int main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-	atexit(close_stdout);
+	close_stdout_atexit();
 
 	if (loopcxt_init(&lc, 0))
 		err(EXIT_FAILURE, _("failed to initialize loopcxt"));

@@ -37,6 +37,7 @@
 # include <readline/readline.h>
 #endif
 #include <libgen.h>
+#include <sys/time.h>
 
 #include "c.h"
 #include "xalloc.h"
@@ -49,6 +50,7 @@
 #include "all-io.h"
 #include "rpmatch.h"
 #include "optutils.h"
+#include "ttyutils.h"
 
 #include "libfdisk.h"
 #include "fdisk-list.h"
@@ -111,6 +113,7 @@ struct sfdisk {
 		     append : 1,	/* don't create new PT, append partitions only */
 		     json : 1,		/* JSON dump */
 		     movedata: 1,	/* move data after resize */
+		     movefsync: 1,	/* use fsync() after each write() */
 		     notell : 1,	/* don't tell kernel aout new PT */
 		     noact  : 1;	/* do not write to device */
 };
@@ -323,7 +326,7 @@ static char *mk_backup_filename_tpl(const char *filename, const char *devname, c
 
 	name = basename(buf);
 
-	if (!filename) {
+	if (!filename || strcmp(filename, "@default") == 0) {
 		const char *home = getenv ("HOME");
 		if (!home)
 			errx(EXIT_FAILURE, _("failed to create a backup file, $HOME undefined"));
@@ -369,10 +372,12 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 	char *devname = NULL, *typescript = NULL, *buf = NULL;
 	FILE *f = NULL;
 	int ok = 0, fd, backward = 0;
-	fdisk_sector_t nsectors, from, to, step, i;
-	size_t ss, step_bytes, cc;
-	uintmax_t src, dst;
-	int errsv;
+	fdisk_sector_t nsectors, from, to, step, i, prev;
+	size_t io, ss, step_bytes, cc;
+	uintmax_t src, dst, nbytes;
+	int errsv, progress = 0;
+	struct timeval prev_time;
+	uint64_t bytes_per_sec = 0;
 
 	assert(sf->movedata);
 
@@ -399,10 +404,11 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 
 	fd = fdisk_get_devfd(sf->cxt);
 
-	ss = fdisk_get_sector_size(sf->cxt);
+	/* set move direction and overlay */
 	nsectors = fdisk_partition_get_size(orig_pa);
 	from = fdisk_partition_get_start(orig_pa);
 	to = fdisk_partition_get_start(pa);
+
 
 	if ((to >= from && from + nsectors >= to) ||
 	    (from >= to && to + nsectors >= from)) {
@@ -411,22 +417,21 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 		DBG(MISC, ul_debug("overlay between source and target"));
 		backward = from < to;
 		DBG(MISC, ul_debug(" copy order: %s", backward ? "backward" : "forward"));
+	}
 
-		step = from > to ? from - to : to - from;
-		if (step > nsectors)
-			step = nsectors;
-	} else
-		step = nsectors;
+	/* set optimal step size -- nearest to 1MiB aligned to optimal I/O */
+	io = fdisk_get_optimal_iosize(sf->cxt);
+	ss = fdisk_get_sector_size(sf->cxt);
+	if (!io)
+		io = ss;
+	if (io < 1024 * 1024)
+		step_bytes = ((1024 * 1024) + io/2) / io * io;
+	else
+		step_bytes = io;
 
-	/* make step usable for malloc() */
-	if (step * ss > (getpagesize() * 256U))
-		step = (getpagesize() * 256) / ss;
+	step = step_bytes / ss;
+	nbytes = nsectors * ss;
 
-	/* align the step (note that nsectors does not have to be power of 2) */
-	while (nsectors % step)
-		step--;
-
-	step_bytes = step * ss;
 	DBG(MISC, ul_debug(" step: %ju (%zu bytes)", (uintmax_t)step, step_bytes));
 
 #if defined(POSIX_FADV_SEQUENTIAL) && defined(HAVE_POSIX_FADVISE)
@@ -434,17 +439,24 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 		posix_fadvise(fd, from * ss, nsectors * ss, POSIX_FADV_SEQUENTIAL);
 #endif
 	devname = fdisk_partname(fdisk_get_devname(sf->cxt), partno+1);
-	typescript = mk_backup_filename_tpl(sf->move_typescript, devname, ".move");
+	if (sf->move_typescript)
+		typescript = mk_backup_filename_tpl(sf->move_typescript, devname, ".move");
 
 	if (!sf->quiet) {
 		fdisk_info(sf->cxt,"");
 		color_scheme_enable("header", UL_COLOR_BOLD);
-		fdisk_info(sf->cxt, _("Data move:"));
+		fdisk_info(sf->cxt, sf->noact ? _("Data move: (--no-act)") : _("Data move:"));
 		color_disable();
-		fdisk_info(sf->cxt, _(" typescript file: %s"), typescript);
-		printf(_(" old start: %ju, new start: %ju (move %ju sectors)\n"),
-			(uintmax_t) from, (uintmax_t) to, (uintmax_t) nsectors);
+		if (typescript)
+			fdisk_info(sf->cxt, _(" typescript file: %s"), typescript);
+		printf(_("  start sector: (from/to) %ju / %ju\n"), (uintmax_t) from, (uintmax_t) to);
+		printf(_("  sectors: %ju\n"), (uintmax_t) nsectors);
+	        printf(_("  step size: %zu bytes\n"), step_bytes);
+		putchar('\n');
 		fflush(stdout);
+
+		if (isatty(fileno(stdout)))
+			progress = 1;
 	}
 
 	if (sf->interactive) {
@@ -456,26 +468,30 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 		}
 	}
 
-	f = fopen(typescript, "w");
-	if (!f)
-		goto fail;
+	if (typescript) {
+		f = fopen(typescript, "w");
+		if (!f) {
+			fdisk_warn(sf->cxt, _("cannot open %s"), typescript);
+			goto fail;
+		}
 
-	/* don't translate */
-	fprintf(f, "# sfdisk: " PACKAGE_STRING "\n");
-	fprintf(f, "# Disk: %s\n", devname);
-	fprintf(f, "# Partition: %zu\n", partno + 1);
-	fprintf(f, "# Operation: move data\n");
-	fprintf(f, "# Original start offset (sectors/bytes): %ju/%ju\n",
-	        (uintmax_t)from, (uintmax_t)from * ss);
-	fprintf(f, "# New start offset (sectors/bytes): %ju/%ju\n",
-	        (uintmax_t)to, (uintmax_t)to * ss);
-	fprintf(f, "# Area size (sectors/bytes): %ju/%ju\n",
-	        (uintmax_t)nsectors, (uintmax_t)nsectors * ss);
-	fprintf(f, "# Sector size: %zu\n", ss);
-	fprintf(f, "# Step size (in bytes): %zu\n", step_bytes);
-	fprintf(f, "# Steps: %ju\n", (uintmax_t)(nsectors / step));
-	fprintf(f, "#\n");
-	fprintf(f, "# <step>: <from> <to> (step offsets in bytes)\n");
+		/* don't translate */
+		fprintf(f, "# sfdisk: " PACKAGE_STRING "\n");
+		fprintf(f, "# Disk: %s\n", devname);
+		fprintf(f, "# Partition: %zu\n", partno + 1);
+		fprintf(f, "# Operation: move data\n");
+		fprintf(f, "# Sector size: %zu\n", ss);
+		fprintf(f, "# Original start offset (sectors/bytes): %ju/%ju\n",
+			(uintmax_t)from, (uintmax_t)from * ss);
+		fprintf(f, "# New start offset (sectors/bytes): %ju/%ju\n",
+			(uintmax_t)to, (uintmax_t)to * ss);
+		fprintf(f, "# Area size (sectors/bytes): %ju/%ju\n",
+			(uintmax_t)nsectors, (uintmax_t)nsectors * ss);
+				fprintf(f, "# Step size (sectors/bytes): %zu/%zu\n", step, step_bytes);
+		fprintf(f, "# Steps: %ju\n", ((uintmax_t) nsectors / step) + 1);
+		fprintf(f, "#\n");
+		fprintf(f, "# <step>: <from> <to> (step offsets in bytes)\n");
+	}
 
 	src = (backward ? from + nsectors : from) * ss;
 	dst = (backward ? to + nsectors : to) * ss;
@@ -483,7 +499,10 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 
 	DBG(MISC, ul_debug(" initial: src=%ju dst=%ju", src, dst));
 
-	for (cc = 1, i = 0; i < nsectors; i += step, cc++) {
+	gettimeofday(&prev_time, NULL);
+	prev = 0;
+
+	for (cc = 1, i = 0; i < nsectors && nbytes > 0; i += step, cc++) {
 		ssize_t rc;
 
 		if (backward)
@@ -491,35 +510,88 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
 
 		DBG(MISC, ul_debug("#%05zu: src=%ju dst=%ju", cc, src, dst));
 
-		/* read source */
-		if (lseek(fd, src, SEEK_SET) == (off_t) -1)
-			goto fail;
-		rc = read(fd, buf, step_bytes);
-		if (rc < 0 || rc != (ssize_t) step_bytes)
-			goto fail;
+		if (nbytes < step_bytes) {
+			DBG(MISC, ul_debug(" aligning step from %ju to %ju",
+						step_bytes, nbytes));
+			step_bytes = nbytes;
+		}
+		nbytes -= step_bytes;
 
-		/* write target */
-		if (lseek(fd, dst, SEEK_SET) == (off_t) -1)
-			goto fail;
-		rc = write(fd, buf, step_bytes);
-		if (rc < 0 || rc != (ssize_t) step_bytes)
-			goto fail;
-		fsync(fd);
+		if (!sf->noact) {
+			/* read source */
+			if (lseek(fd, src, SEEK_SET) == (off_t) -1)
+				goto fail;
+			rc = read(fd, buf, step_bytes);
+			if (rc < 0 || rc != (ssize_t) step_bytes)
+				goto fail;
+
+			/* write target */
+			if (lseek(fd, dst, SEEK_SET) == (off_t) -1)
+				goto fail;
+			rc = write(fd, buf, step_bytes);
+			if (rc < 0 || rc != (ssize_t) step_bytes)
+				goto fail;
+			if (sf->movefsync)
+				fsync(fd);
+		}
 
 		/* write log */
-		fprintf(f, "%05zu: %12ju %12ju\n", cc, src, dst);
+		if (f)
+			fprintf(f, "%05zu: %12ju %12ju\n", cc, src, dst);
 
-#if defined(POSIX_FADV_DONTNEED) && defined(HAVE_POSIX_FADVISE)
-		posix_fadvise(fd, src, step_bytes, POSIX_FADV_DONTNEED);
-#endif
+		if (progress && i % 10 == 0) {
+			unsigned int elapsed = 0;	/* usec */
+			struct timeval cur_time;
+
+			gettimeofday(&cur_time, NULL);
+			if (cur_time.tv_sec - prev_time.tv_sec > 1) {
+				elapsed = ((cur_time.tv_sec - prev_time.tv_sec) * 1000000) +
+					  (cur_time.tv_usec - prev_time.tv_usec);
+
+				bytes_per_sec = ((i - prev) * ss) / elapsed;	/* per usec */
+				bytes_per_sec *= 1000000;			/* per sec */
+
+				prev_time = cur_time;
+				prev = i;
+			}
+
+			if (bytes_per_sec)
+				fprintf(stdout, _("Moved %ju from %ju sectors (%.3f%%, %.1f MiB/s)."),
+					i + 1, nsectors,
+					100.0 / ((double) nsectors/(i+1)),
+					(double) (bytes_per_sec / (1024 * 1024)));
+			else
+				fprintf(stdout, _("Moved %ju from %ju sectors (%.3f%%)."),
+					i + 1, nsectors,
+					100.0 / ((double) nsectors/(i+1)));
+			fflush(stdout);
+                        fputc('\r', stdout);
+
+		}
+
 		if (!backward)
 			src += step_bytes, dst += step_bytes;
 	}
 
-	fclose(f);
+	if (progress) {
+		int x = get_terminal_width(80);
+		for (; x > 0; x--)
+			fputc(' ', stdout);
+		fflush(stdout);
+		fputc('\r', stdout);
+		fprintf(stdout, _("Moved %ju from %ju sectors (%.0f%%)."),
+				i, nsectors,
+				100.0 / ((double) nsectors/(i+1)));
+		fputc('\n', stdout);
+	}
+	if (f)
+		fclose(f);
 	free(buf);
 	free(devname);
 	free(typescript);
+
+	if (sf->noact)
+		fdisk_info(sf->cxt, _("Your data has not been moved (--no-act)."));
 
 	return 0;
 fail:
@@ -540,23 +612,25 @@ static int write_changes(struct sfdisk *sf)
 
 	if (sf->noact)
 		fdisk_info(sf->cxt, _("The partition table is unchanged (--no-act)."));
-	else {
+	else
 		rc = fdisk_write_disklabel(sf->cxt);
-		if (rc == 0 && sf->movedata && sf->orig_pa)
-			rc = move_partition_data(sf, sf->partno, sf->orig_pa);
-		if (!rc) {
-			fdisk_info(sf->cxt, _("\nThe partition table has been altered."));
-			if (!sf->notell) {
-				/* Let's wait a little bit. It's possible that our
-				 * system is still busy with a previous re-read
-				 * ioctl (on sfdisk start) or with another task
-				 * related to the write to the device.
-				 */
-				xusleep(250000);
-				fdisk_reread_partition_table(sf->cxt);
-			}
+
+	if (rc == 0 && sf->movedata && sf->orig_pa)
+		rc = move_partition_data(sf, sf->partno, sf->orig_pa);
+
+	if (!sf->noact && !rc) {
+		fdisk_info(sf->cxt, _("\nThe partition table has been altered."));
+		if (!sf->notell) {
+			/* Let's wait a little bit. It's possible that our
+			 * system is still busy with a previous re-read
+			 * ioctl (on sfdisk start) or with another task
+			 * related to the write to the device.
+			 */
+			xusleep(250000);
+			fdisk_reread_partition_table(sf->cxt);
 		}
 	}
+
 	if (!rc)
 		rc = fdisk_deassign_device(sf->cxt,
 				sf->noact || sf->notell);	/* no-sync */
@@ -1476,13 +1550,15 @@ static void follow_wipe_mode(struct sfdisk *sf)
 
 	if (dowipe) {
 		if (!fdisk_is_ptcollision(sf->cxt)) {
-			fdisk_info(sf->cxt, _("The old %s signature will be removed by a write command."),
-					fdisk_get_collision(sf->cxt));
-			fputc('\n', stderr);
+			fdisk_warnx(sf->cxt, _(
+				"The device contains '%s' signature and it will be removed by a write command. "
+				"See sfdisk(8) man page and --wipe option for more details."),
+				fdisk_get_collision(sf->cxt));
+			fputc('\n', stdout);
 		}
 	} else {
 		fdisk_warnx(sf->cxt, _(
-			"The old %s signature may remain on the device. "
+			"The device contains '%s' signature and it may remain on the device. "
 			"It is recommended to wipe the device with wipefs(8) or "
 			"sfdisk --wipe, in order to avoid possible collisions."),
 			fdisk_get_collision(sf->cxt));
@@ -1661,8 +1737,8 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	else
 		label = "dos";	/* just for backward compatibility */
 
-	fdisk_script_set_header(dp, "label", label);
-
+	if (fdisk_script_set_header(dp, "label", label) != 0)
+		errx(EXIT_FAILURE, _("failed to set script header"));
 
 	if (!sf->quiet && sf->interactive) {
 		if (!fdisk_has_label(sf->cxt) && !sf->label)
@@ -1794,7 +1870,6 @@ static int command_fdisk(struct sfdisk *sf, int argc, char **argv)
 	    && fdisk_script_get_header(dp, "label")) {
 
 		int xrc = fdisk_apply_script_headers(sf->cxt, dp);
-		created = !xrc;
 		if (xrc) {
 			fdisk_warnx(sf->cxt, _(
 				  "Failed to apply script headers, "
@@ -1876,8 +1951,10 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -b, --backup              backup partition table sectors (see -O)\n"), out);
 	fputs(_("     --bytes               print SIZE in bytes rather than in human readable format\n"), out);
 	fputs(_("     --move-data[=<typescript>] move partition data after relocation (requires -N)\n"), out);
+	fputs(_("     --move-use-fsync      use fsync after each write when move data\n"), out);
 	fputs(_(" -f, --force               disable all consistency checking\n"), out);
-	fputs(_("     --color[=<when>]      colorize output (auto, always or never)\n"), out);
+	fprintf(out,
+	      _("     --color[=<when>]      colorize output (%s, %s or %s)\n"), "auto", "always", "never");
 	fprintf(out,
 	        "                             %s\n", USAGE_COLORS_DEFAULT);
 	fputs(_(" -N, --partno <num>        specify partition number\n"), out);
@@ -1887,8 +1964,10 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -O, --backup-file <path>  override default backup file name\n"), out);
 	fputs(_(" -o, --output <list>       output columns\n"), out);
 	fputs(_(" -q, --quiet               suppress extra info messages\n"), out);
-	fputs(_(" -w, --wipe <mode>         wipe signatures (auto, always or never)\n"), out);
-	fputs(_(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (auto, always or never)\n"), out);
+	fprintf(out,
+	      _(" -w, --wipe <mode>         wipe signatures (%s, %s or %s)\n"), "auto", "always", "never");
+	fprintf(out,
+	      _(" -W, --wipe-partitions <mode>  wipe signatures from new partitions (%s, %s or %s)\n"), "auto", "always", "never");
 	fputs(_(" -X, --label <name>        specify label type (dos, gpt, ...)\n"), out);
 	fputs(_(" -Y, --label-nested <name> specify nested label type (dos, bsd)\n"), out);
 	fputs(USAGE_SEPARATOR, out);
@@ -1931,6 +2010,7 @@ int main(int argc, char *argv[])
 		OPT_BYTES,
 		OPT_COLOR,
 		OPT_MOVEDATA,
+		OPT_MOVEFSYNC,
 		OPT_DELETE,
 		OPT_NOTELL
 	};
@@ -1956,6 +2036,7 @@ int main(int argc, char *argv[])
 		{ "no-reread", no_argument,     NULL, OPT_NOREREAD },
 		{ "no-tell-kernel", no_argument, NULL, OPT_NOTELL },
 		{ "move-data", optional_argument, NULL, OPT_MOVEDATA },
+		{ "move-use-fsync", no_argument, NULL, OPT_MOVEFSYNC },
 		{ "output",  required_argument, NULL, 'o' },
 		{ "partno",  required_argument, NULL, 'N' },
 		{ "reorder", no_argument,       NULL, 'r' },
@@ -1983,6 +2064,7 @@ int main(int argc, char *argv[])
 		{ NULL, 0, NULL, 0 },
 	};
 	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
+		{ 'F','J','d'},                 /* --list-free --json --dump */
 		{ 's','u'},			/* --show-size --unit */
 		{ 0 }
 	};
@@ -2125,6 +2207,9 @@ int main(int argc, char *argv[])
 		case OPT_MOVEDATA:
 			sf->movedata = 1;
 			sf->move_typescript = optarg;
+			break;
+		case OPT_MOVEFSYNC:
+			sf->movefsync = 1;
 			break;
 		case OPT_DELETE:
 			sf->act = ACT_DELETE;

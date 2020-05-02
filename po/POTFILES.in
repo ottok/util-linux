@@ -29,6 +29,7 @@ include/all-io.h
 include/bitops.h
 include/blkdev.h
 include/canonicalize.h
+include/caputils.h
 include/carefulputc.h
 include/cctype.h
 include/c.h
@@ -46,6 +47,7 @@ include/exitcodes.h
 include/fileutils.h
 include/idcache.h
 include/ismounted.h
+include/iso9660.h
 include/linux_version.h
 include/list.h
 include/loopdev.h
@@ -63,13 +65,16 @@ include/pager.h
 include/partx.h
 include/path.h
 include/pathnames.h
+include/pidfd-utils.h
 include/plymouth-ctrl.h
 include/procutils.h
 include/pt-bsd.h
+include/pt-gpt-partnames.h
 include/pt-mbr.h
 include/pt-mbr-partnames.h
 include/pt-sgi.h
 include/pt-sun.h
+include/pty-session.h
 include/pwdutils.h
 include/randutils.h
 include/rpmatch.h
@@ -188,6 +193,7 @@ libblkid/src/topology/topology.h
 libblkid/src/verify.c
 libblkid/src/version.c
 lib/canonicalize.c
+lib/caputils.c
 lib/color-names.c
 lib/colors.c
 lib/cpuset.c
@@ -240,6 +246,7 @@ libmount/src/context.c
 libmount/src/context_loopdev.c
 libmount/src/context_mount.c
 libmount/src/context_umount.c
+libmount/src/context_veritydev.c
 libmount/src/fs.c
 libmount/src/init.c
 libmount/src/iter.c
@@ -259,6 +266,7 @@ lib/pager.c
 lib/path.c
 lib/plymouth-ctrl.c
 lib/procutils.c
+lib/pty-session.c
 lib/pwdutils.c
 lib/randutils.c
 lib/setproctitle.c
@@ -417,6 +425,9 @@ sys-utils/zramctl.c
 term-utils/agetty.c
 term-utils/mesg.c
 term-utils/script.c
+term-utils/scriptlive.c
+term-utils/script-playutils.c
+term-utils/script-playutils.h
 term-utils/scriptreplay.c
 term-utils/setterm.c
 term-utils/ttymsg.c

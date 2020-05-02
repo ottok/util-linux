@@ -59,7 +59,9 @@ struct lsblk {
 extern struct lsblk *lsblk;     /* global handler */
 
 struct lsblk_devprop {
+	/* udev / blkid based */
 	char *fstype;		/* detected fs, NULL or "?" if cannot detect */
+	char *fsversion;	/* filesystem version */
 	char *uuid;		/* filesystem UUID (or stack uuid) */
 	char *ptuuid;		/* partition table UUID */
 	char *pttype;		/* partition table type */
@@ -71,6 +73,11 @@ struct lsblk_devprop {
 	char *wwn;		/* storage WWN */
 	char *serial;		/* disk serial number */
 	char *model;		/* disk model */
+
+	/* lsblk specific (for --sysroot only)  */
+	char *owner;		/* user name */
+	char *group;		/* group name */
+	char *mode;		/* access mode in ls(1)-like notation */
 };
 
 /* Device dependence
@@ -127,7 +134,8 @@ struct lsblk_device {
 			is_swap : 1,
 			is_printed : 1,
 			udev_requested : 1,
-			blkid_requested : 1;
+			blkid_requested : 1,
+			file_requested : 1;
 };
 
 #define device_is_partition(_x)		((_x)->wholedisk != NULL)
@@ -190,6 +198,8 @@ extern char *lsblk_device_get_mountpoint(struct lsblk_device *dev);
 extern void lsblk_device_free_properties(struct lsblk_devprop *p);
 extern struct lsblk_devprop *lsblk_device_get_properties(struct lsblk_device *dev);
 extern void lsblk_properties_deinit(void);
+
+extern const char *lsblk_parttype_code_to_string(const char *code, const char *pttype);
 
 /* lsblk-devtree.c */
 void lsblk_reset_iter(struct lsblk_iter *itr, int direction);

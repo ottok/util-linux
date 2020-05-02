@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="14-Jun-2019"
+LIBBLKID_DATE="31-Jan-2020"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -100,6 +100,14 @@ AS_CASE([$libdir],
  [usrlib_execdir='${exec_prefix}'$libdir]
 )
 AC_SUBST([usrlib_execdir])
+
+# static configuration maintaned by packages (e.g. /usr/lib)
+AC_ARG_VAR([SYSCONFSTATICDIR],
+	   [Path to static system configuration, default ${prefix}/lib])
+AS_IF([test "x$SYSCONFSTATICDIR" = x],
+      [sysconfstaticdir='${prefix}/lib'],
+      [sysconfstaticdir=$SYSCONFSTATICDIR])
+AC_SUBST([sysconfstaticdir])
 
 
 AM_PROG_CC_C_O
@@ -243,6 +251,7 @@ AC_CHECK_HEADERS([ \
 	linux/version.h \
 	linux/securebits.h \
 	linux/net_namespace.h \
+	linux/capability.h \
 	locale.h \
 	mntent.h \
 	net/if.h \
@@ -382,6 +391,7 @@ have_linux_blkzoned_h=$ac_cv_header_linux_blkzoned_h
 have_linux_btrfs_h=$ac_cv_header_linux_btrfs_h
 have_linux_raw_h=$ac_cv_header_linux_raw_h
 have_linux_securebits_h=$ac_cv_header_linux_securebits_h
+have_linux_capability_h=$ac_cv_header_linux_capability_h
 have_linux_watchdog_h=$ac_cv_header_linux_watchdog_h
 have_security_pam_appl_h=$ac_cv_header_security_pam_appl_h
 have_security_pam_misc_h=$ac_cv_header_security_pam_misc_h
@@ -389,6 +399,7 @@ have_security_openpam_h=$ac_cv_header_security_openpam_h
 have_shadow_h=$ac_cv_header_shadow_h
 have_sys_signalfd_h=$ac_cv_header_sys_signalfd_h
 have_utmpx_h=$ac_cv_header_utmpx_h
+have_pty_h=$ac_cv_header_pty_h
 
 AS_CASE([$linux_os:$have_linux_version_h],
   [yes:no],
@@ -466,6 +477,7 @@ AC_CHECK_FUNCS([ \
 	err \
 	errx \
 	explicit_bzero \
+	fmemopen \
 	fsync \
 	utimensat \
 	getdomainname \
@@ -485,6 +497,8 @@ AC_CHECK_FUNCS([ \
 	nanosleep \
 	ntp_gettime \
 	personality \
+	pidfd_open \
+	pidfd_send_signal \
 	posix_fadvise \
 	prctl \
 	qsort_r \
@@ -526,6 +540,9 @@ UL_CHECK_SYSCALL([setns])
 AS_IF([test "x$ul_cv_syscall_setns" = xno], [
    have_setns_syscall="no"
 ])
+
+UL_CHECK_SYSCALL([pidfd_open])
+UL_CHECK_SYSCALL([pidfd_send_signal])
 
 AC_CHECK_FUNCS([isnan], [],
 	[AC_CHECK_LIB([m], [isnan], [MATH_LIBS="-lm"])]
@@ -729,7 +746,7 @@ AS_CASE([$scanf_cv_alloc_modifier],
    have_scanf_alloc_modifier=no]
 )
 
-
+have_pty=no
 AC_ARG_WITH([util], AS_HELP_STRING([--without-util], [compile without libutil]),
   [], [with_util=auto]
 )
@@ -740,6 +757,13 @@ AS_IF([test "x$with_util" = xno], [
   UL_CHECK_LIB([util], [openpty])
 ])
 
+AS_IF([test "x$have_pty_h" = xyes -a "x$have_sys_signalfd_h" = xyes -a "x$have_util" = xyes], [
+   AM_CONDITIONAL([HAVE_PTY], [true])
+   AC_DEFINE([HAVE_PTY], [1], [have PTY support])
+   have_pty=yes
+], [
+   AM_CONDITIONAL([HAVE_PTY], [false])
+])
 
 AC_CHECK_TYPES([union semun], [], [], [[
 #include <sys/sem.h>
@@ -756,6 +780,7 @@ UL_REQUIRES_COMPILE([widechar], [[
   #include <wchar.h>
   #include <wctype.h>
   #include <stdio.h>
+  #include <stdlib.h>
   ]], [[
     wchar_t wc;
     wint_t w;
@@ -786,7 +811,7 @@ AC_CHECK_DECLS([CPU_ALLOC], [], [], [[
 ]])
 
 # on Solaris, you can't mix and match standards, since we use c99
-# aparently at this stage, XOPEN_SOURCE will conflict.  As workaround,
+# apparently at this stage, XOPEN_SOURCE will conflict.  As workaround,
 # check for crypt.h and use that without XOPEN_SOURCE.
 have_crypt=no
 AC_CHECK_HEADERS([crypt.h])
@@ -1274,7 +1299,11 @@ UL_BUILD_INIT([findfs], [check])
 UL_REQUIRES_BUILD([findfs], [libblkid])
 AM_CONDITIONAL([BUILD_FINDFS], [test "x$build_findfs" = xyes])
 
-UL_BUILD_INIT([wipefs], [check])
+AC_ARG_ENABLE([wipefs],
+  AS_HELP_STRING([--disable-wipefs], [do not build wipefs]),
+  [], [UL_DEFAULT_ENABLE([wipefs], [check])]
+)
+UL_BUILD_INIT([wipefs])
 UL_REQUIRES_BUILD([wipefs], [libblkid])
 UL_REQUIRES_BUILD([wipefs], [libsmartcols])
 AM_CONDITIONAL([BUILD_WIPEFS], [test "x$build_wipefs" = xyes])
@@ -1373,6 +1402,7 @@ AC_ARG_ENABLE([unshare],
 UL_BUILD_INIT([unshare])
 UL_REQUIRES_LINUX([unshare])
 UL_REQUIRES_SYSCALL_CHECK([unshare], [UL_CHECK_SYSCALL([unshare])])
+UL_REQUIRES_HAVE([unshare], [linux_capability_h], [linux/capability.h header file])
 AM_CONDITIONAL([BUILD_UNSHARE], [test "x$build_unshare" = xyes])
 AC_CHECK_FUNCS([unshare])
 
@@ -1405,7 +1435,8 @@ AC_ARG_ENABLE([setpriv],
 )
 UL_BUILD_INIT([setpriv])
 UL_REQUIRES_LINUX([setpriv])
-UL_REQUIRES_HAVE([setpriv], [linux_securebits_h], [securebits.h header file])
+UL_REQUIRES_HAVE([setpriv], [linux_securebits_h], [linux/securebits.h header file])
+UL_REQUIRES_HAVE([setpriv], [linux_capability_h], [linux/capability.h header file])
 UL_REQUIRES_HAVE([setpriv], [cap_ng], [libcap-ng library])
 AM_CONDITIONAL([BUILD_SETPRIV], [test "x$build_setpriv" = xyes])
 
@@ -1514,6 +1545,27 @@ have_linuxdummy=$linux_os
 UL_BUILD_INIT([hwclock])
 UL_REQUIRES_HAVE([hwclock], [io, linuxdummy], [ioperm iopl function or Linux])
 AM_CONDITIONAL([BUILD_HWCLOCK], [test "x$build_hwclock" = xyes])
+
+AC_ARG_ENABLE([hwclock_cmos],
+  AS_HELP_STRING([--disable-hwclock-cmos], [do not use CMOS clock]),
+  [], [enable_hwclock_cmos=check]
+)
+UL_BUILD_INIT([hwclock_cmos])
+UL_REQUIRES_BUILD([hwclock_cmos], [hwclock])
+UL_REQUIRES_ARCH([hwclock_cmos], [i?86-*,x86_64*])
+AM_CONDITIONAL([USE_HWCLOCK_CMOS], [test "x$build_hwclock_cmos" = xyes])
+AS_IF([test "x$build_hwclock_cmos" = xyes ], [
+    AC_DEFINE([USE_HWCLOCK_CMOS], [1], [Define to 1 if want to use CMOS clock.])
+])
+
+AC_ARG_ENABLE([hwclock_gplv3],
+  AS_HELP_STRING([--disable-hwclock-gplv3], [do not use datetime parsing GPLv3 code]),
+  [], [enable_hwclock_gplv3=yes]
+)
+AM_CONDITIONAL([USE_HWCLOCK_GPLv3_DATETIME], [test "x$enable_hwclock_gplv3" = xyes])
+AS_IF([test "x$enable_hwclock_gplv3" = xyes ], [
+    AC_DEFINE([USE_HWCLOCK_GPLv3_DATETIME], [1], [use datetime parsing GPLv3 code to hwclock])
+])
 
 
 UL_BUILD_INIT([mkfs], [yes])
@@ -1796,11 +1848,15 @@ UL_REQUIRES_LINUX([setarch])
 AM_CONDITIONAL([BUILD_SETARCH], [test "x$build_setarch" = xyes])
 
 UL_BUILD_INIT([script], [check])
-UL_REQUIRES_HAVE([script], [sys_signalfd_h], [sys/signalfd.h header])
+UL_REQUIRES_HAVE([script], [pty])
 AM_CONDITIONAL([BUILD_SCRIPT], [test "x$build_script" = xyes])
 
 UL_BUILD_INIT([scriptreplay], [yes])
 AM_CONDITIONAL([BUILD_SCRIPTREPLAY], [test "x$build_scriptreplay" = xyes])
+
+UL_BUILD_INIT([scriptlive], [check])
+UL_REQUIRES_HAVE([scriptlive], [pty])
+AM_CONDITIONAL([BUILD_SCRIPTLIVE], [test "x$build_scriptlive" = xyes])
 
 UL_BUILD_INIT([col], [yes])
 AM_CONDITIONAL([BUILD_COL], [test "x$build_col" = xyes])
@@ -2382,6 +2438,30 @@ AC_ARG_ENABLE([colors-default],
 AS_IF([test "x$enable_colors_default" = xyes], [
   AC_DEFINE([USE_COLORS_BY_DEFAULT], [1], [Enables colorized output from utils by default])
 ])
+
+
+AC_ARG_WITH([cryptsetup],
+  AS_HELP_STRING([--with-cryptsetup], [compile with cryptsetup support]),
+  [], [with_cryptsetup=no]
+)
+
+AS_IF([test "x$with_cryptsetup" = xno], [
+  AM_CONDITIONAL([HAVE_CRYPTSETUP], [false])
+], [
+  PKG_CHECK_MODULES([CRYPTSETUP], [libcryptsetup],
+	[AC_DEFINE([HAVE_CRYPTSETUP], [1], [Define if cryptsetup is available])
+	 UL_PKG_STATIC([CRYPTSETUP_LIBS_STATIC], [libcryptsetup])
+	 AM_CONDITIONAL([HAVE_CRYPTSETUP], [true])
+	 have_cryptsetup=yes],
+	[have_cryptsetup=no
+   AM_CONDITIONAL([HAVE_CRYPTSETUP], [false])])
+
+  AS_CASE([$with_cryptsetup:$have_cryptsetup],
+    [yes:no], [AC_MSG_WARN([cryptsetup selected but libcryptsetup not found])]
+  )
+])
+AC_SUBST([CRYPTSETUP_LIBS])
+AC_SUBST([CRYPTSETUP_LIBS_STATIC])
 
 
 AC_ARG_VAR([SUID_CFLAGS],
