@@ -1,7 +1,7 @@
 Source: util-linux
 Build-Depends: bc <!stage1 !nocheck>,
                bison,
-               debhelper (>= 11),
+               debhelper (>= 12~),
                dh-exec (>= 0.13),
                dpkg-dev (>= 1.17.14),
                gettext,
