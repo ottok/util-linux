@@ -185,4 +185,3 @@ else
 	@echo "WARNING: non-linux detected, making tests non-fatal."
 	dh_auto_test --max-parallel=1 || true
 endif
-
