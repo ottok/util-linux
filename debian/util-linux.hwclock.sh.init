@@ -1,19 +1,4 @@
 #!/bin/sh
-# hwclock.sh        Set and adjust the CMOS clock.
-#
-# Version:        @(#)hwclock.sh  2.00  14-Dec-1998  miquels@cistron.nl
-#
-# Patches:
-#                2000-01-30 Henrique M. Holschuh <hmh@rcm.org.br>
-#                 - Minor cosmetic changes in an attempt to help new
-#                   users notice something IS changing their clocks
-#                   during startup/shutdown.
-#                 - Added comments to alert users of hwclock issues
-#                   and discourage tampering without proper doc reading.
-#               2012-02-16 Roger Leigh <rleigh@debian.org>
-#                - Use the UTC/LOCAL setting in /etc/adjtime rather than
-#                  the UTC setting in /etc/default/rcS.  Additionally
-#                  source /etc/default/hwclock to permit configuration.
 
 ### BEGIN INIT INFO
 # Provides:          hwclock
