@@ -1,3 +1,16 @@
+util-linux (2.35.1-1) unstable; urgency=medium
+
+  * New upstream released. (Closes: #954002)
+  * Bump Standards-Version to 4.5.0
+  * Update Maintainers/Uploaders to reflect reality
+  * Run wrap-and-sort -a, fix tab/space mixup in debian/copyright
+  * Install new scriptlive(1) tool
+  * Apply patches from git HEAD:
+    hwclock: make glibc 2.31 compatible (Closes: #955559)
+    lsblk: fix -P regression from v2.34 (Closes: #951217)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 03 May 2020 13:45:56 +0000
+
 util-linux (2.34-0.1) unstable; urgency=medium
 
   * Non-maintainer upload.
