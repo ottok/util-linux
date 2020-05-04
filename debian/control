@@ -24,7 +24,6 @@ Section: base
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
 Uploaders: Adam Conrad <adconrad@0c3.net>,
-           Andreas Henriksson <andreas@fatal.se>,
            Chris Hofstaedtler <zeha@debian.org>,
            LaMont Jones <lamont@debian.org>
 Standards-Version: 4.5.0
