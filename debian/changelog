@@ -1,3 +1,17 @@
+util-linux (2.35.1-2) UNRELEASED; urgency=medium
+
+  * Trim trailing whitespace.
+  * Wrap long lines in changelog entries: 2.13.1-2, 2.13.1-1, 2.13-10,
+    2.13-1, 2.12p-1, 2.12l-1, 2.12-3, 2.11z-2, 2.10n-1, 2.10d-7, 2.10d-
+    4, 2.9x-1.
+  * Fill in Homepage field.
+  * Bump debhelper from old 11 to 12.
+  * Set debhelper-compat version in Build-Depends.
+  * Remove obsolete fields Contact, Name from debian/upstream/metadata
+    (already present in machine-readable debian/copyright).
+
+ -- Debian Janitor <janitor@jelmer.uk>  Sun, 03 May 2020 14:38:24 +0000
+
 util-linux (2.35.1-1) unstable; urgency=medium
 
   * New upstream released. (Closes: #954002)
@@ -3327,7 +3341,8 @@ util-linux (2.13.1-2) unstable; urgency=low
 
   [Hamish Coleman]
 
-  * agetty: make username-in-uppercase feature optional (off by default.).  Closes: #156242
+  * agetty: make username-in-uppercase feature optional (off by default.).
+    Closes: #156242
 
   [Neil Williams]
 
@@ -3356,7 +3371,8 @@ util-linux (2.13.1-1) unstable; urgency=low
       - po: update sl.po (from translationproject.org) (Simon Mihevc)
       - po: update ru.po (from translationproject.org) (Pavel Maryanov)
       - po: update cs.po (from translationproject.org) (Petr Pisar)
-      - po: update pt_BR.po (from translationproject.org) (Rodrigo Stulzer Lopes)
+      - po: update pt_BR.po (from translationproject.org) (Rodrigo Stulzer
+        Lopes)
       - po: update id.po (from translationproject.org) (Arif E. Nugroho)
       - po: update es.po (from translationproject.org) (Santiago Vila Doncel)
       - po: update hu.po (from translationproject.org) (Gabor Kelemen)
@@ -3505,7 +3521,8 @@ util-linux (2.13-10) unstable; urgency=low
 
   [LaMont Jones]
 
-  * build: don't deliver col* and ul as part of bsdutils for now.  Closes: #446939
+  * build: don't deliver col* and ul as part of bsdutils for now.
+    Closes: #446939
 
  -- LaMont Jones <lamont@debian.org>  Mon, 29 Oct 2007 14:29:49 -0600
 
@@ -3625,7 +3642,8 @@ util-linux (2.13-1) unstable; urgency=low
     - ionice: clean up error handling
     - cytune: make the oneliner more specific the cyclades hw in question
     - docs: update TODO
-    - setarch: add --3gb option for compatibility with Debian linux{32,64} command
+    - setarch: add --3gb option for compatibility with Debian linux{32,64}
+      command
   * Revert "umount: only call update_mtab if mtab_is_writable().", since the
     fix is already present in a different way.
   * Have debian/rules deal with architectures that don't get packages.
@@ -4206,8 +4224,8 @@ util-linux (2.12p-1ubuntu1) hoary; urgency=low
 
 util-linux (2.12p-1) unstable; urgency=low
 
-  * New upstream version. (2.12p)
-    Closes: #182325, #270173, #192751, #229875, #230859, #214144, #254317, #272580
+  * New upstream version. (2.12p) Closes: #182325, #270173, #192751, #229875,
+    #230859, #214144, #254317, #272580
     - cfdisk: fix number of new partition when partitions not in disk order
     - fdisk: fix Sun label handling in sector mode
     - mkfs: never truncate filename (not that that ever happened)
@@ -4255,7 +4273,8 @@ util-linux (2.12l-1) unstable; urgency=low
     - Makefile: remove cat-id-tbl.c upon make clean
     - fdisk: fixed a bug that would cause a non-update of a sun disklabel
     - fdisk: use sectorsize instead of 512 for SGI (Eric Y. Theriault)
-    - fdisk: use __attribute__((packed)) for alpha, ARM: avoid unaligned accesses
+    - fdisk: use __attribute__((packed)) for alpha, ARM: avoid unaligned
+      accesses
     - hwclock: actually use HAVE_tm_gmtoff
     - swapon: fix priority handling
     - umount: refuse to unmount an empty string
@@ -4465,8 +4484,9 @@ util-linux (2.12-4) unstable; urgency=low
 
 util-linux (2.12-3) unstable; urgency=low
 
-  * Re-add support for kerneli (if cryptoapi is there, we use it.  If not, we assume
-    that -e <name> refers to kerneli).  Closes: #65068, #131044, #163639, #211534.
+  * Re-add support for kerneli (if cryptoapi is there, we use it.  If not, we
+    assume that -e <name> refers to kerneli).  Closes: #65068, #131044, #163639,
+    #211534.
 
  -- LaMont Jones <lamont@debian.org>  Fri, 19 Sep 2003 20:42:08 -0600
 
@@ -4538,7 +4558,8 @@ util-linux (2.11z-3) unstable; urgency=low
 util-linux (2.11z-2) unstable; urgency=low
 
   * add in hurd patch.  Closes: #153410
-  * Actually fixed in 2.11z-1 (or earlier)...  Closes: #81531, #138215, #138388, #185430
+  * Actually fixed in 2.11z-1 (or earlier)...  Closes: #81531, #138215, #138388,
+    #185430
   * Install line.  Closes: #141498
   * Suggest dosfstools (home of mkfs.vfat).  Closes: #175369
 
@@ -4946,13 +4967,13 @@ util-linux (2.10o-1) unstable; urgency=low
 
 util-linux (2.10n-1) unstable; urgency=low
 
-  * New upstream code.
-    closes: #68976 util-linux needs new upstream version.
-    closes: #64536 util-linux: [PATCH] mkswap refuses to create big swap partitions.
-    closes: #63747 Option parsing bug of 'mkswap' command Debian Package util-linux.
-    closes: #62935 mkswap BUG of option parsing in Debian Package util-linux.
-    closes: #59264 util-linux: mkswap: erroneous option parsing, documentation outdated.
-    closes: #64079 util-linux: mkswap's -v[01] option is broken.
+  * New upstream code. closes: #68976 util-linux needs new upstream version.
+    closes: #64536 util-linux: [PATCH] mkswap refuses to create big swap
+    partitions. closes: #63747 Option parsing bug of 'mkswap' command Debian
+    Package util-linux. closes: #62935 mkswap BUG of option parsing in Debian
+    Package util-linux. closes: #59264 util-linux: mkswap: erroneous option
+    parsing, documentation outdated. closes: #64079 util-linux: mkswap's -v[01]
+    option is broken.
 
  -- Vincent Renardias <vincent@debian.org>  Sun, 13 Aug 2000 00:54:51 +0200
 
@@ -5019,12 +5040,11 @@ util-linux (2.10f-1) unstable; urgency=low
 
 util-linux (2.10d-7) frozen unstable; urgency=low
 
-  * There is no real concensus about what we should do about the
-    hwclock issue. Now at least the problem is enough documented
-    to let the user decide. (Thanks to Henrique M Holschuh <hmh+debianml@rcm.org.br>
-    for the patch).
-    When this package is installed, I'll examine one by one which BR can
-    be closed.
+  * There is no real concensus about what we should do about the hwclock issue.
+    Now at least the problem is enough documented to let the user decide.
+    (Thanks to Henrique M Holschuh <hmh+debianml@rcm.org.br> for the patch).
+    When this package is installed, I'll examine one by one which BR can be
+    closed.
 
  -- Vincent Renardias <vincent@debian.org>  Mon, 31 Jan 2000 14:34:03 +0100
 
@@ -5051,8 +5071,8 @@ util-linux (2.10d-4) unstable; urgency=low
 
   * ipcrm now accepts multiple ids thanks to a patch from Topi Miettinen.
     closes: #15110: ipcrm doesn't work with xargs.
-  * fix postinst script:
-    closes: #53254: util-linux: ppc chunk of postinst script has syntactical error.
+  * fix postinst script: closes: #53254: util-linux: ppc chunk of postinst
+    script has syntactical error.
 
  -- Vincent Renardias <vincent@debian.org>  Wed, 22 Dec 1999 17:24:46 +0100
 
@@ -5150,14 +5170,12 @@ util-linux (2.10-1) unstable; urgency=low
 
 util-linux (2.9x-1) unstable; urgency=low
 
-  * New upstream release.
-    closes: #32916: hwclock freezes m68k system.
-    closes: #44986: util-linux: PAM support for kbdrate.
-    closes: #44821: util-linux: pam.d entry contains a path.
-    closes: #44727: util-linux: sfdisk examples are present twice in the package.
-    closes: #45565: removed /bin/kill. this is now provided by procps.
-    closes: #36332: problems with our /bin/kill.
-    closes: #41171: wall should be sgid tty, not root.
+  * New upstream release. closes: #32916: hwclock freezes m68k system. closes:
+    #44986: util-linux: PAM support for kbdrate. closes: #44821: util-linux:
+    pam.d entry contains a path. closes: #44727: util-linux: sfdisk examples are
+    present twice in the package. closes: #45565: removed /bin/kill. this is now
+    provided by procps. closes: #36332: problems with our /bin/kill. closes:
+    #41171: wall should be sgid tty, not root.
 
  -- Vincent Renardias <vincent@debian.org>  Tue, 21 Sep 1999 17:54:47 +0200
 
