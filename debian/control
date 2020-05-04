@@ -40,8 +40,7 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: fdisk,
-         login (>= 1:4.5-1.1~),
+Depends: login (>= 1:4.5-1.1~),
          ${misc:Depends}
 Suggests: dosfstools,
           kbd | console-tools,
