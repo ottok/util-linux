@@ -141,6 +141,8 @@ endif
 	ln -s ../misc-utils/uuidd.rc debian/uuid-runtime.uuidd.init
 	dh_installinit --name=uuidd --restart-after-upgrade
 	rm -f debian/uuid-runtime.uuidd.init
+	# enable periodic fstrim
+	dh_installsystemd --package=util-linux fstrim.timer
 
 override_dh_installpam:
 	dh_installpam --package=util-linux --name=runuser
