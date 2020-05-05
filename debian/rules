@@ -104,7 +104,7 @@ override_dh_install:
 		BASENAME=$$(basename $$BINARY); \
 		BCDIR=usr/share/bash-completion/completions/; \
 		BCNAME=$$BCDIR/$$BASENAME ; \
-		if [ "$$BASENAME" != '*' ] && [ -e "debian/tmp/$$BCNAME" ]; \
+		if [ "$$BASENAME" != '*' ] && find "debian/tmp/$$BCNAME" -quit; \
 		then \
 			echo "$$PACKAGE: Installing $$BCNAME"; \
 			[ -d debian/$$PACKAGE/$$BCDIR ] || \
