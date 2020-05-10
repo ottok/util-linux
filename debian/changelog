@@ -1,3 +1,16 @@
+util-linux (2.35.1-3) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Improve fstrim.timer installation, probably fixes kfreebsd FTBFS
+  * d/copyright: update
+  * Add NEWS entry for eject change
+  * Mark eject(-udeb) as Priority: optional, as before
+
+  [ Michael Biebl ]
+  * Take over eject binary (Closes: #737658)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 10 May 2020 22:49:29 +0000
+
 util-linux (2.35.1-2) unstable; urgency=medium
 
   [ Debian Janitor ]
