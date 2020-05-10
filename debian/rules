@@ -141,8 +141,6 @@ endif
 	ln -s ../misc-utils/uuidd.rc debian/uuid-runtime.uuidd.init
 	dh_installinit --name=uuidd --restart-after-upgrade
 	rm -f debian/uuid-runtime.uuidd.init
-	# enable periodic fstrim
-	dh_installsystemd --package=util-linux fstrim.timer
 
 override_dh_installpam:
 	dh_installpam --package=util-linux --name=runuser
@@ -170,7 +168,8 @@ override_dh_fixperms:
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 override_dh_installsystemd:
-	dh_installsystemd -putil-linux --no-enable --no-start fstrim.timer fstrim.service
+	dh_installsystemd -putil-linux fstrim.timer
+	dh_installsystemd -putil-linux fstrim.service
 	dh_installsystemd --remaining-packages
 endif
 
