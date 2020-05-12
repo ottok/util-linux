@@ -268,6 +268,7 @@ Priority: optional
 Depends: libblkid-dev,
          libc6-dev | libc-dev,
          libmount1 (= ${binary:Version}),
+         libselinux1-dev,
          ${misc:Depends}
 Multi-Arch: same
 Description: device mounting library - headers and static libraries
@@ -417,7 +418,8 @@ Description: tool for enabling and disabling wireless devices
 Package: eject
 Architecture: linux-any
 Section: utils
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
 Priority: optional
 Multi-Arch: foreign
 Description: ejects CDs and operates CD-Changers under Linux
@@ -433,7 +435,8 @@ Description: ejects CDs and operates CD-Changers under Linux
 Package: eject-udeb
 Architecture: linux-any
 Section: debian-installer
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
 Priority: optional
 Package-Type: udeb
 XB-Installer-Menu-Item: 96000
