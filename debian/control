@@ -118,7 +118,6 @@ Description: basic utilities from 4.4BSD-Lite
 Package: fdisk
 Architecture: any
 Build-Profiles: <!stage1>
-XB-Important: yes
 Section: utils
 Priority: important
 Pre-Depends: ${misc:Pre-Depends}
