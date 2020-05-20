@@ -330,7 +330,7 @@ static void auto_eject(const struct eject_control *ctl)
  * Stops CDROM from opening on manual eject button press.
  * This can be useful when you carry your laptop
  * in your bag while it's on and no CD inserted in it's drive.
- * Implemented as found in Documentation/ioctl/cdrom.txt
+ * Implemented as found in Documentation/userspace-api/ioctl/cdrom.rst
  */
 static void manual_eject(const struct eject_control *ctl)
 {
@@ -888,7 +888,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!ctl.device)
-		errx(EXIT_FAILURE, _("%s: unable to find device"), ctl.device);
+		errx(EXIT_FAILURE, _("unable to find device"));
 
 	verbose(&ctl, _("device name is `%s'"), ctl.device);
 
