@@ -1,3 +1,15 @@
+util-linux (2.35.2-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #960839).
+  * Drop all patches, applied upstream.
+  * mount: add Recommends: gawk for bash-completion.
+    The bash-completion for umount now explicitly uses gawk. Recommends:
+    should pull in gawk on new installs in a typical environment, and
+    users with Recommends turned off already know what they are doing.
+    (Closes: #933934)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 20 May 2020 22:21:26 +0000
+
 util-linux (2.35.1-5) unstable; urgency=medium
 
   * libmount-dev: depend on libselinux1-dev (Closes: #960446)
