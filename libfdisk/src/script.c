@@ -192,6 +192,7 @@ void fdisk_unref_script(struct fdisk_script *dp)
 	if (dp->refcount <= 0) {
 		fdisk_reset_script(dp);
 		fdisk_unref_context(dp->cxt);
+		fdisk_unref_table(dp->table);
 		DBG(SCRIPT, ul_debugobj(dp, "free script"));
 		free(dp);
 	}
@@ -805,8 +806,12 @@ static inline int is_header_line(const char *s)
 /* parses "<name>: value", note modifies @s*/
 static int parse_line_header(struct fdisk_script *dp, char *s)
 {
-	int rc = -EINVAL;
+	size_t i;
 	char *name, *value;
+	static const char *supported[] = {
+		"label", "unit", "label-id", "device", "grain",
+		"first-lba", "last-lba", "table-length", "sector-size"
+	};
 
 	DBG(SCRIPT, ul_debugobj(dp, "   parse header '%s'", s));
 
@@ -816,7 +821,7 @@ static int parse_line_header(struct fdisk_script *dp, char *s)
 	name = s;
 	value = strchr(s, ':');
 	if (!value)
-		goto done;
+		return -EINVAL;
 	*value = '\0';
 	value++;
 
@@ -825,32 +830,30 @@ static int parse_line_header(struct fdisk_script *dp, char *s)
 	ltrim_whitespace((unsigned char *) value);
 	rtrim_whitespace((unsigned char *) value);
 
+	if (!*name || !*value)
+		return -EINVAL;
+
+	/* check header name */
+	for (i = 0; i < ARRAY_SIZE(supported); i++) {
+		if (strcmp(name, supported[i]) == 0)
+			break;
+	}
+	if (i == ARRAY_SIZE(supported))
+		return -ENOTSUP;
+
+	/* header specific actions */
 	if (strcmp(name, "label") == 0) {
 		if (dp->cxt && !fdisk_get_label(dp->cxt, value))
-			goto done;			/* unknown label name */
+			return -EINVAL;			/* unknown label name */
 		dp->force_label = 1;
+
 	} else if (strcmp(name, "unit") == 0) {
 		if (strcmp(value, "sectors") != 0)
-			goto done;			/* only "sectors" supported */
-	} else if (strcmp(name, "label-id") == 0
-		   || strcmp(name, "device") == 0
-		   || strcmp(name, "grain") == 0
-		   || strcmp(name, "first-lba") == 0
-		   || strcmp(name, "last-lba") == 0
-		   || strcmp(name, "table-length") == 0) {
-		;					/* whatever is possible */
-	} else
-		goto done;				/* unknown header */
+			return -EINVAL;			/* only "sectors" supported */
 
-	if (*name && *value)
-		rc = fdisk_script_set_header(dp, name, value);
-done:
-	if (rc)
-		DBG(SCRIPT, ul_debugobj(dp, "header parse error: "
-				"[rc=%d, name='%s', value='%s']",
-				rc, name, value));
-	return rc;
+	}
 
+	return fdisk_script_set_header(dp, name, value);
 }
 
 /* returns zero terminated string with next token and @str is updated */
@@ -953,12 +956,17 @@ static int partno_from_devname(char *s)
 	size_t sz;
 	char *end, *p;
 
+	if (!s || !*s)
+		return -1;
+
 	sz = rtrim_whitespace((unsigned char *)s);
-	p = s + sz - 1;
+	end = p = s + sz;
 
 	while (p > s && isdigit(*(p - 1)))
 		p--;
-
+	if (p == end)
+		return -1;
+	end = NULL;
 	errno = 0;
 	pno = strtol(p, &end, 10);
 	if (errno || !end || p == end)
@@ -1054,7 +1062,8 @@ static int parse_line_nameval(struct fdisk_script *dp, char *s)
 		} else if (!strncasecmp(p, "name=", 5)) {
 			p += 5;
 			rc = next_string(&p, &pa->name);
-			unhexmangle_string(pa->name);
+			if (!rc)
+				unhexmangle_string(pa->name);
 
 		} else if (!strncasecmp(p, "type=", 5) ||
 			   !strncasecmp(p, "Id=", 3)) {		/* backward compatibility */
@@ -1363,7 +1372,8 @@ int fdisk_script_set_fgets(struct fdisk_script *dp,
  *
  * Reads next line into dump.
  *
- * Returns: 0 on success, <0 on error, 1 when nothing to read.
+ * Returns: 0 on success, <0 on error, 1 when nothing to read. For unknown headers
+ *          returns -ENOTSUP, it's usually safe to ignore this error.
  */
 int fdisk_script_read_line(struct fdisk_script *dp, FILE *f, char *buf, size_t bufsz)
 {
@@ -1428,7 +1438,7 @@ int fdisk_script_read_file(struct fdisk_script *dp, FILE *f)
 
 	while (!feof(f)) {
 		rc = fdisk_script_read_line(dp, f, buf, sizeof(buf));
-		if (rc)
+		if (rc && rc != -ENOTSUP)
 			break;
 	}
 
@@ -1455,6 +1465,9 @@ int fdisk_script_read_file(struct fdisk_script *dp, FILE *f)
  * Note that script also contains reference to the fdisk context (see
  * fdisk_new_script()). This context may be completely independent on
  * context used for fdisk_set_script().
+ *
+ * Don't forget to call fdisk_set_script(cxt, NULL); to remove this reference
+ * if no more necessary!
  *
  * Returns: <0 on error, 0 on success.
  */
