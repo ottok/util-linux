@@ -90,7 +90,6 @@ Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
 Depends: util-linux (>= 2.29.2-3~),
          ${misc:Depends}
-Recommends: gawk
 Suggests: nfs-common (>= 1:1.1.0-13)
 Breaks: bash-completion (<< 1:2.1-4.3~)
 Replaces: bash-completion (<< 1:2.1-4.3~)
