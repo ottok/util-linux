@@ -1,7 +1,7 @@
 # Polish messages for debian-installer.
 # Copyright (C) 2003 Software in the Public Interest, Inc.
 # This file is distributed under the same license as debian-installer.
-# Copyright (C) 2004 Bartosz Feñski <fenio@o2.pl>
+# Copyright (C) 2004 Bartosz FeÅ„ski <fenio@o2.pl>
 #
 msgid ""
 msgstr ""
@@ -12,11 +12,12 @@ msgstr ""
 "Last-Translator: Dominik Zablotny <dominz@wp.pl>\n"
 "Language-Team: Polish <pddp@debian.linux.org.pl>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: text
 #. description
 #: ../eject-udeb.templates:3
 msgid "Eject a CD from the drive"
-msgstr "Wysuñ p³ytê z napêdu"
+msgstr "WysuÅ„ pÅ‚ytÄ™ z napÄ™du"
+

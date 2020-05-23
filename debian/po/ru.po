@@ -20,11 +20,11 @@ msgstr ""
 "Last-Translator: Basil Shubin <bashu@surgut.ru>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=KOI8-R\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: text
 #. description
 #: ../eject-udeb.templates:3
 msgid "Eject a CD from the drive"
-msgstr "Выдвинуть диск из привода компакт-дисков"
+msgstr "п▓я▀п╢п╡п╦п╫я┐я┌я▄ п╢п╦я│п╨ п╦п╥ п©я─п╦п╡п╬п╢п╟ п╨п╬п╪п©п╟п╨я┌-п╢п╦я│п╨п╬п╡"
