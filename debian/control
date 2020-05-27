@@ -106,14 +106,32 @@ Section: utils
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
 Depends: ${misc:Depends}
-Recommends: bsdmainutils
+Recommends: bsdextrautils,
+            bsdmainutils
 Replaces: bash-completion (<< 1:2.1-4.1~)
 Breaks: bash-completion (<< 1:2.1-4.1~)
 Multi-Arch: foreign
 Description: basic utilities from 4.4BSD-Lite
  This package contains the bare minimum of BSD utilities needed for a Debian
- system: logger, renice, script, scriptlive, scriptreplay, and wall. The
- remaining standard BSD utilities are provided by bsdmainutils.
+ system: logger, renice, script, scriptlive, scriptreplay and wall. The
+ remaining standard BSD utilities are provided by bsdmainutils and
+ bsdextrautils.
+
+Package: bsdextrautils
+Architecture: any
+Build-Profiles: <!stage1>
+Section: utils
+Priority: optional
+Pre-Depends: ${misc:Pre-Depends},
+             ${shlibs:Depends}
+Depends: ${misc:Depends}
+Replaces: bsdmainutils (<< 11.1.3~)
+Breaks: bsdmainutils (<< 11.1.3~)
+Multi-Arch: foreign
+Description: extra utilities from 4.4BSD-Lite
+ This package contains some extra BSD utilities: col, colrm, column, hexdump,
+ hd, and ul.
+ Other BSD utilities are provided by bsdutils, bsdmainutils and calendar.
 
 Package: fdisk
 Architecture: any

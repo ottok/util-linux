@@ -33,11 +33,8 @@ CONFOPTS += --disable-kill
 # => passwd
 CONFOPTS += --disable-chfn-chsh
 # => bsdmainutils
-CONFOPTS += --disable-look
-CONFOPTS += --disable-hexdump
-CONFOPTS += --disable-col --disable-colcrt --disable-colrm --disable-column
-CONFOPTS += --disable-ul
 CONFOPTS += --disable-cal
+CONFOPTS += --disable-look
 
 # Get the list of binary package, except lib* and *-udeb, from
 # debian/control instead of hardcoding the list when installing
