@@ -1,3 +1,17 @@
+util-linux (2.35.2-3) unstable; urgency=medium
+
+  [ Holger Wansing ]
+  * po: Convert po files into UTF-8
+  * po: Correct charset declaration to UTF-8
+  * po: Add/fill/correct translation headers, to make msgfmt happy
+
+  [ Chris Hofstaedtler ]
+  * Introduce new bsdextrautils binary package:
+    Take over col, colcrt, colrm, column, hexdump, hd, look and ul from
+    bsdmainutils.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 28 May 2020 13:01:05 +0000
+
 util-linux (2.35.2-2) unstable; urgency=medium
 
   * umount bash-completion: avoid gawk Recommends. (Closes: #933934)
