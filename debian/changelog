@@ -1,3 +1,9 @@
+util-linux (2.35.2-4) unstable; urgency=medium
+
+  * d/watch: update to find -rc versions
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 21 Jun 2020 01:28:37 +0000
+
 util-linux (2.35.2-3) unstable; urgency=medium
 
   [ Holger Wansing ]
