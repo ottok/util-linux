@@ -1,0 +1,50 @@
+From 3bf0d429aa966866f1fb8166c9d30910f28a74b7 Mon Sep 17 00:00:00 2001
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Tue, 23 Jun 2020 00:14:30 +0000
+Subject: [PATCH] hexdump: automatically use -C when called as hd
+
+When invoking hexdump as hd enable the "Canonical" format to by
+default, implying the -C option.
+
+This is historic behaviour on Debian and apparently also on FreeBSD.
+Some Debian users have asked for this to be restored, after Debian
+switched to util-linux' hexdump and hd.
+
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+---
+ text-utils/hexdump.1 | 3 +++
+ text-utils/hexdump.c | 7 +++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/text-utils/hexdump.1 b/text-utils/hexdump.1
+index eb7713ce6..99b9d0636 100644
+--- a/text-utils/hexdump.1
++++ b/text-utils/hexdump.1
+@@ -67,6 +67,9 @@ by the same sixteen bytes in
+ format enclosed in
+ .RB ' | '
+ characters.
++Invoking the program as
++.B hd
++implies this option.
+ .TP
+ \fB\-d\fR, \fB\-\-two\-bytes\-decimal\fR
+ \fITwo-byte decimal display\fR.  Display the input offset in hexadecimal,
+diff --git a/text-utils/hexdump.c b/text-utils/hexdump.c
+index d7a54be5b..4068fb8d1 100644
+--- a/text-utils/hexdump.c
++++ b/text-utils/hexdump.c
+@@ -82,6 +82,13 @@ parse_args(int argc, char **argv, struct hexdump *hex)
+ 		{NULL, no_argument, NULL, 0}
+ 	};
+ 
++	if (!strcmp(program_invocation_short_name, "hd")) {
++		/* Canonical format */
++		add_fmt("\"%08.8_Ax\n\"", hex);
++		add_fmt("\"%08.8_ax  \" 8/1 \"%02x \" \"  \" 8/1 \"%02x \" ", hex);
++		add_fmt("\"  |\" 16/1 \"%_p\" \"|\\n\"", hex);
++	}
++
+ 	while ((ch = getopt_long(argc, argv, "bcCde:f:L::n:os:vxhV", longopts, NULL)) != -1) {
+ 		switch (ch) {
+ 		case 'b':
