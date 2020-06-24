@@ -8,6 +8,7 @@ CONFOPTS += --enable-raw
 CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
 CONFOPTS += --enable-partx
+CONFOPTS += --enable-write
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	CONFOPTS += --without-systemd --without-udev --without-audit
 else
@@ -34,7 +35,6 @@ CONFOPTS += --disable-kill
 CONFOPTS += --disable-chfn-chsh
 # => bsdmainutils
 CONFOPTS += --disable-cal
-CONFOPTS += --disable-look
 
 # Get the list of binary package, except lib* and *-udeb, from
 # debian/control instead of hardcoding the list when installing
@@ -159,7 +159,7 @@ override_dh_makeshlibs:
 		--add-udeb=libuuid1-udeb
 
 override_dh_fixperms:
-	dh_fixperms -i -a -Xusr/bin/wall -Xbin/mount -Xbin/umount -Xbin/su
+	dh_fixperms -i -a -Xusr/bin/wall -Xusr/bin/write.ul -Xbin/mount -Xbin/umount -Xbin/su
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 override_dh_installsystemd:
