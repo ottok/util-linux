@@ -72,7 +72,6 @@ Section: localization
 Priority: optional
 Depends: util-linux (>= ${source:Upstream-Version}),
          ${misc:Depends}
-Replaces: util-linux (<< 2.11b)
 Multi-Arch: foreign
 Description: locales files for util-linux
  This package contains the internationalization files for the util-linux
@@ -90,9 +89,7 @@ Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
 Depends: util-linux (>= 2.29.2-3~),
          ${misc:Depends}
-Suggests: nfs-common (>= 1:1.1.0-13)
-Breaks: bash-completion (<< 1:2.1-4.3~)
-Replaces: bash-completion (<< 1:2.1-4.3~)
+Suggests: nfs-common
 Multi-Arch: foreign
 Description: tools for mounting and manipulating filesystems
  This package provides the mount(8), umount(8), swapon(8),
@@ -108,8 +105,6 @@ Pre-Depends: ${misc:Pre-Depends},
 Depends: ${misc:Depends}
 Recommends: bsdextrautils,
             bsdmainutils
-Replaces: bash-completion (<< 1:2.1-4.1~)
-Breaks: bash-completion (<< 1:2.1-4.1~)
 Multi-Arch: foreign
 Description: basic utilities from 4.4BSD-Lite
  This package contains the bare minimum of BSD utilities needed for a Debian
@@ -338,7 +333,6 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Recommends: uuid-runtime
-Replaces: e2fsprogs (<< 1.34-1)
 Multi-Arch: same
 Description: Universally Unique ID library
  The libuuid library generates and parses 128-bit Universally Unique
@@ -359,7 +353,6 @@ Pre-Depends: libuuid1 (>= 2.25-5~),
 Depends: adduser,
          ${misc:Depends},
          ${shlibs:Depends}
-Replaces: e2fsprogs (<= 1.40.3-1ubuntu1)
 Multi-Arch: foreign
 Description: runtime components for the Universally Unique ID library
  The libuuid library generates and parses 128-bit Universally Unique
@@ -397,7 +390,6 @@ Priority: optional
 Depends: libc6-dev | libc-dev,
          libuuid1 (= ${binary:Version}),
          ${misc:Depends}
-Replaces: e2fslibs-dev (<< 1.15)
 Multi-Arch: same
 Description: Universally Unique ID library - headers and static libraries
  The libuuid library generates and parses 128-bit Universally Unique IDs
