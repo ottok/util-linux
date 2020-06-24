@@ -153,8 +153,10 @@ override_dh_makeshlibs:
 		--add-udeb=libblkid1-udeb
 	dh_makeshlibs -plibfdisk1 -V \
 		--add-udeb=libfdisk1-udeb
+ifeq ($(DEB_HOST_ARCH_OS),linux)
 	dh_makeshlibs -plibmount1 -V \
 		--add-udeb=libmount1-udeb
+endif
 	dh_makeshlibs -plibuuid1 -V \
 		--add-udeb=libuuid1-udeb
 
