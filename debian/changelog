@@ -1,3 +1,10 @@
+util-linux (2.35.2-6) unstable; urgency=medium
+
+  [ Pino Toscano ]
+  * Add libcryptsetup-dev dependency to libmount-dev (Closes: #963704)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 25 Jun 2020 16:56:12 +0000
+
 util-linux (2.35.2-5) unstable; urgency=medium
 
   * Build with libcryptsetup-dev to enable dm-verity (Closes: #951048)
