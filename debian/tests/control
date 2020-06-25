@@ -7,3 +7,19 @@ Depends: bash,
          grep,
          mount,
          util-linux
+
+Tests: libblkid-dev
+Depends: build-essential, pkg-config, libblkid-dev
+Restrictions: allow-stderr, superficial
+
+Tests: libmount-dev
+Depends: build-essential, pkg-config, libmount-dev
+Restrictions: allow-stderr, superficial
+
+Tests: libsmartcols-dev
+Depends: build-essential, pkg-config, libsmartcols-dev
+Restrictions: allow-stderr, superficial
+
+Tests: uuid-dev
+Depends: build-essential, pkg-config, uuid-dev
+Restrictions: allow-stderr, superficial

@@ -1,0 +1,40 @@
+#!/bin/sh
+# Copyright 2020 Collabora Ltd.
+# SPDX-License-Identifier: MIT
+
+set -eux
+
+if [ -n "${AUTOPKGTEST_ARTIFACTS-}" ]; then
+    WORKDIR="$AUTOPKGTEST_ARTIFACTS"
+else
+    WORKDIR="$(mktemp -d)"
+    trap 'cd /; rm -fr "$WORKDIR"' 0 INT QUIT ABRT PIPE TERM
+fi
+
+if [ -n "${DEB_HOST_GNU_TYPE:-}" ]; then
+    CROSS_COMPILE="$DEB_HOST_GNU_TYPE-"
+else
+    CROSS_COMPILE=
+fi
+
+cd "$WORKDIR"
+
+cat > trivial.c <<EOF
+#include <uuid.h>
+
+#include <assert.h>
+#include <stddef.h>
+
+int main(void)
+{
+    uuid_t uu;
+    assert(uuid_parse("nope", uu) == -1);
+    assert(uuid_parse("139ee05d-d991-4dd1-8ab9-83167cdb5cf0", uu) == 0);
+}
+EOF
+
+# Deliberately word-splitting pkg-config's output:
+# shellcheck disable=SC2046
+"${CROSS_COMPILE}gcc" -otrivial trivial.c -lm $("${CROSS_COMPILE}pkg-config" --cflags --libs uuid)
+./trivial
+
