@@ -280,6 +280,7 @@ Section: libdevel
 Priority: optional
 Depends: libblkid-dev,
          libc6-dev | libc-dev,
+         libcryptsetup-dev,
          libmount1 (= ${binary:Version}),
          libselinux1-dev,
          ${misc:Depends}
