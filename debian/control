@@ -6,7 +6,6 @@ Build-Depends: bc <!stage1 !nocheck>,
                gettext,
                libaudit-dev [linux-any] <!stage1>,
                libcap-ng-dev [linux-any] <!stage1>,
-               libcryptsetup-dev [linux-any] <!stage1>,
                libncurses5-dev,
                libncursesw5-dev,
                libpam0g-dev <!stage1>,
@@ -20,6 +19,7 @@ Build-Depends: bc <!stage1 !nocheck>,
                socat <!stage1 !nocheck>,
                systemd [linux-any] <!stage1>,
                zlib1g-dev
+Build-Conflicts: libcryptsetup-dev
 Section: base
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
@@ -280,7 +280,6 @@ Section: libdevel
 Priority: optional
 Depends: libblkid-dev,
          libc6-dev | libc-dev,
-         libcryptsetup-dev,
          libmount1 (= ${binary:Version}),
          libselinux1-dev,
          ${misc:Depends}
