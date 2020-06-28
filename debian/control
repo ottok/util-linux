@@ -83,7 +83,6 @@ Description: locales files for util-linux
 Package: mount
 Architecture: linux-any
 Build-Profiles: <!stage1>
-XB-Important: yes
 Section: admin
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
