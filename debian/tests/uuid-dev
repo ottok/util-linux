@@ -36,6 +36,6 @@ EOF
 
 # Deliberately word-splitting pkg-config's output:
 # shellcheck disable=SC2046
-"${CROSS_COMPILE}gcc" -otrivial trivial.c -lm $("${CROSS_COMPILE}pkg-config" --cflags --libs uuid)
+"${CROSS_COMPILE}gcc" -otrivial trivial.c $("${CROSS_COMPILE}pkg-config" --cflags --libs uuid)
 ./trivial
 
