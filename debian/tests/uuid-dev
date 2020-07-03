@@ -30,6 +30,7 @@ int main(void)
     uuid_t uu;
     assert(uuid_parse("nope", uu) == -1);
     assert(uuid_parse("139ee05d-d991-4dd1-8ab9-83167cdb5cf0", uu) == 0);
+    return 0;
 }
 EOF
 

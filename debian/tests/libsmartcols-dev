@@ -28,6 +28,7 @@ cat > trivial.c <<EOF
 int main(void)
 {
     assert(scols_get_library_version(NULL) >= 2350);
+    return 0;
 }
 EOF
 
