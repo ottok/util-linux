@@ -102,14 +102,12 @@ Section: utils
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
 Depends: ${misc:Depends}
-Recommends: bsdextrautils,
-            bsdmainutils
+Recommends: bsdextrautils
 Multi-Arch: foreign
 Description: basic utilities from 4.4BSD-Lite
  This package contains the bare minimum of BSD utilities needed for a Debian
  system: logger, renice, script, scriptlive, scriptreplay and wall. The
- remaining standard BSD utilities are provided by bsdmainutils and
- bsdextrautils.
+ remaining standard BSD utilities are provided by bsdextrautils.
 
 Package: bsdextrautils
 Architecture: any
@@ -125,7 +123,7 @@ Multi-Arch: foreign
 Description: extra utilities from 4.4BSD-Lite
  This package contains some extra BSD utilities: col, colrm, column, hexdump,
  hd, look, ul and write.
- Other BSD utilities are provided by bsdutils, bsdmainutils and calendar.
+ Other BSD utilities are provided by bsdutils and calendar.
 
 Package: fdisk
 Architecture: any
