@@ -198,7 +198,7 @@ Depends: libblkid1 (= ${binary:Version}),
          uuid-dev,
          ${misc:Depends}
 Multi-Arch: same
-Description: block device ID library - headers and static libraries
+Description: block device ID library - headers
  The blkid library allows system programs such as fsck and mount to
  quickly and easily find block devices by filesystem UUID or label.
  This allows system administrators to avoid specifying filesystems by
@@ -242,7 +242,7 @@ Depends: libblkid-dev,
          uuid-dev,
          ${misc:Depends}
 Multi-Arch: same
-Description: fdisk partitioning library - headers and static libraries
+Description: fdisk partitioning library - headers
  The libfdisk library is used for manipulating partition tables. It is
  the core of the fdisk, cfdisk, and sfdisk tools.
  .
@@ -281,7 +281,7 @@ Depends: libblkid-dev,
          libselinux1-dev,
          ${misc:Depends}
 Multi-Arch: same
-Description: device mounting library - headers and static libraries
+Description: device mounting library - headers
  This device mounting library is used by mount and umount helpers.
  .
  This package contains the development environment for the mount library.
@@ -317,7 +317,7 @@ Depends: libc6-dev | libc-dev,
          libsmartcols1 (= ${binary:Version}),
          ${misc:Depends}
 Multi-Arch: same
-Description: smart column output alignment library - headers and static libraries
+Description: smart column output alignment library - headers
  This smart column output alignment library is used by fdisk utilities.
  .
  This package contains the development environment for the mount library.
