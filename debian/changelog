@@ -19,7 +19,8 @@ util-linux (2.35.2-7) unstable; urgency=medium
   * Take over look and write from bsdmainutils (Closes: #964242)
 
   [ jan krcmar ]
-  * Update util-linux.su.pam
+  * Fix group name in su's PAM config comment: The pam_wheel.so default group
+    is wheel, not root. Update the comment accordingly, to avoid confusion.
 
  -- Chris Hofstaedtler <zeha@debian.org>  Mon, 06 Jul 2020 15:22:50 +0000
 
