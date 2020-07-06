@@ -1,3 +1,28 @@
+util-linux (2.35.2-7) unstable; urgency=medium
+
+  [ Simon McVittie ]
+  * d/tests: Add a compile/link/run autopkgtest for each library
+
+  [ Chris Hofstaedtler ]
+  * Build-Conflict with libcryptsetup-dev.
+    Building with libcryptsetup-dev enables Verity support, but also makes
+    all programs using libmount1 pull in libcryptsetup12 and libjansson.
+    However, libjansson and libjson-c (used in many other "core" libraries)
+    export conflicting symbols today, causing various crashes. See Debian
+    bug #963932.
+    Also, libcryptsetup12 pulls in libssl1.1, which causes some
+    not-from-Debian software to crash (because of conflicting libssl
+    symbols).
+    Unfortunately this disables Verity support again, see Debian bug
+     #951048.
+  * Remove Important: yes from mount
+  * Take over look and write from bsdmainutils (Closes: #964242)
+
+  [ jan krcmar ]
+  * Update util-linux.su.pam
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 06 Jul 2020 15:22:50 +0000
+
 util-linux (2.35.2-6) unstable; urgency=medium
 
   [ Pino Toscano ]
