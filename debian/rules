@@ -8,13 +8,14 @@ CONFOPTS += --enable-raw
 CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
 CONFOPTS += --enable-partx
-CONFOPTS += --enable-write
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	CONFOPTS += --without-systemd --without-udev --without-audit
 else
 	CONFOPTS += --with-systemd --with-udev --with-audit
 endif
 endif
+
+CONFOPTS += --enable-write
 
 # build static versions of programs used in fdisk-udeb and util-linux-udeb
 CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
