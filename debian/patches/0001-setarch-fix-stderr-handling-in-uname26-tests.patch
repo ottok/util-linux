@@ -1,0 +1,54 @@
+From 2261cfdc26b91b50fd7c4c7da56bae9a5999122e Mon Sep 17 00:00:00 2001
+From: Helge Deller <deller@gmx.de>
+Date: Wed, 27 May 2020 23:20:58 +0000
+Subject: [PATCH] setarch: fix stderr handling in uname26 tests
+
+A while ago stdout and stderr have been split in these testcases, but
+"FATAL: kernel too old" is actually treated as an "okay" output. However
+this FATAL ends up on stderr, so when it happens, it is not seen in
+the captured stdout.
+
+Fix this by merging stdout/stderr in these cases once again.
+
+Signed-off-by: Helge Deller <deller@gmx.de>
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+Bug: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=961639
+Fixes: cbf858aa085e25aa5afd1d06decaea6e14a8963f
+---
+ tests/ts/misc/setarch | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/tests/ts/misc/setarch b/tests/ts/misc/setarch
+index 7c99ccad2..6c872bf70 100755
+--- a/tests/ts/misc/setarch
++++ b/tests/ts/misc/setarch
+@@ -45,22 +45,22 @@ ts_init_subtest uname26
+ finmsg="" # for debugging 2.6 issues
+ 
+ echo "###### --uname-2.6 echo" >>$TS_OUTPUT
+-$TS_CMD_SETARCH $ARCH -v --uname-2.6 echo "2.6 worked" >> $TS_OUTPUT 2>> $TS_ERRLOG
++$TS_CMD_SETARCH $ARCH -v --uname-2.6 echo "2.6 worked" >> $TS_OUTPUT 2>&1
+ if [ $? -eq 0 ]; then
+ 	expected='^2.6 worked$'
+ else
+-	# this may happen after execvp
++	# this may happen after execvp - gets written to stderr
+ 	expected="^FATAL: kernel too old$"
+ 	finmsg+=" echo"
+ fi
+ sed -i "$ s/$expected/2.6 works or kernel too old/" $TS_OUTPUT
+ 
+ echo "###### --uname-2.6 true, non-verbose" >>$TS_OUTPUT
+-$TS_CMD_SETARCH $ARCH --uname-2.6 true >> $TS_OUTPUT 2>> $TS_ERRLOG
++$TS_CMD_SETARCH $ARCH --uname-2.6 true >> $TS_OUTPUT 2>&1
+ if [ $? -eq 0 ]; then
+ 	echo "2.6 works or kernel too old" >> $TS_OUTPUT
+ else
+-	# this may happen after execvp
++	# this may happen after execvp - gets written to stderr
+ 	expected="^FATAL: kernel too old$"
+ 	sed -i "$ s/$expected/2.6 works or kernel too old/" $TS_OUTPUT
+ 	finmsg+=" true"
+-- 
+2.28.0.rc1
+
