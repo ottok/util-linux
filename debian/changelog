@@ -1,3 +1,25 @@
+util-linux (2.35.2-8) unstable; urgency=medium
+
+  [ Simon McVittie ]
+  * d/tests: Explicitly return a value from main() (Closes: #964420)
+  * d/tests: Don't link with -lm
+  * d/tests: Don't save built binaries as artifacts
+
+  [ Chris Hofstaedtler ]
+  * Reenable verbose tests and drop arch exceptions on Linux
+  * Stop Recommending bsdmainutils (transitional)
+  * Stop providing static libraries for: libblkid, libfdisk, libmount,
+    libsmartcols. Also see #963933.
+
+  [ Sven Joachim ]
+  * Do not invoke dh_makeshlibs for libmount1 on non-linux arches
+    (Closes: #963625)
+
+  [ Samuel Thibault ]
+  * Enable write on all platforms, not just linux (Closes: #964393)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 21 Jul 2020 12:50:41 +0000
+
 util-linux (2.35.2-7) unstable; urgency=medium
 
   [ Simon McVittie ]
