@@ -1,3 +1,10 @@
+util-linux (2.35.2-9) unstable; urgency=medium
+
+  * Fix uname26 test, by applying upstream commit 2261cfdc26.
+    Thanks to Helge Deller <deller@gmx.de> (Closes: #961639)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 21 Jul 2020 20:32:19 +0000
+
 util-linux (2.35.2-8) unstable; urgency=medium
 
   [ Simon McVittie ]
