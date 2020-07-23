@@ -67,6 +67,9 @@ endif
 	#
 	# remove *.la files
 	rm -f debian/tmp/usr/lib/*/*.la
+	#
+	# Avoid shipping static libraries.
+	find debian/tmp/usr/lib -name 'lib*.a' \! -name 'libuuid.a' -delete
 
 override_dh_auto_clean:
 	dh_auto_clean
@@ -115,6 +118,9 @@ override_dh_install:
 override_dh_installman:
 	dh_installman --language=C
 
+override_dh_missing:
+	dh_missing --list-missing
+
 override_dh_gencontrol:
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	dh_gencontrol --package=bsdutils -- -v1:$(DEB_VERSION_UPSTREAM_REVISION)
@@ -143,23 +149,6 @@ override_dh_installpam:
 	dh_installpam --package=util-linux --name=runuser-l
 	dh_installpam --package=util-linux --name=su
 	dh_installpam --package=util-linux --name=su-l
-
-override_dh_makeshlibs:
-	dh_makeshlibs \
-		-N libsmartcols1 -N libblkid1 \
-		-N libfdisk1 -N libmount1 -N libuuid1
-	dh_makeshlibs -plibsmartcols1 -V \
-		--add-udeb=libsmartcols1-udeb
-	dh_makeshlibs -plibblkid1 -V \
-		--add-udeb=libblkid1-udeb
-	dh_makeshlibs -plibfdisk1 -V \
-		--add-udeb=libfdisk1-udeb
-ifeq ($(DEB_HOST_ARCH_OS),linux)
-	dh_makeshlibs -plibmount1 -V \
-		--add-udeb=libmount1-udeb
-endif
-	dh_makeshlibs -plibuuid1 -V \
-		--add-udeb=libuuid1-udeb
 
 override_dh_fixperms:
 	dh_fixperms -i -a -Xusr/bin/wall -Xusr/bin/write.ul -Xbin/mount -Xbin/umount -Xbin/su

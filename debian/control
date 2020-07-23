@@ -1,7 +1,7 @@
 Source: util-linux
 Build-Depends: bc <!stage1 !nocheck>,
                bison,
-               debhelper-compat (= 12),
+               debhelper-compat (= 13),
                dh-exec,
                gettext,
                libaudit-dev [linux-any] <!stage1>,
