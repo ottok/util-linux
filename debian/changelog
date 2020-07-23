@@ -1,3 +1,12 @@
+util-linux (2.36-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #956739, #959783, #953065, #879024)
+    The new lsirq and irqtop tools are not installed for now, as without
+    per-CPU data they do not seem mature at this time.
+  * Use debhelper v13. (Closes: #963625)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 23 Jul 2020 22:56:45 +0000
+
 util-linux (2.35.2-9) unstable; urgency=medium
 
   * Fix uname26 test, by applying upstream commit 2261cfdc26.
