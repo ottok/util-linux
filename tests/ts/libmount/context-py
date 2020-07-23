@@ -20,7 +20,7 @@ ts_check_prog "mkfs.ext4"
 
 ts_init_py libmount
 
-if [ "$TS_ENABLE_ASAN" == "yes" ]; then
+if [ "$TS_ENABLE_ASAN" == "yes" -o "$TS_ENABLE_UBSAN" == "yes" ]; then
 	TS_KNOWN_FAIL="yes"
 fi
 
@@ -48,7 +48,8 @@ if [ "$has_mtab" == "yes" ]; then
 fi
 
 ts_log "Create partitions"
-$TS_CMD_FDISK ${TS_DEVICE} &> /dev/null <<EOF
+$TS_CMD_FDISK --noauto-pt ${TS_DEVICE} &> /dev/null <<EOF
+o
 n
 p
 1

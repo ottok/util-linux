@@ -299,7 +299,7 @@ int loopcxt_set_fd(struct loopdev_cxt *lc, int fd, int mode)
  * @lc: context
  * @flags: LOOPITER_FL_* flags
  *
- * Iterator allows to scan list of the free or used loop devices.
+ * Iterator can be used to scan list of the free or used loop devices.
  *
  * Returns: <0 on error, 0 on success
  */
@@ -681,7 +681,7 @@ struct loop_info64 *loopcxt_get_info(struct loopdev_cxt *lc)
 /*
  * @lc: context
  *
- * Returns (allocated) string with path to the file assicieted
+ * Returns (allocated) string with path to the file associated
  * with the current loop device.
  */
 char *loopcxt_get_backing_file(struct loopdev_cxt *lc)
@@ -1074,8 +1074,8 @@ found:
 			uint64_t sz = 0;
 
 			return loopcxt_get_sizelimit(lc, &sz) == 0 && sz == sizelimit;
-		} else
-			return rc;
+		}
+		return rc;
 	}
 	return 1;
 }
@@ -1806,7 +1806,7 @@ int loopdev_count_by_backing_file(const char *filename, char **loopdev)
 	while(loopcxt_next(&lc) == 0) {
 		char *backing = loopcxt_get_backing_file(&lc);
 
-		if (!backing || strcmp(backing, filename)) {
+		if (!backing || strcmp(backing, filename) != 0) {
 			free(backing);
 			continue;
 		}

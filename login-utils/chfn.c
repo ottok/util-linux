@@ -195,7 +195,6 @@ static void parse_argv(struct chfn_control *ctl, int argc, char **argv)
 		}
 		ctl->username = argv[optind];
 	}
-	return;
 }
 
 /*
@@ -236,12 +235,13 @@ static char *ask_new_field(struct chfn_control *ctl, const char *question,
 	if (!def_val)
 		def_val = "";
 	while (true) {
-		printf("%s [%s]: ", question, def_val);
+		printf("%s [%s]:", question, def_val);
 		__fpurge(stdin);
 #ifdef HAVE_LIBREADLINE
 		rl_bind_key('\t', rl_insert);
-		if ((buf = readline(NULL)) == NULL)
+		if ((buf = readline(" ")) == NULL)
 #else
+		putchar(' ');
 		if (getline(&buf, &dummy, stdin) < 0)
 #endif
 			errx(EXIT_FAILURE, _("Aborted."));
@@ -310,7 +310,6 @@ static void get_login_defs(struct chfn_control *ctl)
 		warnx(_("%s: CHFN_RESTRICT has unexpected value: %s"), _PATH_LOGINDEFS, s);
 	if (!ctl->allow_fullname && !ctl->allow_room && !ctl->allow_work && !ctl->allow_home)
 		errx(EXIT_FAILURE, _("%s: CHFN_RESTRICT does not allow any changes"), _PATH_LOGINDEFS);
-	return;
 }
 
 /*

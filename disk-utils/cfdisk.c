@@ -64,6 +64,7 @@
 #include "colors.h"
 #include "debug.h"
 #include "list.h"
+#include "blkdev.h"
 
 static const char *default_disks[] = {
 #ifdef __GNU__
@@ -986,7 +987,9 @@ static size_t menuitem_get_line(struct cfdisk *cf, size_t idx)
 		if (!m->page_sz)				/* small menu */
 			return (ui_lines - (cf->menu->nitems + 1)) / 2 + idx;
 		return (idx % m->page_sz) + 1;
-	} else {
+	}
+
+	{
 		size_t len = MENU_H_ITEMWIDTH(m) + MENU_H_BETWEEN; /** item width */
 		size_t items = ui_cols / len;			/* items per line */
 
@@ -1003,7 +1006,9 @@ static int menuitem_get_column(struct cfdisk *cf, size_t idx)
 		if ((size_t) ui_cols <= nc)
 			return 0;
 		return (ui_cols - nc) / 2;
-	} else {
+	}
+
+	{
 		size_t len = MENU_H_ITEMWIDTH(cf->menu) + MENU_H_BETWEEN; /* item width */
 		size_t items = ui_cols / len;				/* items per line */
 		size_t extra = items < cf->menu->nitems ?		/* extra space on line */
@@ -1721,6 +1726,7 @@ static int ui_refresh(struct cfdisk *cf)
 	else
 		ui_center(2, _("Label: %s"), fdisk_label_get_name(lb));
 	free(strsz);
+	free(id);
 
 	ui_draw_table(cf);
 	ui_draw_menu(cf);
@@ -1877,7 +1883,7 @@ static int ui_get_size(struct cfdisk *cf,	/* context */
 		if (rc == 0) {
 			ui_warnx(_("Please, specify size."));
 			continue;			/* nothing specified */
-		} else if (rc == -CFDISK_ERR_ESC)
+		} if (rc == -CFDISK_ERR_ESC)
 			break;				/* cancel dialog */
 
 		if (strcmp(buf, dflt) == 0)
@@ -2643,6 +2649,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	fprintf(out,
 	        "                            %s\n", USAGE_COLORS_DEFAULT);
 	fputs(_(" -z, --zero               start with zeroed partition table\n"), out);
+	fprintf(out,
+	      _("     --lock[=<mode>]      use exclusive device lock (%s, %s or %s)\n"), "yes", "no", "nonblock");
 
 	fputs(USAGE_SEPARATOR, out);
 	printf(USAGE_HELP_OPTIONS(26));
@@ -2653,13 +2661,16 @@ static void __attribute__((__noreturn__)) usage(void)
 
 int main(int argc, char *argv[])
 {
-	const char *diskpath = NULL;
+	const char *diskpath = NULL, *lockmode = NULL;
 	int rc, c, colormode = UL_COLORMODE_UNDEF;
 	struct cfdisk _cf = { .lines_idx = 0 },
 		      *cf = &_cf;
-
+	enum {
+		OPT_LOCK	= CHAR_MAX + 1
+	};
 	static const struct option longopts[] = {
 		{ "color",   optional_argument, NULL, 'L' },
+		{ "lock",    optional_argument, NULL, OPT_LOCK },
 		{ "help",    no_argument,       NULL, 'h' },
 		{ "version", no_argument,       NULL, 'V' },
 		{ "zero",    no_argument,	NULL, 'z' },
@@ -2686,6 +2697,14 @@ int main(int argc, char *argv[])
 			print_version(EXIT_SUCCESS);
 		case 'z':
 			cf->zero_start = 1;
+			break;
+		case OPT_LOCK:
+			lockmode = "1";
+			if (optarg) {
+				if (*optarg == '=')
+					optarg++;
+				lockmode = optarg;
+			}
 			break;
 		default:
 			errtryhelp(EXIT_FAILURE);
@@ -2724,6 +2743,9 @@ int main(int argc, char *argv[])
 		err(EXIT_FAILURE, _("cannot open %s"), diskpath);
 
 	if (!fdisk_is_readonly(cf->cxt)) {
+		if (blkdev_lock(fdisk_get_devfd(cf->cxt), diskpath, lockmode) != 0)
+			return EXIT_FAILURE;
+
 		cf->device_is_used = fdisk_device_is_used(cf->cxt);
 		fdisk_get_partitions(cf->cxt, &cf->original_layout);
 	}

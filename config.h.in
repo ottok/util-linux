@@ -12,6 +12,9 @@
 /* Path to hwclock adjtime file */
 #undef CONFIG_ADJTIME_PATH
 
+/* Define if cryptsetup is to be loaded via dlopen */
+#undef CRYPTSETUP_VIA_DLOPEN
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
@@ -47,6 +50,9 @@
 
 /* Define if cryptsetup is available */
 #undef HAVE_CRYPTSETUP
+
+/* Define if crypt_activate_by_signed_key exist in -lcryptsetup */
+#undef HAVE_CRYPT_ACTIVATE_BY_SIGNED_KEY
 
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
@@ -209,6 +215,9 @@
 /* Do we need -lcrypt? */
 #undef HAVE_LIBCRYPT
 
+/* Define if libeconf is available */
+#undef HAVE_LIBECONF
+
 /* Define if libmount available. */
 #undef HAVE_LIBMOUNT
 
@@ -305,20 +314,14 @@
 /* Define to 1 if you have the `llseek' function. */
 #undef HAVE_LLSEEK
 
-/* Define to 1 if have llseek prototype */
-#undef HAVE_LLSEEK_PROTOTYPE
-
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
 /* Define to 1 if the system has the type `loff_t'. */
 #undef HAVE_LOFF_T
 
-/* Define to 1 if you have the `lseek64' function. */
-#undef HAVE_LSEEK64
-
-/* Define to 1 if have lseek64 prototype */
-#undef HAVE_LSEEK64_PROTOTYPE
+/* Define to 1 if you have the libmagic present. */
+#undef HAVE_MAGIC
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -844,6 +847,9 @@
 
 /* Define to 1 to remove /bin and /sbin from PATH env.variable */
 #undef USE_USRDIR_PATHS_ONLY
+
+/* Define to 1 to use vendordir */
+#undef USE_VENDORDIR
 
 /* Version number of package */
 #undef VERSION

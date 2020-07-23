@@ -169,6 +169,7 @@ struct dmesg_control {
 	struct timeval	lasttime;	/* last printed timestamp */
 	struct tm	lasttm;		/* last localtime */
 	struct timeval	boot_time;	/* system boot time */
+	time_t		suspended_time;	/* time spent in suspended state */
 
 	int		action;		/* SYSLOG_ACTION_* */
 	int		method;		/* DMESG_METHOD_* */
@@ -190,6 +191,7 @@ struct dmesg_control {
 	unsigned int	time_fmt;	/* time format */
 
 	unsigned int	follow:1,	/* wait for new messages */
+			end:1,		/* seek to the of buffer */
 			raw:1,		/* raw mode */
 			noesc:1,	/* no escape */
 			fltr_lev:1,	/* filter out by levels[] */
@@ -292,6 +294,7 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -s, --buffer-size <size>    buffer size to query the kernel ring buffer\n"), out);
 	fputs(_(" -u, --userspace             display userspace messages\n"), out);
 	fputs(_(" -w, --follow                wait for new messages\n"), out);
+	fputs(_(" -W, --follow-new            wait and print only new messages\n"), out);
 	fputs(_(" -x, --decode                decode facility and level to readable string\n"), out);
 	fputs(_(" -d, --show-delta            show time delta between printed messages\n"), out);
 	fputs(_(" -e, --reltime               show local time and time delta in readable format\n"), out);
@@ -822,7 +825,7 @@ static struct tm *record_localtime(struct dmesg_control *ctl,
 				   struct dmesg_record *rec,
 				   struct tm *tm)
 {
-	time_t t = ctl->boot_time.tv_sec + rec->tv.tv_sec;
+	time_t t = ctl->boot_time.tv_sec + ctl->suspended_time + rec->tv.tv_sec;
 	return localtime_r(&t, tm);
 }
 
@@ -850,7 +853,7 @@ static char *iso_8601_time(struct dmesg_control *ctl, struct dmesg_record *rec,
 			   char *buf, size_t bufsz)
 {
 	struct timeval tv = {
-		.tv_sec = ctl->boot_time.tv_sec + rec->tv.tv_sec,
+		.tv_sec = ctl->boot_time.tv_sec + ctl->suspended_time + rec->tv.tv_sec,
 		.tv_usec = rec->tv.tv_usec
 	};
 
@@ -1127,11 +1130,11 @@ static int init_kmsg(struct dmesg_control *ctl)
 	 *
 	 * ... otherwise SYSLOG_ACTION_CLEAR will have no effect for kmsg.
 	 */
-	lseek(ctl->kmsg, 0, SEEK_DATA);
+	lseek(ctl->kmsg, 0, ctl->end ? SEEK_END : SEEK_DATA);
 
 	/*
-	 * Old kernels (<3.5) allow to successfully open /dev/kmsg for
-	 * read-only, but read() returns -EINVAL :-(((
+	 * Old kernels (<3.5) can successfully open /dev/kmsg for read-only,
+	 * but read() returns -EINVAL :-(((
 	 *
 	 * Let's try to read the first record. The record is later processed in
 	 * read_kmsg().
@@ -1299,8 +1302,16 @@ static inline int dmesg_get_boot_time(struct timeval *tv)
 
 	return get_boot_time(tv);
 }
+
+static inline time_t dmesg_get_suspended_time(void)
+{
+	if (getenv("DMESG_TEST_BOOTIME"))
+		return 0;
+	return get_suspended_time();
+}
 #else
 # define dmesg_get_boot_time	get_boot_time
+# define dmesg_get_suspended_time	get_suspended_time
 #endif
 
 int main(int argc, char *argv[])
@@ -1336,6 +1347,7 @@ int main(int argc, char *argv[])
 		{ "file",          required_argument, NULL, 'F' },
 		{ "facility",      required_argument, NULL, 'f' },
 		{ "follow",        no_argument,       NULL, 'w' },
+		{ "follow-new",    no_argument,       NULL, 'W' },
 		{ "human",         no_argument,       NULL, 'H' },
 		{ "help",          no_argument,	      NULL, 'h' },
 		{ "kernel",        no_argument,       NULL, 'k' },
@@ -1375,7 +1387,7 @@ int main(int argc, char *argv[])
 	textdomain(PACKAGE);
 	close_stdout_atexit();
 
-	while ((c = getopt_long(argc, argv, "CcDdEeF:f:HhkL::l:n:iPprSs:TtuVwx",
+	while ((c = getopt_long(argc, argv, "CcDdEeF:f:HhkL::l:n:iPprSs:TtuVWwx",
 				longopts, NULL)) != -1) {
 
 		err_exclusive_options(c, longopts, excl, excl_st);
@@ -1466,6 +1478,10 @@ int main(int argc, char *argv[])
 		case 'w':
 			ctl.follow = 1;
 			break;
+		case 'W':
+			ctl.follow = 1;
+			ctl.end = 1;
+			break;
 		case 'x':
 			ctl.decode = 1;
 			break;
@@ -1492,9 +1508,12 @@ int main(int argc, char *argv[])
 
 	if ((is_timefmt(&ctl, RELTIME) ||
 	     is_timefmt(&ctl, CTIME)   ||
-	     is_timefmt(&ctl, ISO8601))
-	    && dmesg_get_boot_time(&ctl.boot_time) != 0)
-		ctl.time_fmt = DMESG_TIMEFTM_NONE;
+	     is_timefmt(&ctl, ISO8601))) {
+		if (dmesg_get_boot_time(&ctl.boot_time) != 0)
+			ctl.time_fmt = DMESG_TIMEFTM_NONE;
+		else
+			ctl.suspended_time = dmesg_get_suspended_time();
+	}
 
 	if (delta)
 		switch (ctl.time_fmt) {

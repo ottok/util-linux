@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="20-May-2020"
+LIBBLKID_DATE="23-Jul-2020"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -122,7 +122,6 @@ AC_C_BIGENDIAN
 dnl Compiler warnings
 UL_WARN_ADD([-fno-common])
 UL_WARN_ADD([-Wall])
-UL_WARN_ADD([-Werror=sequence-point])
 UL_WARN_ADD([-Wextra])
 UL_WARN_ADD([-Wextra-semi])
 UL_WARN_ADD([-Wembedded-directive])
@@ -145,7 +144,20 @@ UL_WARN_ADD([-Wstrict-prototypes])
 UL_WARN_ADD([-Wformat-security])
 UL_WARN_ADD([-Wimplicit-function-declaration])
 UL_WARN_ADD([-Wdiscarded-qualifiers])
+UL_WARN_ADD([-Waddress-of-packed-member])
+
+AC_ARG_ENABLE([werror],
+  AS_HELP_STRING([--enable-werror], [make all compiler warnings into errors]),
+  [], [enable_werror=no]
+)
+AS_IF([test "x$enable_werror" = xyes], [
+  UL_WARN_ADD([-Werror])
+],[
+  UL_WARN_ADD([-Werror=sequence-point])
+])
+
 AC_SUBST([WARN_CFLAGS])
+
 
 UL_WARN_ADD([-Wno-clobbered], [BSD_WARN_CFLAGS])
 AC_SUBST([BSD_WARN_CFLAGS])
@@ -166,6 +178,16 @@ AS_IF([test "x$enable_asan" = xyes], [
   ASAN_LDFLAGS="-fsanitize=address"
 ])
 AC_SUBST([ASAN_LDFLAGS])
+
+AC_ARG_ENABLE([ubsan],
+  AS_HELP_STRING([--enable-ubsan], [compile with UBsan]),
+  [], [enable_ubsan=no]
+)
+AS_IF([test "x$enable_ubsan" = xyes], [
+  UL_WARN_ADD([-fsanitize=undefined])
+  UBSAN_LDFLAGS="-fsanitize=undefined"
+])
+AC_SUBST([UBSAN_LDFLAGS])
 
 dnl libtool-2
 LT_INIT
@@ -329,8 +351,8 @@ AC_CHECK_HEADERS([security/openpam.h], [], [], [
 ])
 
 AC_CHECK_HEADERS([langinfo.h],
-		[AM_CONDITIONAL([HAVE_LANGINFO], [true])],
-		[AM_CONDITIONAL([HAVE_LANGINFO], [false])])
+		[AM_CONDITIONAL([HAVE_LANGINFO_H], [true])],
+		[AM_CONDITIONAL([HAVE_LANGINFO_H], [false])])
 
 AC_MSG_CHECKING([whether langinfo.h defines ALTMON_x constants])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -426,20 +448,6 @@ AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec],,,
 
 AC_CHECK_DECLS([_NL_TIME_WEEK_1STDAY],[],[],[[#include <langinfo.h>]])
 
-AC_CHECK_DECL([llseek],
-	[AC_DEFINE([HAVE_LLSEEK_PROTOTYPE], [1],
-			[Define to 1 if have llseek prototype])],
-	[],
-	[#include <unistd.h>])
-
-AC_CHECK_DECL([lseek64],
-	[AC_DEFINE([HAVE_LSEEK64_PROTOTYPE], [1],
-			[Define to 1 if have lseek64 prototype])],
-	[],
-	[#define _LARGEFILE_SOURCE
-	 #define _LARGEFILE64_SOURCE
-	 #include <unistd.h>])
-
 AC_CHECK_DECL([environ],
 	[AC_DEFINE([HAVE_ENVIRON_DECL], [1],
 		[Define to 1 if have **environ prototype])],
@@ -491,7 +499,6 @@ AC_CHECK_FUNCS([ \
 	jrand48 \
 	lchown \
 	llseek \
-	lseek64 \
 	mempcpy \
 	mkostemp \
 	nanosleep \
@@ -1501,6 +1508,18 @@ AS_IF([test "x$with_libz" = xno], [have_z=no], [
   AC_CHECK_LIB([z], [crc32], [have_z=yes], [have_z=no])
 ])
 
+AC_ARG_WITH([libmagic],
+  AS_HELP_STRING([--without-libmagic], [compile without libmagic]),
+  [], [with_libmagic=auto]
+)
+AS_IF([test "x$with_libmagic" = xno], [have_magic=no], [
+  AC_CHECK_LIB([magic], [magic_open], [
+    AC_DEFINE([HAVE_MAGIC], [1], [Define to 1 if you have the libmagic present.])
+    MAGIC_LIBS="-lmagic"
+  ])
+])
+AC_SUBST([MAGIC_LIBS])
+
 
 AC_ARG_ENABLE([cramfs],
   AS_HELP_STRING([--disable-cramfs], [do not build fsck.cramfs, mkfs.cramfs]),
@@ -1768,6 +1787,28 @@ AC_ARG_ENABLE([ipcs],
 UL_BUILD_INIT([ipcs])
 AM_CONDITIONAL([BUILD_IPCS], [test "x$build_ipcs" = xyes])
 
+
+AC_ARG_ENABLE([irqtop],
+  AS_HELP_STRING([--disable-irqtop], [do not build irqtop]),
+  [], [UL_DEFAULT_ENABLE([irqtop], [check])]
+)
+UL_BUILD_INIT([irqtop])
+UL_REQUIRES_LINUX([irqtop])
+UL_REQUIRES_BUILD([irqtop], [libsmartcols])
+UL_REQUIRES_HAVE([irqtop], [open_memstream], [open_memstream function])
+UL_REQUIRES_HAVE([irqtop], [ncursesw,slang,ncurses], [ncursesw, ncurses or slang library])
+AM_CONDITIONAL([BUILD_IRQTOP], [test "x$build_irqtop" = xyes])
+
+AC_ARG_ENABLE([lsirq],
+  AS_HELP_STRING([--disable-lsirq], [do not build lsirq]),
+  [], [UL_DEFAULT_ENABLE([lsirq], [check])]
+)
+UL_BUILD_INIT([lsirq])
+UL_REQUIRES_LINUX([lsirq])
+UL_REQUIRES_BUILD([lsirq], [libsmartcols])
+AM_CONDITIONAL([BUILD_LSIRQ], [test "x$build_lsirq" = xyes])
+
+
 UL_BUILD_INIT([choom], [check])
 UL_REQUIRES_LINUX([choom])
 AM_CONDITIONAL([BUILD_CHOOM], [test "x$build_choom" = xyes])
@@ -1994,7 +2035,7 @@ AC_ARG_ENABLE([chfn-chsh-password],
 )
 
 AC_ARG_ENABLE([chfn-chsh],
-  AS_HELP_STRING([--enable-chfn-chsh], [build chfn and chsh]),
+  AS_HELP_STRING([--disable-chfn-chsh], [do not build chfn and chsh]),
   [], [UL_DEFAULT_ENABLE([chfn_chsh], [check])]
 )
 UL_BUILD_INIT([chfn_chsh])
@@ -2103,6 +2144,7 @@ AC_ARG_ENABLE([more],
 )
 UL_BUILD_INIT([more])
 UL_REQUIRES_HAVE([more], [ncursesw, ncurses], [ncursesw or ncurses libraries])
+UL_REQUIRES_LINUX([more])
 AM_CONDITIONAL([BUILD_MORE], [test "x$build_more" = xyes])
 
 
@@ -2272,6 +2314,33 @@ AC_ARG_WITH([smack],
 )
 AS_IF([test "x$with_smack" = xyes], [
   AC_DEFINE([HAVE_SMACK], [1], [Add SMACK support])
+])
+
+AC_ARG_WITH([econf],
+  AS_HELP_STRING([--without-econf], [do not use libeconf]),
+  [], [with_econf=check]
+)
+
+have_econf=no
+AS_IF([test "x$with_econf" != xno], [
+  PKG_CHECK_MODULES([ECONF], [libeconf], [have_econf=yes], [have_econf=no])
+    AS_CASE([$with_econf:$have_econf],
+    [yes:no],
+      [AC_MSG_ERROR([libeconf expected but libeconf not found])],
+    [*:yes],
+       AC_DEFINE([HAVE_LIBECONF], [1], [Define if libeconf is available])
+  )
+])
+AM_CONDITIONAL([HAVE_ECONF], [test "x$have_econf" = xyes])
+
+AC_ARG_WITH([vendordir],
+  AS_HELP_STRING([--with-vendordir=DIR], [Direcotry for distribution provided configuration files]),
+  [], []
+)
+AC_SUBST([vendordir], [$with_vendordir])
+AM_CONDITIONAL([USE_VENDORDIR], [test "x$with_vendordir" != x])
+AS_IF([test "x$with_vendordir" != x], [
+  AC_DEFINE([USE_VENDORDIR], [1], [Define to 1 to use vendordir])
 ])
 
 
@@ -2447,14 +2516,35 @@ AC_ARG_WITH([cryptsetup],
 
 AS_IF([test "x$with_cryptsetup" = xno], [
   AM_CONDITIONAL([HAVE_CRYPTSETUP], [false])
+  AM_CONDITIONAL([CRYPTSETUP_VIA_DLOPEN], [false])
 ], [
   PKG_CHECK_MODULES([CRYPTSETUP], [libcryptsetup],
 	[AC_DEFINE([HAVE_CRYPTSETUP], [1], [Define if cryptsetup is available])
 	 UL_PKG_STATIC([CRYPTSETUP_LIBS_STATIC], [libcryptsetup])
 	 AM_CONDITIONAL([HAVE_CRYPTSETUP], [true])
+	 SAVE_CFLAGS="$CFLAGS"
+	 CFLAGS="$CRYPTSETUP_CFLAGS $CFLAGS"
+	 SAVE_LIBS="$LIBS"
+	 LIBS="$CRYPTSETUP_LIBS $LIBS"
+	 AC_CHECK_LIB([cryptsetup], [crypt_activate_by_signed_key], [
+	  AC_DEFINE_UNQUOTED([HAVE_CRYPT_ACTIVATE_BY_SIGNED_KEY], [1], [Define if crypt_activate_by_signed_key exist in -lcryptsetup])
+	 ])
+	 AS_IF([test "x$with_cryptsetup" = xdlopen], [
+	  LIBS="-ldl $LIBS"
+	  AC_CHECK_LIB([dl], [dlsym], [
+	    AC_DEFINE([CRYPTSETUP_VIA_DLOPEN], [1], [Define if cryptsetup is to be loaded via dlopen])
+	    AM_CONDITIONAL([CRYPTSETUP_VIA_DLOPEN], [true])
+	   ], [AC_MSG_ERROR([libdl required to build with cryptsetup support])])
+	 ], [
+	  AM_CONDITIONAL([CRYPTSETUP_VIA_DLOPEN], [false])
+	 ])
+	 CFLAGS="$SAVE_CFLAGS"
+	 LIBS="$SAVE_LIBS"
 	 have_cryptsetup=yes],
 	[have_cryptsetup=no
-   AM_CONDITIONAL([HAVE_CRYPTSETUP], [false])])
+   AM_CONDITIONAL([HAVE_CRYPTSETUP], [false])
+   AM_CONDITIONAL([CRYPTSETUP_VIA_DLOPEN], [false])
+  ])
 
   AS_CASE([$with_cryptsetup:$have_cryptsetup],
     [yes:no], [AC_MSG_WARN([cryptsetup selected but libcryptsetup not found])]
@@ -2527,6 +2617,7 @@ AC_MSG_RESULT([
 	usrbin_execdir:    ${usrbin_execdir}
 	usrsbin_execdir:   ${usrsbin_execdir}
 	usrlib_execdir:    ${usrlib_execdir}
+        vendordir:         ${with_vendordir}
 
 	compiler:          ${CC}
 	cflags:            ${CFLAGS}
@@ -2542,6 +2633,7 @@ AC_MSG_RESULT([
 	Bash completions:  ${with_bashcompletiondir}
 	Systemd support:   ${have_systemd}
 	Systemd unitdir:   ${with_systemdsystemunitdir}
+	libeconf support:  ${have_econf}
 	Btrfs support:     ${have_btrfs}
 	Wide-char support: ${build_widechar}
 

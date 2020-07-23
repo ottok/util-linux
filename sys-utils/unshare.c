@@ -45,6 +45,7 @@
 #include "all-io.h"
 #include "signames.h"
 #include "strutils.h"
+#include "pwdutils.h"
 
 /* synchronize parent and child by pipe */
 #define PIPE_SYNC_BYTE	0x06
@@ -63,8 +64,9 @@ static struct namespace_file {
 	{ .type = CLONE_NEWIPC,   .name = "ns/ipc"  },
 	{ .type = CLONE_NEWUTS,   .name = "ns/uts"  },
 	{ .type = CLONE_NEWNET,   .name = "ns/net"  },
-	{ .type = CLONE_NEWPID,   .name = "ns/pid"  },
+	{ .type = CLONE_NEWPID,   .name = "ns/pid_for_children" },
 	{ .type = CLONE_NEWNS,    .name = "ns/mnt"  },
+	{ .type = CLONE_NEWTIME,  .name = "ns/time_for_children" },
 	{ .name = NULL }
 };
 
@@ -74,12 +76,6 @@ enum {
 	SETGROUPS_NONE = -1,
 	SETGROUPS_DENY = 0,
 	SETGROUPS_ALLOW = 1,
-};
-
-enum {
-	MAP_USER_NONE,
-	MAP_USER_ROOT,
-	MAP_USER_CURRENT,
 };
 
 static const char *setgroups_strings[] =
@@ -213,6 +209,23 @@ static ino_t get_mnt_ino(pid_t pid)
 	return st.st_ino;
 }
 
+static void settime(time_t offset, clockid_t clk_id)
+{
+	char buf[sizeof(stringify_value(ULONG_MAX)) * 3];
+	int fd, len;
+
+	len = snprintf(buf, sizeof(buf), "%d %ld 0", clk_id, offset);
+
+	fd = open("/proc/self/timens_offsets", O_WRONLY);
+	if (fd < 0)
+		err(EXIT_FAILURE, _("failed to open /proc/self/timens_offsets"));
+
+	if (write(fd, buf, len) != len)
+		err(EXIT_FAILURE, _("failed to write to /proc/self/timens_offsets"));
+
+	close(fd);
+}
+
 static void bind_ns_files_from_child(pid_t *child, int fds[2])
 {
 	char ch;
@@ -248,6 +261,42 @@ static void bind_ns_files_from_child(pid_t *child, int fds[2])
 	}
 }
 
+static uid_t get_user(const char *s, const char *err)
+{
+	struct passwd *pw;
+	char *buf = NULL;
+	uid_t ret;
+
+	pw = xgetpwnam(s, &buf);
+	if (pw) {
+		ret = pw->pw_uid;
+		free(pw);
+		free(buf);
+	} else {
+		ret = strtoul_or_err(s, err);
+	}
+
+	return ret;
+}
+
+static gid_t get_group(const char *s, const char *err)
+{
+	struct group *gr;
+	char *buf = NULL;
+	gid_t ret;
+
+	gr = xgetgrnam(s, &buf);
+	if (gr) {
+		ret = gr->gr_gid;
+		free(gr);
+		free(buf);
+	} else {
+		ret = strtoul_or_err(s, err);
+	}
+
+	return ret;
+}
+
 static void __attribute__((__noreturn__)) usage(void)
 {
 	FILE *out = stdout;
@@ -267,8 +316,11 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -p, --pid[=<file>]        unshare pid namespace\n"), out);
 	fputs(_(" -U, --user[=<file>]       unshare user namespace\n"), out);
 	fputs(_(" -C, --cgroup[=<file>]     unshare cgroup namespace\n"), out);
+	fputs(_(" -T, --time[=<file>]       unshare time namespace\n"), out);
 	fputs(USAGE_SEPARATOR, out);
 	fputs(_(" -f, --fork                fork before launching <program>\n"), out);
+	fputs(_(" --map-user=<uid>|<name>   map current user to uid (implies --user)\n"), out);
+	fputs(_(" --map-group=<gid>|<name>  map current group to gid (implies --user)\n"), out);
 	fputs(_(" -r, --map-root-user       map current user to root (implies --user)\n"), out);
 	fputs(_(" -c, --map-current-user    map current user to itself (implies --user)\n"), out);
 	fputs(USAGE_SEPARATOR, out);
@@ -280,10 +332,12 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" --setgroups allow|deny    control the setgroups syscall in user namespaces\n"), out);
 	fputs(_(" --keep-caps               retain capabilities granted in user namespaces\n"), out);
 	fputs(USAGE_SEPARATOR, out);
-	fputs(_(" -R, --root=<dir>	    run the command with root directory set to <dir>\n"), out);
-	fputs(_(" -w, --wd=<dir>	    change working directory to <dir>\n"), out);
-	fputs(_(" -S, --setuid <uid>	    set uid in entered namespace\n"), out);
-	fputs(_(" -G, --setgid <gid>	    set gid in entered namespace\n"), out);
+	fputs(_(" -R, --root=<dir>          run the command with root directory set to <dir>\n"), out);
+	fputs(_(" -w, --wd=<dir>            change working directory to <dir>\n"), out);
+	fputs(_(" -S, --setuid <uid>        set uid in entered namespace\n"), out);
+	fputs(_(" -G, --setgid <gid>        set gid in entered namespace\n"), out);
+	fputs(_(" --monotonic <offset>      set clock monotonic offset (seconds) in time namespaces\n"), out);
+	fputs(_(" --boottime <offset>       set clock boottime offset (seconds) in time namespaces\n"), out);
 
 	fputs(USAGE_SEPARATOR, out);
 	printf(USAGE_HELP_OPTIONS(27));
@@ -300,6 +354,10 @@ int main(int argc, char *argv[])
 		OPT_SETGROUPS,
 		OPT_KILLCHILD,
 		OPT_KEEPCAPS,
+		OPT_MONOTONIC,
+		OPT_BOOTTIME,
+		OPT_MAPUSER,
+		OPT_MAPGROUP,
 	};
 	static const struct option longopts[] = {
 		{ "help",          no_argument,       NULL, 'h'             },
@@ -312,10 +370,13 @@ int main(int argc, char *argv[])
 		{ "pid",           optional_argument, NULL, 'p'             },
 		{ "user",          optional_argument, NULL, 'U'             },
 		{ "cgroup",        optional_argument, NULL, 'C'             },
+		{ "time",          optional_argument, NULL, 'T'             },
 
 		{ "fork",          no_argument,       NULL, 'f'             },
 		{ "kill-child",    optional_argument, NULL, OPT_KILLCHILD   },
 		{ "mount-proc",    optional_argument, NULL, OPT_MOUNTPROC   },
+		{ "map-user",      required_argument, NULL, OPT_MAPUSER     },
+		{ "map-group",     required_argument, NULL, OPT_MAPGROUP    },
 		{ "map-root-user", no_argument,       NULL, 'r'             },
 		{ "map-current-user", no_argument,    NULL, 'c'             },
 		{ "propagation",   required_argument, NULL, OPT_PROPAGATION },
@@ -325,16 +386,21 @@ int main(int argc, char *argv[])
 		{ "setgid",	   required_argument, NULL, 'G'		    },
 		{ "root",	   required_argument, NULL, 'R'		    },
 		{ "wd",		   required_argument, NULL, 'w'		    },
+		{ "monotonic",     required_argument, NULL, OPT_MONOTONIC   },
+		{ "boottime",      required_argument, NULL, OPT_BOOTTIME    },
 		{ NULL, 0, NULL, 0 }
 	};
 
 	int setgrpcmd = SETGROUPS_NONE;
 	int unshare_flags = 0;
-	int c, forkit = 0, mapuser = MAP_USER_NONE;
+	int c, forkit = 0;
+	uid_t mapuser = -1;
+	gid_t mapgroup = -1;
 	int kill_child_signo = 0; /* 0 means --kill-child was not used */
 	const char *procmnt = NULL;
 	const char *newroot = NULL;
 	const char *newdir = NULL;
+	pid_t pid_bind = 0;
 	pid_t pid = 0;
 	int fds[2];
 	int status;
@@ -343,13 +409,17 @@ int main(int argc, char *argv[])
 	uid_t uid = 0, real_euid = geteuid();
 	gid_t gid = 0, real_egid = getegid();
 	int keepcaps = 0;
+	time_t monotonic = 0;
+	time_t boottime = 0;
+	int force_monotonic = 0;
+	int force_boottime = 0;
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	close_stdout_atexit();
 
-	while ((c = getopt_long(argc, argv, "+fhVmuinpCUrR:w:S:G:c", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "+fhVmuinpCTUrR:w:S:G:c", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			forkit = 1;
@@ -389,25 +459,32 @@ int main(int argc, char *argv[])
 			if (optarg)
 				set_ns_target(CLONE_NEWCGROUP, optarg);
 			break;
+		case 'T':
+			unshare_flags |= CLONE_NEWTIME;
+			if (optarg)
+				set_ns_target(CLONE_NEWTIME, optarg);
+			break;
 		case OPT_MOUNTPROC:
 			unshare_flags |= CLONE_NEWNS;
 			procmnt = optarg ? optarg : "/proc";
 			break;
-		case 'r':
-			if (mapuser == MAP_USER_CURRENT)
-			        errx(EXIT_FAILURE, _("options --map-root-user and "
-					"--map-current-user are mutually exclusive"));
-
+		case OPT_MAPUSER:
 			unshare_flags |= CLONE_NEWUSER;
-			mapuser = MAP_USER_ROOT;
+			mapuser = get_user(optarg, _("failed to parse uid"));
+			break;
+		case OPT_MAPGROUP:
+			unshare_flags |= CLONE_NEWUSER;
+			mapgroup = get_group(optarg, _("failed to parse gid"));
+			break;
+		case 'r':
+			unshare_flags |= CLONE_NEWUSER;
+			mapuser = 0;
+			mapgroup = 0;
 			break;
 		case 'c':
-			if (mapuser == MAP_USER_ROOT)
-			        errx(EXIT_FAILURE, _("options --map-root-user and "
-					"--map-current-user are mutually exclusive"));
-
 			unshare_flags |= CLONE_NEWUSER;
-			mapuser = MAP_USER_CURRENT;
+			mapuser = real_euid;
+			mapgroup = real_egid;
 			break;
 		case OPT_SETGROUPS:
 			setgrpcmd = setgroups_str2id(optarg);
@@ -443,6 +520,14 @@ int main(int argc, char *argv[])
 		case 'w':
 			newdir = optarg;
 			break;
+                case OPT_MONOTONIC:
+			monotonic = strtoul_or_err(optarg, _("failed to parse monotonic offset"));
+			force_monotonic = 1;
+			break;
+                case OPT_BOOTTIME:
+			boottime = strtoul_or_err(optarg, _("failed to parse boottime offset"));
+			force_boottime = 1;
+			break;
 
 		case 'h':
 			usage();
@@ -453,14 +538,45 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if ((force_monotonic || force_boottime) && !(unshare_flags & CLONE_NEWTIME))
+		errx(EXIT_FAILURE, _("options --monotonic and --boottime require "
+			"unsharing of a time namespace (-t)"));
+
 	if (npersists && (unshare_flags & CLONE_NEWNS))
-		bind_ns_files_from_child(&pid, fds);
+		bind_ns_files_from_child(&pid_bind, fds);
 
 	if (-1 == unshare(unshare_flags))
 		err(EXIT_FAILURE, _("unshare failed"));
 
-	if (npersists) {
-		if (pid && (unshare_flags & CLONE_NEWNS)) {
+	if (force_boottime)
+		settime(boottime, CLOCK_BOOTTIME);
+
+	if (force_monotonic)
+		settime(monotonic, CLOCK_MONOTONIC);
+
+	if (forkit) {
+		signal(SIGINT, SIG_IGN);
+		signal(SIGTERM, SIG_IGN);
+
+		/* force child forking before mountspace binding
+		 * so pid_for_children is populated */
+		pid = fork();
+
+		switch(pid) {
+		case -1:
+			err(EXIT_FAILURE, _("fork failed"));
+		case 0:	/* child */
+			if (pid_bind && (unshare_flags & CLONE_NEWNS))
+				close(fds[1]);
+			break;
+		default: /* parent */
+			break;
+		}
+	}
+
+	if (npersists && (pid || !forkit)) {
+		/* run in parent */
+		if (pid_bind && (unshare_flags & CLONE_NEWNS)) {
 			int rc;
 			char ch = PIPE_SYNC_BYTE;
 
@@ -471,7 +587,7 @@ int main(int argc, char *argv[])
 
 			/* wait for bind_ns_files_from_child() */
 			do {
-				rc = waitpid(pid, &status, 0);
+				rc = waitpid(pid_bind, &status, 0);
 				if (rc < 0) {
 					if (errno == EINTR)
 						continue;
@@ -486,55 +602,40 @@ int main(int argc, char *argv[])
 			bind_ns_files(getpid());
 	}
 
-	if (forkit) {
-		pid = fork();
+	if (pid) {
+		if (waitpid(pid, &status, 0) == -1)
+			err(EXIT_FAILURE, _("waitpid failed"));
 
-		switch(pid) {
-		case -1:
-			err(EXIT_FAILURE, _("fork failed"));
-		case 0:	/* child */
-			break;
-		default: /* parent */
-			if (waitpid(pid, &status, 0) == -1)
-				err(EXIT_FAILURE, _("waitpid failed"));
-			if (WIFEXITED(status))
-				return WEXITSTATUS(status);
-			else if (WIFSIGNALED(status))
-				kill(getpid(), WTERMSIG(status));
-			err(EXIT_FAILURE, _("child exit failed"));
-		}
+		signal(SIGINT, SIG_DFL);
+		signal(SIGTERM, SIG_DFL);
+
+		if (WIFEXITED(status))
+			return WEXITSTATUS(status);
+		if (WIFSIGNALED(status))
+			kill(getpid(), WTERMSIG(status));
+		err(EXIT_FAILURE, _("child exit failed"));
 	}
 
 	if (kill_child_signo != 0 && prctl(PR_SET_PDEATHSIG, kill_child_signo) < 0)
 		err(EXIT_FAILURE, "prctl failed");
 
+        if (mapuser != (uid_t) -1)
+		map_id(_PATH_PROC_UIDMAP, mapuser, real_euid);
+
         /* Since Linux 3.19 unprivileged writing of /proc/self/gid_map
          * has been disabled unless /proc/self/setgroups is written
          * first to permanently disable the ability to call setgroups
          * in that user namespace. */
-        switch (mapuser) {
-        case MAP_USER_ROOT:
+	if (mapgroup != (gid_t) -1) {
 		if (setgrpcmd == SETGROUPS_ALLOW)
 			errx(EXIT_FAILURE, _("options --setgroups=allow and "
-					"--map-root-user are mutually exclusive"));
-
+					"--map-group are mutually exclusive"));
 		setgroups_control(SETGROUPS_DENY);
-		map_id(_PATH_PROC_UIDMAP, 0, real_euid);
-		map_id(_PATH_PROC_GIDMAP, 0, real_egid);
-                break;
-        case MAP_USER_CURRENT:
-		if (setgrpcmd == SETGROUPS_ALLOW)
-			errx(EXIT_FAILURE, _("options --setgroups=allow and "
-					"--map-current-user are mutually exclusive"));
+		map_id(_PATH_PROC_GIDMAP, mapgroup, real_egid);
+	}
 
-		setgroups_control(SETGROUPS_DENY);
-		map_id(_PATH_PROC_UIDMAP, real_euid, real_euid);
-		map_id(_PATH_PROC_GIDMAP, real_egid, real_egid);
-                break;
-        case MAP_USER_NONE:
-	        if (setgrpcmd != SETGROUPS_NONE)
-		        setgroups_control(setgrpcmd);
-        }
+	if (setgrpcmd != SETGROUPS_NONE)
+		setgroups_control(setgrpcmd);
 
 	if ((unshare_flags & CLONE_NEWNS) && propagation)
 		set_propagation(propagation);
@@ -573,7 +674,7 @@ int main(int argc, char *argv[])
 			.pid = 0,
 		};
 
-		struct __user_cap_data_struct payload[_LINUX_CAPABILITY_U32S_3] = { 0 };
+		struct __user_cap_data_struct payload[_LINUX_CAPABILITY_U32S_3] = {{ 0 }};
 		int cap;
 		uint64_t effective;
 

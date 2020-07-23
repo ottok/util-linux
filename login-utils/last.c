@@ -263,7 +263,9 @@ static int uread(FILE *fp, struct utmpx *u,  int *quit, const char *filename)
  */
 static char *showdate(void)
 {
-	char *s = ctime(&lastdate);
+	static char s[CTIME_BUFSIZ];
+
+	ctime_r(&lastdate, s);
 	s[16] = 0;
 	return s;
 }
@@ -339,15 +341,22 @@ static int time_formatter(int fmt, char *dst, size_t dlen, time_t *when)
 		break;
 	case LAST_TIMEFTM_HHMM:
 	{
-		struct tm *tm = localtime(when);
-		if (!snprintf(dst, dlen, "%02d:%02d", tm->tm_hour, tm->tm_min))
+		struct tm tm;
+
+		localtime_r(when, &tm);
+		if (!snprintf(dst, dlen, "%02d:%02d", tm.tm_hour, tm.tm_min))
 			ret = -1;
 		break;
 	}
 	case LAST_TIMEFTM_CTIME:
-		snprintf(dst, dlen, "%s", ctime(when));
+	{
+		char buf[CTIME_BUFSIZ];
+
+		ctime_r(when, buf);
+		snprintf(dst, dlen, "%s", buf);
 		ret = rtrim_whitespace((unsigned char *) dst);
 		break;
+	}
 	case LAST_TIMEFTM_ISO8601:
 		ret = strtime_iso(when, ISO_TIMESTAMP_T, dst, dlen);
 		break;
@@ -603,7 +612,7 @@ static int is_phantom(const struct last_control *ctl, struct utmpx *ut)
 	pw = getpwnam(ut->ut_user);
 	if (!pw)
 		return 1;
-	sprintf(path, "/proc/%u/loginuid", ut->ut_pid);
+	snprintf(path, sizeof(path), "/proc/%u/loginuid", ut->ut_pid);
 	if (access(path, R_OK) == 0) {
 		unsigned int loginuid;
 		FILE *f = NULL;
@@ -617,8 +626,11 @@ static int is_phantom(const struct last_control *ctl, struct utmpx *ut)
 			return 1;
 	} else {
 		struct stat st;
+		char utline[sizeof(ut->ut_line) + 1];
 
-		sprintf(path, "/dev/%s", ut->ut_line);
+		mem2strcpy(utline, ut->ut_line, sizeof(ut->ut_line), sizeof(utline));
+
+		snprintf(path, sizeof(path), "/dev/%s", utline);
 		if (stat(path, &st))
 			return 1;
 		if (pw->pw_uid != st.st_uid)

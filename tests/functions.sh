@@ -262,8 +262,9 @@ function ts_init_env {
 	LC_ALL="POSIX"
 	CHARSET="UTF-8"
 	ASAN_OPTIONS="detect_leaks=0"
+	UBSAN_OPTIONS="print_stacktrace=1:print_summary=1:halt_on_error=1"
 
-	export LANG LANGUAGE LC_ALL CHARSET ASAN_OPTIONS
+	export LANG LANGUAGE LC_ALL CHARSET ASAN_OPTIONS UBSAN_OPTIONS
 
 	mydir=$(ts_canonicalize "$mydir")
 
@@ -338,6 +339,10 @@ function ts_init_env {
 	tmp=$( ts_has_option "memcheck-asan" "$*")
 	if [ "$tmp" == "yes" ]; then
 		TS_ENABLE_ASAN="yes"
+	fi
+	tmp=$( ts_has_option "memcheck-ubsan" "$*")
+	if [ "$tmp" == "yes" ]; then
+		TS_ENABLE_UBSAN="yes"
 	fi
 
 	BLKID_FILE="$TS_OUTDIR/${TS_TESTNAME}.blkidtab"
@@ -437,12 +442,23 @@ function ts_init_py {
 
 function ts_run {
 	declare -a args
+	local asan_options="strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
 
 	#
 	# ASAN mode
 	#
-	if [ "$TS_ENABLE_ASAN" == "yes" ]; then
-		args+=(env ASAN_OPTIONS=detect_leaks=1)
+	if [ "$TS_ENABLE_ASAN" == "yes" -o "$TS_ENABLE_UBSAN" == "yes" ]; then
+		args+=(env)
+		if [ "$TS_ENABLE_ASAN" == "yes" ]; then
+			# detect_leaks isn't supported on s390x: https://github.com/llvm/llvm-project/blob/master/compiler-rt/lib/lsan/lsan_common.h
+			if [ "$(uname -m)" != "s390x" ]; then
+				asan_options="$asan_options:detect_leaks=1"
+			fi
+			args+=(ASAN_OPTIONS=$asan_options)
+		fi
+		if [ "$TS_ENABLE_UBSAN" == "yes" ]; then
+			args+=(UBSAN_OPTIONS=print_stacktrace=1:print_summary=1:halt_on_error=1)
+		fi
 	fi
 
 	#
@@ -770,7 +786,8 @@ function ts_fdisk_clean {
 
 	sed -i \
 		-e 's/Disk identifier:.*/Disk identifier: <removed>/' \
-		-e 's/Created a new.*/Created a new <removed>./' \
+		-e 's/Created a new partition.*/Created a new partition <removed>./' \
+		-e 's/Created a new .* disklabel .*/Created a new disklabel./' \
 		-e 's/^Device[[:blank:]]*Start/Device             Start/' \
 		-e 's/^Device[[:blank:]]*Boot/Device     Boot/' \
 		-e 's/Welcome to fdisk.*/Welcome to fdisk <removed>./' \

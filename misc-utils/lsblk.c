@@ -117,6 +117,7 @@ enum {
 	COL_REV,
 	COL_VENDOR,
 	COL_ZONED,
+	COL_DAX
 };
 
 /* basic table settings */
@@ -208,6 +209,7 @@ static struct colinfo infos[] = {
 	[COL_REV]    = { "REV",   4, SCOLS_FL_RIGHT, N_("device revision") },
 	[COL_VENDOR] = { "VENDOR", 0.1, SCOLS_FL_TRUNC, N_("device vendor") },
 	[COL_ZONED]  = { "ZONED", 0.3, 0, N_("zone model") },
+	[COL_DAX]    = { "DAX", 1, SCOLS_FL_RIGHT, N_("dax-capable device"), COLTYPE_BOOL },
 };
 
 struct lsblk *lsblk;	/* global handler */
@@ -1030,6 +1032,9 @@ static char *device_get_data(
 		break;
 	case COL_ZONED:
 		ul_path_read_string(dev->sysfs, &str, "queue/zoned");
+		break;
+	case COL_DAX:
+		ul_path_read_string(dev->sysfs, &str, "queue/dax");
 		break;
 	};
 
@@ -1989,6 +1994,7 @@ int main(int argc, char *argv[])
 			add_uniq_column(COL_VENDOR);
 			add_uniq_column(COL_MODEL);
 			add_uniq_column(COL_REV);
+			add_uniq_column(COL_SERIAL);
 			add_uniq_column(COL_TRANSPORT);
 			break;
 		case 'T':

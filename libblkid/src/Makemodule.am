@@ -17,7 +17,6 @@ libblkid_la_SOURCES = \
 	libblkid/src/encode.c \
 	libblkid/src/evaluate.c \
 	libblkid/src/getsize.c \
-	libblkid/src/llseek.c \
 	libblkid/src/probe.c \
 	libblkid/src/read.c \
 	libblkid/src/resolve.c \
@@ -101,6 +100,7 @@ libblkid_la_SOURCES = \
 	libblkid/src/superblocks/vxfs.c \
 	libblkid/src/superblocks/xfs.c \
 	libblkid/src/superblocks/zfs.c \
+	libblkid/src/superblocks/zonefs.c \
 	\
 	libblkid/src/topology/topology.c \
 	libblkid/src/topology/topology.h
@@ -151,7 +151,7 @@ check_PROGRAMS += \
 
 blkid_tests_cflags  = -DTEST_PROGRAM $(libblkid_la_CFLAGS)
 blkid_tests_ldflags =
-blkid_tests_ldadd   = libblkid.la
+blkid_tests_ldadd   = $(LDADD) libblkid.la
 blkid_tests_ldflags += -static
 
 test_blkid_cache_SOURCES = libblkid/src/cache.c

@@ -167,7 +167,8 @@ static const struct blkid_idinfo *idinfos[] =
 	&exfat_idinfo,
 	&f2fs_idinfo,
 	&mpool_idinfo,
-	&apfs_idinfo
+	&apfs_idinfo,
+	&zonefs_idinfo
 };
 
 /*
@@ -625,12 +626,13 @@ int blkid_probe_set_utf8_id_label(blkid_probe pr, const char *name,
 	if (!v)
 		return -ENOMEM;
 
-	v->data = blkid_encode_alloc(len, &v->len);
+	v->len = (len * 3) + 1;
+	v->data = calloc(1, v->len);
 	if (!v->data)
 		rc = -ENOMEM;
 
 	if (!rc) {
-		blkid_encode_to_utf8(enc, v->data, v->len, data, len);
+		ul_encode_to_utf8(enc, v->data, v->len, data, len);
 		v->len = blkid_rtrim_whitespace(v->data) + 1;
 		if (v->len > 1)
 			v->len = blkid_ltrim_whitespace(v->data) + 1;
@@ -688,11 +690,12 @@ int blkid_probe_set_utf8label(blkid_probe pr, const unsigned char *label,
 	if (!v)
 		return -ENOMEM;
 
-	v->data = blkid_encode_alloc(len, &v->len);
+	v->len = (len * 3) + 1;
+	v->data = calloc(1, v->len);
 	if (!v->data)
 		rc = -ENOMEM;
 	if (!rc) {
-		blkid_encode_to_utf8(enc, v->data, v->len, label, len);
+		ul_encode_to_utf8(enc, v->data, v->len, label, len);
 		v->len = blkid_rtrim_whitespace(v->data) + 1;
 		if (v->len > 1)
 			return 0;
@@ -853,7 +856,7 @@ int blkid_probe_invert_filter(blkid_probe pr)
  *
  * Returns: 0 on success, or -1 in case of error.
  *
- * Deprecated: Use blkid_probe_filter_superblocks_types().
+ * Deprecated: Use blkid_probe_filter_superblocks_type().
  */
 int blkid_probe_filter_types(blkid_probe pr, int flag, char *names[])
 {

@@ -72,6 +72,7 @@ int is_file_empty(const char *name)
 int mnt_valid_tagname(const char *tagname)
 {
 	if (tagname && *tagname && (
+	    strcmp("ID", tagname) == 0 ||
 	    strcmp("UUID", tagname) == 0 ||
 	    strcmp("LABEL", tagname) == 0 ||
 	    strcmp("PARTUUID", tagname) == 0 ||
@@ -132,6 +133,16 @@ int mnt_stat_mountpoint(const char *target, struct stat *st)
 	return stat(target, st);
 #endif
 }
+
+int mnt_lstat_mountpoint(const char *target, struct stat *st)
+{
+#ifdef AT_NO_AUTOMOUNT
+	return fstatat(AT_FDCWD, target, st, AT_NO_AUTOMOUNT | AT_SYMLINK_NOFOLLOW);
+#else
+	return lstat(target, st);
+#endif
+}
+
 
 /*
  * Note that the @target has to be an absolute path (so at least "/").  The
@@ -271,8 +282,10 @@ int mnt_fstype_is_pseudofs(const char *type)
 	/* This array must remain sorted when adding new fstypes */
 	static const char *pseudofs[] = {
 		"anon_inodefs",
+		"apparmorfs",
 		"autofs",
 		"bdev",
+		"binder",
 		"binfmt_misc",
 		"bpf",
 		"cgroup",
@@ -284,6 +297,8 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"devpts",
 		"devtmpfs",
 		"dlmfs",
+		"dmabuf",
+		"drm",
 		"efivarfs",
 		"fuse", /* Fallback name of fuse used by many poorly written drivers. */
 		"fuse.archivemount", /* Not a true pseudofs (has source), but source is not reported. */
@@ -298,6 +313,7 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"fuse.xwmfs",
 		"fusectl",
 		"hugetlbfs",
+		"ipathfs",
 		"mqueue",
 		"nfsd",
 		"none",
@@ -307,14 +323,17 @@ int mnt_fstype_is_pseudofs(const char *type)
 		"proc",
 		"pstore",
 		"ramfs",
+		"resctrl",
 		"rootfs",
 		"rpc_pipefs",
 		"securityfs",
 		"selinuxfs",
+		"smackfs",
 		"sockfs",
 		"spufs",
 		"sysfs",
-		"tmpfs"
+		"tmpfs",
+		"tracefs"
 	};
 
 	assert(type);
@@ -691,28 +710,32 @@ static int try_write(const char *filename, const char *directory)
 	if (eaccess(filename, R_OK|W_OK) == 0) {
 		DBG(UTILS, ul_debug(" access OK"));
 		return 0;
-	} else if (errno != ENOENT) {
+	}
+
+	if (errno != ENOENT) {
 		DBG(UTILS, ul_debug(" access FAILED"));
 		return -errno;
-	} else if (directory) {
+	}
+
+	if (directory) {
 		/* file does not exist; try if directory is writable */
 		if (eaccess(directory, R_OK|W_OK) != 0)
 			rc = -errno;
 
 		DBG(UTILS, ul_debug(" access %s [%s]", rc ? "FAILED" : "OK", directory));
 		return rc;
-	} else
-#endif
-	{
-		DBG(UTILS, ul_debug(" doing open-write test"));
-
-		int fd = open(filename, O_RDWR|O_CREAT|O_CLOEXEC,
-			    S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH);
-		if (fd < 0)
-			rc = -errno;
-		else
-			close(fd);
 	}
+#endif
+
+	DBG(UTILS, ul_debug(" doing open-write test"));
+
+	int fd = open(filename, O_RDWR|O_CREAT|O_CLOEXEC,
+		    S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH);
+	if (fd < 0)
+		rc = -errno;
+	else
+		close(fd);
+
 	return rc;
 }
 
@@ -1200,7 +1223,7 @@ static int read_procfs_file(int fd, char **buf, size_t *bufsiz)
 			}
 			break;
 
-		} else if (ret > 0) {
+		} if (ret > 0) {
 			/* success -- verify no event during read */
 			struct pollfd fds[] = {
 				{ .fd = fd, .events = POLLPRI }

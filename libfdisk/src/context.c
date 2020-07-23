@@ -226,7 +226,8 @@ struct fdisk_label *fdisk_get_label(struct fdisk_context *cxt, const char *name)
 
 	if (!name)
 		return cxt->label;
-	else if (strcasecmp(name, "mbr") == 0)
+
+	if (strcasecmp(name, "mbr") == 0)
 		name = "dos";
 
 	for (i = 0; i < cxt->nlabels; i++)
@@ -334,7 +335,7 @@ int fdisk_has_protected_bootbits(struct fdisk_context *cxt)
  * @enable: 1 or 0
  *
  * The library zeroizes all the first sector when create a new disk label by
- * default.  This function allows to control this behavior. For now it's
+ * default.  This function can be used to control this behavior. For now it's
  * supported for MBR and GPT.
  *
  * Returns: 0 on success, < 0 on error.
@@ -700,6 +701,8 @@ int fdisk_assign_device(struct fdisk_context *cxt,
  * The device has to be open O_RDWR on @readonly=0.
  *
  * Returns: 0 on success, < 0 on error.
+ *
+ * Since: 2.35
  */
 int fdisk_assign_device_by_fd(struct fdisk_context *cxt, int fd,
 			const char *fname, int readonly)
@@ -818,17 +821,16 @@ int fdisk_reread_partition_table(struct fdisk_context *cxt)
 
 	if (!S_ISBLK(cxt->dev_st.st_mode))
 		return 0;
-	else {
-		DBG(CXT, ul_debugobj(cxt, "calling re-read ioctl"));
-		sync();
+
+	DBG(CXT, ul_debugobj(cxt, "calling re-read ioctl"));
+	sync();
 #ifdef BLKRRPART
-		fdisk_info(cxt, _("Calling ioctl() to re-read partition table."));
-		i = ioctl(cxt->dev_fd, BLKRRPART);
+	fdisk_info(cxt, _("Calling ioctl() to re-read partition table."));
+	i = ioctl(cxt->dev_fd, BLKRRPART);
 #else
-		errno = ENOSYS;
-		i = 1;
+	errno = ENOSYS;
+	i = 1;
 #endif
-	}
 
 	if (i) {
 		fdisk_warn(cxt, _("Re-reading the partition table failed."));
@@ -868,7 +870,7 @@ static inline int add_to_partitions_array(
  * partition table. The BLKPG_* ioctls are used for individual partitions. The
  * advantage is that unmodified partitions maybe mounted.
  *
- * The function behavies like fdisk_reread_partition_table() on systems where
+ * The function behaves like fdisk_reread_partition_table() on systems where
  * are no available BLKPG_* ioctls.
  *
  * Returns: <0 on error, or 0.

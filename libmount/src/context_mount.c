@@ -293,8 +293,8 @@ static int fix_optstr(struct libmnt_context *cxt)
 		se_rem = 1;
 	else if (cxt->mountflags & MS_REMOUNT)
 		/*
-		 * Linux kernel < 2.6.39 does not allow to remount with any
-		 * selinux specific mount options.
+		 * Linux kernel < 2.6.39 does not support remount operation
+		 * with any selinux specific mount options.
 		 *
 		 * Kernel 2.6.39 commits:  ff36fe2c845cab2102e4826c1ffa0a6ebf487c65
 		 *                         026eb167ae77244458fa4b4b9fc171209c079ba7
@@ -1080,7 +1080,7 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 		/*
 		 * Mounted by mount(2), do some post-mount checks
 		 *
-		 * Kernel allows to use MS_RDONLY for bind mounts, but the
+		 * Kernel can be used to use MS_RDONLY for bind mounts, but the
 		 * read-only request could be silently ignored. Check it to
 		 * avoid 'ro' in mtab and 'rw' in /proc/mounts.
 		 */
@@ -1117,6 +1117,48 @@ int mnt_context_do_mount(struct libmnt_context *cxt)
 		return -MNT_ERR_NAMESPACE;
 
 	return res;
+}
+
+/*
+ * Returns mountinfo FS entry of context source patch if the source is already
+ * mounted. This function is used for "already mounted" message or to get FS of
+ * re-used loop device.
+ */
+static struct libmnt_fs *get_already_mounted_source(struct libmnt_context *cxt)
+{
+	const char *src;
+	struct libmnt_table *tb;
+
+	assert(cxt);
+
+	src = mnt_fs_get_srcpath(cxt->fs);
+
+	if (src && mnt_context_get_mtab(cxt, &tb) == 0) {
+		struct libmnt_iter itr;
+		struct libmnt_fs *fs;
+
+		mnt_reset_iter(&itr, MNT_ITER_FORWARD);
+		while (mnt_table_next_fs(tb, &itr, &fs) == 0) {
+			const char *s = mnt_fs_get_srcpath(fs),
+				   *t = mnt_fs_get_target(fs);
+
+			if (t && s && mnt_fs_streq_srcpath(fs, src))
+				return fs;
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Checks if source filesystem superblock is already ro-mounted. Note that we
+ * care about FS superblock as VFS node is irrelevant here.
+ */
+static int is_source_already_rdonly(struct libmnt_context *cxt)
+{
+	struct libmnt_fs *fs = get_already_mounted_source(cxt);
+	const char *opts = fs ? mnt_fs_get_fs_options(fs) : NULL;
+
+	return opts && mnt_optstr_get_option(opts, "ro", NULL, NULL) == 0;
 }
 
 /**
@@ -1220,11 +1262,14 @@ again:
 		rc = mnt_context_update_tabs(cxt);
 
 	/*
-	 * Read-only device; try mount filesystem read-only
+	 * Read-only device or already read-only mounted FS.
+	 * Try mount the filesystem read-only.
 	 */
 	if ((rc == -EROFS && !mnt_context_syscall_called(cxt))	/* before syscall; rdonly loopdev */
 	     || mnt_context_get_syscall_errno(cxt) == EROFS	/* syscall failed with EROFS */
-	     || mnt_context_get_syscall_errno(cxt) == EACCES)	/* syscall failed with EACCES */
+	     || mnt_context_get_syscall_errno(cxt) == EACCES	/* syscall failed with EACCES */
+	     || (mnt_context_get_syscall_errno(cxt) == EBUSY	/* already ro-mounted FS */
+		 && is_source_already_rdonly(cxt)))
 	{
 		unsigned long mflags = 0;
 
@@ -1600,7 +1645,7 @@ int mnt_context_get_mount_excode(
 		 * Libmount success && syscall success.
 		 */
 		if (buf && mnt_context_forced_rdonly(cxt))
-			snprintf(buf, bufsz, _("WARNING: device write-protected, mounted read-only"));
+			snprintf(buf, bufsz, _("WARNING: source write-protected, mounted read-only"));
 		return MNT_EX_SUCCESS;
 	}
 
@@ -1688,12 +1733,16 @@ int mnt_context_get_mount_excode(
 			if (buf)
 				snprintf(buf, bufsz, _("filesystem was mounted, but failed to update userspace mount table"));
 			return MNT_EX_FILEIO;
-		} else if (rc == -MNT_ERR_NAMESPACE) {
+		}
+
+		if (rc == -MNT_ERR_NAMESPACE) {
 			if (buf)
 				snprintf(buf, bufsz, _("filesystem was mounted, but failed to switch namespace back"));
 			return MNT_EX_SYSERR;
 
-		} else if (rc < 0)
+		}
+
+		if (rc < 0)
 			return mnt_context_get_generic_excode(rc, buf, bufsz,
 				_("filesystem was mounted, but any subsequent operation failed: %m"));
 
@@ -1712,7 +1761,7 @@ int mnt_context_get_mount_excode(
 		if (!buf)
 			break;
 		if (geteuid() == 0) {
-			if (stat(tgt, &st) || !S_ISDIR(st.st_mode))
+			if (mnt_stat_mountpoint(tgt, &st) || !S_ISDIR(st.st_mode))
 				snprintf(buf, bufsz, _("mount point is not a directory"));
 			else
 				snprintf(buf, bufsz, _("permission denied"));
@@ -1721,39 +1770,27 @@ int mnt_context_get_mount_excode(
 		break;
 
 	case EBUSY:
-	{
-		struct libmnt_table *tb;
-
 		if (!buf)
 			break;
 		if (mflags & MS_REMOUNT) {
 			snprintf(buf, bufsz, _("mount point is busy"));
 			break;
 		}
-		if (src && mnt_context_get_mtab(cxt, &tb) == 0) {
-			struct libmnt_iter itr;
-			struct libmnt_fs *fs;
+		if (src) {
+			struct libmnt_fs *fs = get_already_mounted_source(cxt);
 
-			mnt_reset_iter(&itr, MNT_ITER_FORWARD);
-			while (mnt_table_next_fs(tb, &itr, &fs) == 0) {
-				const char *s = mnt_fs_get_srcpath(fs),
-					   *t = mnt_fs_get_target(fs);
-
-				if (t && s && mnt_fs_streq_srcpath(fs, src)) {
-					snprintf(buf, bufsz, _("%s already mounted on %s"), s, t);
-					break;
-				}
-			}
+			if (fs && mnt_fs_get_target(fs))
+				snprintf(buf, bufsz, _("%s already mounted on %s"),
+						src, mnt_fs_get_target(fs));
 		}
 		if (!*buf)
 			snprintf(buf, bufsz, _("%s already mounted or mount point busy"), src);
 		break;
-	}
 	case ENOENT:
-		if (tgt && lstat(tgt, &st)) {
+		if (tgt && mnt_lstat_mountpoint(tgt, &st)) {
 			if (buf)
 				snprintf(buf, bufsz, _("mount point does not exist"));
-		} else if (tgt && stat(tgt, &st)) {
+		} else if (tgt && mnt_stat_mountpoint(tgt, &st)) {
 			if (buf)
 				snprintf(buf, bufsz, _("mount point is a symbolic link to nowhere"));
 		} else if (src && stat(src, &st)) {
@@ -1768,7 +1805,7 @@ int mnt_context_get_mount_excode(
 		break;
 
 	case ENOTDIR:
-		if (stat(tgt, &st) || ! S_ISDIR(st.st_mode)) {
+		if (mnt_stat_mountpoint(tgt, &st) || ! S_ISDIR(st.st_mode)) {
 			if (buf)
 				snprintf(buf, bufsz, _("mount point is not a directory"));
 		} else if (src && stat(src, &st) && errno == ENOTDIR) {

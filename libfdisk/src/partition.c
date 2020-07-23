@@ -500,6 +500,13 @@ struct fdisk_parttype *fdisk_partition_get_type(struct fdisk_partition *pa)
 	return pa ? pa->type : NULL;
 }
 
+/**
+ * fdisk_partition_set_name:
+ * @pa: partition
+ * @name: partition name
+ *
+ * Returns: 0 on success, <0 on error.
+ */
 int fdisk_partition_set_name(struct fdisk_partition *pa, const char *name)
 {
 	if (!pa)
@@ -507,11 +514,24 @@ int fdisk_partition_set_name(struct fdisk_partition *pa, const char *name)
 	return strdup_to_struct_member(pa, name, name);
 }
 
+/**
+ * fdisk_partition_get_name:
+ * @pa: partition
+ *
+ * Returns: partition name
+ */
 const char *fdisk_partition_get_name(struct fdisk_partition *pa)
 {
 	return pa ? pa->name : NULL;
 }
 
+/**
+ * fdisk_partition_set_uuid:
+ * @pa: partition
+ * @uuid: UUID of the partition
+ *
+ * Returns: 0 on success, <0 on error.
+ */
 int fdisk_partition_set_uuid(struct fdisk_partition *pa, const char *uuid)
 {
 	if (!pa)
@@ -733,7 +753,9 @@ int fdisk_partition_next_partno(
 		}
 		return -ERANGE;
 
-	} else if (pa && fdisk_partition_has_partno(pa)) {
+	}
+
+	if (pa && fdisk_partition_has_partno(pa)) {
 
 		DBG(PART, ul_debugobj(pa, "next partno (specified=%zu)", pa->partno));
 
@@ -743,7 +765,9 @@ int fdisk_partition_next_partno(
 		*n = pa->partno;
 		return 0;
 
-	} else if (fdisk_has_dialogs(cxt))
+	}
+
+	if (fdisk_has_dialogs(cxt))
 		return fdisk_ask_partnum(cxt, n, 1);
 
 	return -EINVAL;
@@ -1151,7 +1175,7 @@ static int recount_resize(
 	rc = fdisk_get_partitions(cxt, &tb);
 	if (!rc) {
 		/* For resize we do not follow grain to detect free-space, but
-		 * we allow to resize with very small granulation. */
+		 * we support to resize with very small granulation. */
 		unsigned long org = cxt->grain;
 
 		cxt->grain = cxt->sector_size;
@@ -1395,7 +1419,7 @@ int fdisk_partition_has_wipe(struct fdisk_context *cxt, struct fdisk_partition *
  * If @pa is not specified or any @pa item is missing the libfdisk will ask by
  * fdisk_ask_ API.
  *
- * The @pa template is is important for non-interactive partitioning,
+ * The @pa template is important for non-interactive partitioning,
  * especially for MBR where is necessary to differentiate between
  * primary/logical; this is done by start offset or/and partno.
  * The rules for MBR:

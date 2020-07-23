@@ -385,7 +385,9 @@ static char *get_mm_stat(struct zram *z, size_t idx, int bytes)
 		ul_path_read_string(sysfs, &str, name);
 		return str;
 
-	} else if (ul_path_read_u64(sysfs, &num, name) == 0)
+	}
+
+	if (ul_path_read_u64(sysfs, &num, name) == 0)
 		return size_to_human_string(SIZE_SUFFIX_1LETTER, num);
 
 	return NULL;
@@ -558,6 +560,9 @@ static void __attribute__((__noreturn__)) usage(void)
 
 	fputs(USAGE_SEPARATOR, out);
 	printf(USAGE_HELP_OPTIONS(27));
+
+	fputs(USAGE_ARGUMENTS, out);
+	printf(USAGE_ARG_SIZE(_("<size>")));
 
 	fputs(USAGE_COLUMNS, out);
 	for (i = 0; i < ARRAY_SIZE(infos); i++)
