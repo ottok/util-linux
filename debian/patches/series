@@ -1,4 +1,2 @@
-0001-bash-completion-umount-shell-characters-escape.patch
 0001-hexdump-automatically-use-C-when-called-as-hd.patch
-0001-setarch-fix-stderr-handling-in-uname26-tests.patch
 verbose-tests.patch
