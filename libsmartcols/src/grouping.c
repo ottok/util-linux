@@ -8,7 +8,7 @@
  * @title: Grouping
  * @short_description: lines grouing
  *
- * Lines groups manipulation API. The grouping API allows to create M:N
+ * Lines groups manipulation API. The grouping API can be used to create M:N
  * relations between lines and on tree-like output it prints extra chart to
  * visualize these relations. The group has unlimited number of members and
  * group childs. See libsmartcols/sample/grouping* for more details.
@@ -222,7 +222,7 @@ static int group_state_for_line(struct libscols_group *gr, struct libscols_line 
 }
 
 /*
- * apply new @state to the chunk (addresesd by @xx) of grpset used for the group (@gr)
+ * apply new @state to the chunk (addressed by @xx) of grpset used for the group (@gr)
  */
 static void grpset_apply_group_state(struct libscols_group **xx, int state, struct libscols_group *gr)
 {

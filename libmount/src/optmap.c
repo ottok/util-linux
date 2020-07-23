@@ -186,6 +186,7 @@ static const struct libmnt_optmap userspace_opts_map[] =
    { "verity.fecdevice=",   MNT_MS_FEC_DEVICE, MNT_NOHLPS | MNT_NOMTAB },		/* verity FEC device */
    { "verity.fecoffset=", MNT_MS_FEC_OFFSET, MNT_NOHLPS | MNT_NOMTAB },	      /* verity FEC area offset */
    { "verity.fecroots=", MNT_MS_FEC_ROOTS, MNT_NOHLPS | MNT_NOMTAB },	      /* verity FEC roots */
+   { "verity.roothashsig=",    MNT_MS_ROOT_HASH_SIG, MNT_NOHLPS | MNT_NOMTAB },	/* verity device root hash signature file */
 
    { NULL, 0, 0 }
 };
@@ -208,7 +209,7 @@ const struct libmnt_optmap *mnt_get_builtin_optmap(int id)
 
 	if (id == MNT_LINUX_MAP)
 		return linux_flags_map;
-	else if (id == MNT_USERSPACE_MAP)
+	if (id == MNT_USERSPACE_MAP)
 		return userspace_opts_map;
 	return NULL;
 }
@@ -248,7 +249,7 @@ const struct libmnt_optmap *mnt_optmap_get_entry(
 				}
 				continue;
 			}
-			if (strncmp(ent->name, name, namelen))
+			if (strncmp(ent->name, name, namelen) != 0)
 				continue;
 			p = ent->name + namelen;
 			if (*p == '\0' || *p == '=' || *p == '[') {

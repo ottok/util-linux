@@ -41,6 +41,7 @@ include/crc32c.h
 include/crc32.h
 include/debug.h
 include/debugobj.h
+include/encode.h
 include/env.h
 include/exec_shell.h
 include/exitcodes.h
@@ -103,7 +104,6 @@ libblkid/src/encode.c
 libblkid/src/evaluate.c
 libblkid/src/getsize.c
 libblkid/src/init.c
-libblkid/src/llseek.c
 libblkid/src/partitions/aix.c
 libblkid/src/partitions/aix.h
 libblkid/src/partitions/atari.c
@@ -181,6 +181,7 @@ libblkid/src/superblocks/vmfs.c
 libblkid/src/superblocks/vxfs.c
 libblkid/src/superblocks/xfs.c
 libblkid/src/superblocks/zfs.c
+libblkid/src/superblocks/zonefs.c
 libblkid/src/tag.c
 libblkid/src/topology/dm.c
 libblkid/src/topology/evms.c
@@ -199,6 +200,7 @@ lib/colors.c
 lib/cpuset.c
 lib/crc32.c
 lib/crc32c.c
+lib/encode.c
 lib/env.c
 lib/exec_shell.c
 libfdisk/src/alignment.c
@@ -391,6 +393,9 @@ sys-utils/ipcrm.c
 sys-utils/ipcs.c
 sys-utils/ipcutils.c
 sys-utils/ipcutils.h
+sys-utils/irq-common.c
+sys-utils/irq-common.h
+sys-utils/irqtop.c
 sys-utils/ldattach.c
 sys-utils/losetup.c
 sys-utils/lscpu-arm.c
@@ -398,6 +403,7 @@ sys-utils/lscpu.c
 sys-utils/lscpu-dmi.c
 sys-utils/lscpu.h
 sys-utils/lsipc.c
+sys-utils/lsirq.c
 sys-utils/lsmem.c
 sys-utils/lsns.c
 sys-utils/mount.c

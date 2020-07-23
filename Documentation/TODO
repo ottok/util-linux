@@ -5,11 +5,18 @@ script (lib/pty-session.c)
 --------------------------
   - (!) add #ifdefs and optional code for non-signalfd() systems
 
-irqtop or lsirq
----------------
-  - add tool to list and monitor IRQs from /proc/interrupts
-  - libsmartcols is expected
-  - initial work is done by zhenwei pi, see https://github.com/pacepi/irqtop
+
+docs
+----
+  - use terminal hyperlinks (for example for --help)
+    try on terminal: printf 'For more details see \e]8;;man:fdisk(8)\e\\fdisk(8)\e]8;;\e\\.\n'
+    https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+
+rev
+---
+  - support huge input lines (for example read input by small fixed buffer
+    rather than try allocate all buffer for a whole line)
+    see: https://github.com/karelzak/util-linux/issues/972
 
 col
 ---
@@ -20,8 +27,6 @@ col
 
 cal
 ---
-   - add option to print calendar in vertical way
-     https://github.com/karelzak/util-linux/issues/604
    - support another --reforms, see for example freebsd version
      https://github.com/freebsd/freebsd/blob/master/usr.bin/ncal/ncal.c#L72
 
@@ -72,7 +77,7 @@ libmount (mount/umount)
    loop devices, write to /run/mount/utab or /etc/mtab, etc.
 
    It would be nice to improve libmount to check for CAP_SYS_ADMIN if suid not
-   set and allow to use it for simple tasks where no another operation is
+   set and allow using it for simple tasks where no another operation is
    necessary.
 
 partx
@@ -96,6 +101,7 @@ docs
 
  - (!) add API documentation to libuuid
 
+ - (!) rewrite man pages to AsciiDoc and generate final man pages by Asciidoctor & Docbook
 
 login-utils:
 -----------

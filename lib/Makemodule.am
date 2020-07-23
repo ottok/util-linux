@@ -8,6 +8,7 @@ libcommon_la_SOURCES = \
 	lib/crc32c.c \
 	lib/env.c \
 	lib/idcache.c \
+	lib/encode.c \
 	lib/fileutils.c \
 	lib/ismounted.c \
 	lib/color-names.c \
@@ -39,7 +40,7 @@ if USE_PLYMOUTH_SUPPORT
 libcommon_la_SOURCES += lib/plymouth-ctrl.c
 endif
 
-if !HAVE_LANGINFO
+if !HAVE_LANGINFO_H
 libcommon_la_SOURCES += lib/langinfo.c
 endif
 
@@ -82,6 +83,7 @@ check_PROGRAMS += \
 	test_pwdutils \
 	test_mangle \
 	test_randutils \
+	test_remove_env \
 	test_strutils \
 	test_ttyutils \
 	test_timeutils
@@ -181,3 +183,6 @@ test_timeutils_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM_TIMEUTILS
 
 test_pwdutils_SOURCES = lib/pwdutils.c
 test_pwdutils_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM
+
+test_remove_env_SOURCES = lib/env.c
+test_remove_env_CFLAGS = $(AM_CFLAGS) -DTEST_PROGRAM

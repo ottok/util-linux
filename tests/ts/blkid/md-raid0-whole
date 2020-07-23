@@ -29,7 +29,8 @@ ts_skip_nonroot
 ts_check_losetup
 ts_check_prog "mdadm"
 
-TS_KNOWN_FAIL="yes"	# due to recent changes in mdadm
+# rhbz#182625: It can't create new raid0 with metadata 0.90 from mdadm-4.1
+TS_KNOWN_FAIL="yes"
 
 ts_log "Initialize devices"
 IMGNAME="${TS_OUTDIR}/${TS_TESTNAME}"
@@ -51,7 +52,7 @@ mdadm -q --create ${MD_DEVICE} --metadata=0.90 --chunk=64 --level=0 \
 	    --raid-devices=2 ${DEVICE1} ${DEVICE2} >> $TS_OUTPUT 2>> $TS_ERRLOG
 
 # create dos partition table
-$TS_CMD_FDISK ${MD_DEVICE} &>/dev/null <<EOF
+$TS_CMD_FDISK --noauto-pt ${MD_DEVICE} &>/dev/null <<EOF
 o
 w
 q

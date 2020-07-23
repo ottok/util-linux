@@ -110,7 +110,7 @@ fdisk_sector_t fdisk_align_lba(struct fdisk_context *cxt, fdisk_sector_t lba, in
 				res += sects_in_phy;
 		}
 	}
-
+/*
 	if (lba != res)
 		DBG(CXT, ul_debugobj(cxt, "LBA %12ju aligned-%s %12ju [grain=%lus]",
 				(uintmax_t) lba,
@@ -120,7 +120,7 @@ fdisk_sector_t fdisk_align_lba(struct fdisk_context *cxt, fdisk_sector_t lba, in
 				cxt->grain / cxt->sector_size));
 	else
 		DBG(CXT, ul_debugobj(cxt, "LBA %12ju already aligned", (uintmax_t)lba));
-
+*/
 	return res;
 }
 
@@ -140,12 +140,14 @@ fdisk_sector_t fdisk_align_lba_in_range(struct fdisk_context *cxt,
 {
 	fdisk_sector_t res;
 
-	start = fdisk_align_lba(cxt, start, FDISK_ALIGN_UP);
-	stop = fdisk_align_lba(cxt, stop, FDISK_ALIGN_DOWN);
+	/*DBG(CXT, ul_debugobj(cxt, "LBA: align in range <%ju..%ju>", (uintmax_t) start, (uintmax_t) stop));*/
 
-	if (lba > start && lba < stop
-	    && (lba - start) < (cxt->grain / cxt->sector_size)) {
+	if (start + (cxt->grain / cxt->sector_size) <= stop) {
+		start = fdisk_align_lba(cxt, start, FDISK_ALIGN_UP);
+		stop = fdisk_align_lba(cxt, stop, FDISK_ALIGN_DOWN);
+	}
 
+	if (start + (cxt->grain / cxt->sector_size) > stop) {
 		DBG(CXT, ul_debugobj(cxt, "LBA: area smaller than grain, don't align"));
 		res = lba;
 		goto done;

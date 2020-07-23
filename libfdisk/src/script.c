@@ -9,7 +9,7 @@
  * @title: Script
  * @short_description: complex way to create and dump partition table
  *
- * This interface allows to compose in-memory partition table with all details,
+ * This interface can be used to compose in-memory partition table with all details,
  * write all partition table description to human readable text file, read it
  * from the file, and apply the script to on-disk label.
  *
@@ -60,9 +60,6 @@ struct fdisk_script {
 	unsigned int		json : 1,		/* JSON output */
 				force_label : 1;	/* label: <name> specified */
 };
-
-static struct fdisk_parttype *translate_type_shortcuts(struct fdisk_script *dp, char *str);
-
 
 static void fdisk_script_free_header(struct fdisk_scriptheader *fi)
 {
@@ -271,7 +268,7 @@ const char *fdisk_script_get_header(struct fdisk_script *dp, const char *name)
  * If no @data is specified then the header is removed. If header does not exist
  * and @data is specified then a new header is added.
  *
- * Note that libfdisk allows to specify arbitrary custom header, the default
+ * Note that libfdisk can be used to specify arbitrary custom header, the default
  * built-in headers are "unit" and "label", and some label specific headers
  * (for example "uuid" and "name" for GPT).
  *
@@ -365,7 +362,7 @@ struct fdisk_table *fdisk_script_get_table(struct fdisk_script *dp)
  * @tb: table
  *
  * Replaces table used by script and creates a new reference to @tb. This
- * function allows to generate a new script table independently on the current
+ * function can be used to generate a new script table independently on the current
  * context and without any file reading.
  *
  * This is useful for example to create partition table with the same basic
@@ -379,6 +376,8 @@ struct fdisk_table *fdisk_script_get_table(struct fdisk_script *dp)
  * always a new script table.
  *
  * Returns: 0 on success, <0 on error
+ *
+ * Since: 2.35
  */
 int fdisk_script_set_table(struct fdisk_script *dp, struct fdisk_table *tb)
 {
@@ -974,6 +973,11 @@ static int partno_from_devname(char *s)
 	return pno - 1;
 }
 
+#define FDISK_SCRIPT_PARTTYPE_PARSE_FLAGS \
+	(FDISK_PARTTYPE_PARSE_DATA | FDISK_PARTTYPE_PARSE_DATALAST | \
+	 FDISK_PARTTYPE_PARSE_SHORTCUT | FDISK_PARTTYPE_PARSE_ALIAS | \
+	 FDISK_PARTTYPE_PARSE_DEPRECATED)
+
 /* dump format
  * <device>: start=<num>, size=<num>, type=<string>, ...
  */
@@ -1075,19 +1079,14 @@ static int parse_line_nameval(struct fdisk_script *dp, char *s)
 			if (rc)
 				break;
 
-			pa->type = translate_type_shortcuts(dp, type);
-			if (!pa->type)
-				pa->type = fdisk_label_parse_parttype(
-						script_get_label(dp), type);
+			pa->type = fdisk_label_advparse_parttype(script_get_label(dp),
+					type, FDISK_SCRIPT_PARTTYPE_PARSE_FLAGS);
 			free(type);
 
 			if (!pa->type) {
 				rc = -EINVAL;
-				fdisk_unref_parttype(pa->type);
-				pa->type = NULL;
 				break;
 			}
-
 		} else {
 			DBG(SCRIPT, ul_debugobj(dp, "script parse error: unknown field '%s'", p));
 			rc = -EINVAL;
@@ -1102,71 +1101,6 @@ static int parse_line_nameval(struct fdisk_script *dp, char *s)
 
 	fdisk_unref_partition(pa);
 	return rc;
-}
-
-/* original sfdisk supports partition types shortcuts like 'L' = Linux native
- */
-static struct fdisk_parttype *translate_type_shortcuts(struct fdisk_script *dp, char *str)
-{
-	struct fdisk_label *lb;
-	const char *type = NULL;
-
-	if (strlen(str) != 1)
-		return NULL;
-
-	lb = script_get_label(dp);
-	if (!lb)
-		return NULL;
-
-	if (lb->id == FDISK_DISKLABEL_DOS) {
-		switch (*str) {
-		case 'L':	/* Linux */
-			type = "83";
-			break;
-		case 'S':	/* Swap */
-			type = "82";
-			break;
-		case 'E':	/* Dos extended */
-			type = "05";
-			break;
-		case 'X':	/* Linux extended */
-			type = "85";
-			break;
-		case 'U':	/* UEFI system */
-			type = "EF";
-			break;
-		case 'R':	/* Linux RAID */
-			type = "FD";
-			break;
-		case 'V':	/* LVM */
-			type = "8E";
-			break;
-
-		}
-	} else if (lb->id == FDISK_DISKLABEL_GPT) {
-		switch (*str) {
-		case 'L':	/* Linux */
-			type = "0FC63DAF-8483-4772-8E79-3D69D8477DE4";
-			break;
-		case 'S':	/* Swap */
-			type = "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F";
-			break;
-		case 'H':	/* Home */
-			type = "933AC7E1-2EB4-4F13-B844-0E14E2AEF915";
-			break;
-		case 'U':	/* UEFI system */
-			type = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B";
-			break;
-		case 'R':	/* Linux RAID */
-			type = "A19D880F-05FC-4D3B-A006-743F0F84911E";
-			break;
-		case 'V':	/* LVM */
-			type = "E6D6D379-F507-44C2-A23C-238F2A3DF928";
-			break;
-		}
-	}
-
-	return type ? fdisk_label_parse_parttype(lb, type) : NULL;
 }
 
 #define TK_PLUS		1
@@ -1263,18 +1197,12 @@ static int parse_line_valcommas(struct fdisk_script *dp, char *s)
 			if (rc)
 				break;
 
-			pa->type = translate_type_shortcuts(dp, str);
-			if (!pa->type)
-				pa->type = fdisk_label_parse_parttype(
-						script_get_label(dp), str);
+			pa->type = fdisk_label_advparse_parttype(script_get_label(dp),
+						str, FDISK_SCRIPT_PARTTYPE_PARSE_FLAGS);
 			free(str);
 
-			if (!pa->type) {
+			if (!pa->type)
 				rc = -EINVAL;
-				fdisk_unref_parttype(pa->type);
-				pa->type = NULL;
-				break;
-			}
 			break;
 		case ITEM_BOOTABLE:
 			if (*p == ',' || *p == ';')

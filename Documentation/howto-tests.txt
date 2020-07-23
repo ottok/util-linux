@@ -125,22 +125,14 @@ Travis CI - automatically executed for all github commits.
     We require "sudo" to install additional stuff and to run the tests with
     UID=0, it means that tests are executed on travis "legacy infrastructure".
 
+lgtm CI - automatically executed security code analysis
 
-Drone.io - automatically executed for all github commits.
+    URL: https://lgtm.com/projects/g/karelzak/util-linux/
 
-    URL: https://drone.io/github.com/karelzak/util-linux
+Coverity Scan
 
-    The drone.io does not use any in-tree config file (like travis-ci), the
-    currently used configuration (maintained by Drone.io web UI):
+    URL: https://scan.coverity.com/projects/karelzak-util-linux
 
-	MAKE_CHECK="root"
-	MAKE_CHECK_OPTS="--skip-loopdevs --exclude=mount/move"
-	source ./.travis-functions.sh
-	travis_install_script || exit
-	travis_before_script || exit
-	ret=0
-	travis_script || ret=$?
-	travis_after_script
-	exit $ret
+Fossies codespell report
 
-    yes, it shares the setup functions with travis-ci.
+    URL: https://fossies.org/linux/test/util-linux-master.tar.gz/codespell.html

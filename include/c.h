@@ -350,6 +350,7 @@ static inline int xusleep(useconds_t usec)
 #define USAGE_OPTIONS    _("\nOptions:\n")
 #define USAGE_FUNCTIONS  _("\nFunctions:\n")
 #define USAGE_COMMANDS   _("\nCommands:\n")
+#define USAGE_ARGUMENTS   _("\nArguments:\n")
 #define USAGE_COLUMNS    _("\nAvailable output columns:\n")
 #define USAGE_SEPARATOR    "\n"
 
@@ -361,6 +362,11 @@ static inline int xusleep(useconds_t usec)
 		"%-" #marg_dsc "s%s\n" \
 		, " -h, --help",    USAGE_OPTSTR_HELP \
 		, " -V, --version", USAGE_OPTSTR_VERSION
+
+#define USAGE_ARG_SEPARATOR    "\n"
+#define USAGE_ARG_SIZE(_name) \
+		_(" %s arguments may be followed by the suffixes for\n" \
+		  "   GiB, TiB, PiB, EiB, ZiB, and YiB (the \"iB\" is optional)\n"), _name
 
 #define USAGE_MAN_TAIL(_man)   _("\nFor more details see %s.\n"), _man
 

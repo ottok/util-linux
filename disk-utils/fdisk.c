@@ -480,9 +480,15 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt, int 
 		return NULL;
 
 	*canceled = 0;
-        q = fdisk_label_has_code_parttypes(lb) ?
-		_("Hex code (type L to list all codes): ") :
-		_("Partition type (type L to list all types): ");
+
+	if (fdisk_label_has_parttypes_shortcuts(lb))
+		 q = fdisk_label_has_code_parttypes(lb) ?
+			_("Hex code or alias (type L to list all): ") :
+			_("Partition type or alias (type L to list all): ");
+	else
+	        q = fdisk_label_has_code_parttypes(lb) ?
+			_("Hex code (type L to list all codes): ") :
+			_("Partition type (type L to list all types): ");
 	do {
 		char buf[256] = { '\0' };
 		int rc = get_user_reply(q, buf, sizeof(buf));
@@ -496,8 +502,10 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt, int 
 		if (buf[1] == '\0' && toupper(*buf) == 'L')
 			list_partition_types(cxt);
 		else if (*buf) {
-			struct fdisk_parttype *t = fdisk_label_parse_parttype(lb, buf);
-
+			struct fdisk_parttype *t = fdisk_label_advparse_parttype(lb, buf,
+								FDISK_PARTTYPE_PARSE_DATA
+								| FDISK_PARTTYPE_PARSE_ALIAS
+								| FDISK_PARTTYPE_PARSE_SEQNUM);
 			if (!t)
 				fdisk_info(cxt, _("Failed to parse '%s' partition type."), buf);
 			return t;
@@ -510,8 +518,9 @@ static struct fdisk_parttype *ask_partition_type(struct fdisk_context *cxt, int 
 
 void list_partition_types(struct fdisk_context *cxt)
 {
-	size_t ntypes = 0;
+	size_t ntypes = 0, next = 0;
 	struct fdisk_label *lb;
+	int pager = 0;
 
 	assert(cxt);
 	lb = fdisk_get_label(cxt, NULL);
@@ -525,7 +534,7 @@ void list_partition_types(struct fdisk_context *cxt)
 		/*
 		 * Prints in 4 columns in format <hex> <name>
 		 */
-		size_t last[4], done = 0, next = 0, size;
+		size_t last[4], done = 0, size;
 		int i;
 
 		size = ntypes;
@@ -542,7 +551,7 @@ void list_partition_types(struct fdisk_context *cxt)
 			size_t ret;
 
 			if (fdisk_parttype_get_name(t)) {
-				printf("%c%2x  ", i ? ' ' : '\n',
+				printf("%s%02x ", i ? "  " : "\n",
 						fdisk_parttype_get_code(t));
 				ret = mbsalign(_(fdisk_parttype_get_name(t)),
 						name, sizeof(name),
@@ -562,6 +571,7 @@ void list_partition_types(struct fdisk_context *cxt)
 			}
 		} while (done < last[0]);
 
+		putchar('\n');
 	} else {
 		/*
 		 * Prints 1 column in format <idx> <name> <typestr>
@@ -569,6 +579,7 @@ void list_partition_types(struct fdisk_context *cxt)
 		size_t i;
 
 		pager_open();
+		pager = 1;
 
 		for (i = 0; i < ntypes; i++) {
 			const struct fdisk_parttype *t = fdisk_label_get_parttype(lb, i);
@@ -577,9 +588,30 @@ void list_partition_types(struct fdisk_context *cxt)
 					fdisk_parttype_get_string(t));
 		}
 
-		pager_close();
 	}
-	putchar('\n');
+
+
+	/*
+	 * Aliases
+	 */
+	if (fdisk_label_has_parttypes_shortcuts(lb)) {
+		const char *alias = NULL, *typestr = NULL;
+		int rc = 0;
+
+		fputs(_("\nAliases:\n"), stdout);
+
+		for (next = 0; rc == 0 || rc == 2; next++) {
+			/* rc: <0 error, 0 success, 1 end, 2 deprecated */
+			rc = fdisk_label_get_parttype_shortcut(lb,
+					next, &typestr, NULL, &alias);
+			if (rc == 0)
+				printf("   %-14s - %s\n", alias, typestr);
+		}
+	}
+
+	if (pager)
+		pager_close();
+
 }
 
 void toggle_dos_compatibility_flag(struct fdisk_context *cxt)
@@ -817,8 +849,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(USAGE_HEADER, out);
 
 	fprintf(out,
-	      _(" %1$s [options] <disk>      change partition table\n"
-	        " %1$s [options] -l [<disk>] list partition table(s)\n"),
+	      _(" %1$s [options] <disk>         change partition table\n"
+	        " %1$s [options] -l [<disk>...] list partition table(s)\n"),
 	       program_invocation_short_name);
 
 	fputs(USAGE_SEPARATOR, out);
@@ -833,11 +865,16 @@ static void __attribute__((__noreturn__)) usage(void)
 	fprintf(out,
 	        "                                 %s\n", USAGE_COLORS_DEFAULT);
 	fputs(_(" -l, --list                    display partitions and exit\n"), out);
+	fputs(_(" -x, --list-details            like --list but with more details\n"), out);
+
+	fputs(_(" -n, --noauto-pt               don't create default partition table on empty devices\n"), out);
 	fputs(_(" -o, --output <list>           output columns\n"), out);
 	fputs(_(" -t, --type <type>             recognize specified partition table type only\n"), out);
 	fputs(_(" -u, --units[=<unit>]          display units: 'cylinders' or 'sectors' (default)\n"), out);
 	fputs(_(" -s, --getsz                   display device size in 512-byte sectors [DEPRECATED]\n"), out);
 	fputs(_("     --bytes                   print SIZE in bytes rather than in human readable format\n"), out);
+	fprintf(out,
+	      _("     --lock[=<mode>]           use exclusive device lock (%s, %s or %s)\n"), "yes", "no", "nonblock");
 	fprintf(out,
 	      _(" -w, --wipe <mode>             wipe signatures (%s, %s or %s)\n"), "auto", "always", "never");
 	fprintf(out,
@@ -861,28 +898,34 @@ static void __attribute__((__noreturn__)) usage(void)
 enum {
 	ACT_FDISK = 0,	/* default */
 	ACT_LIST,
+	ACT_LIST_DETAILS,
 	ACT_SHOWSIZE
 };
 
 int main(int argc, char **argv)
 {
-	int rc, i, c, act = ACT_FDISK;
+	int rc, i, c, act = ACT_FDISK, noauto_pt = 0;
 	int colormode = UL_COLORMODE_UNDEF;
 	struct fdisk_context *cxt;
 	char *outarg = NULL;
+	const char *devname, *lockmode = NULL;
 	enum {
-		OPT_BYTES	= CHAR_MAX + 1
+		OPT_BYTES	= CHAR_MAX + 1,
+		OPT_LOCK
 	};
 	static const struct option longopts[] = {
 		{ "bytes",          no_argument,       NULL, OPT_BYTES },
 		{ "color",          optional_argument, NULL, 'L' },
 		{ "compatibility",  optional_argument, NULL, 'c' },
 		{ "cylinders",      required_argument, NULL, 'C' },
-		{ "heads",	    required_argument, NULL, 'H' },
+		{ "heads",          required_argument, NULL, 'H' },
 		{ "sectors",        required_argument, NULL, 'S' },
 		{ "getsz",          no_argument,       NULL, 's' },
 		{ "help",           no_argument,       NULL, 'h' },
 		{ "list",           no_argument,       NULL, 'l' },
+		{ "list-details",   no_argument,       NULL, 'x' },
+		{ "lock",           optional_argument, NULL, OPT_LOCK },
+		{ "noauto-pt",      no_argument,       NULL, 'n' },
 		{ "sector-size",    required_argument, NULL, 'b' },
 		{ "type",           required_argument, NULL, 't' },
 		{ "units",          optional_argument, NULL, 'u' },
@@ -909,7 +952,7 @@ int main(int argc, char **argv)
 
 	fdisk_set_ask(cxt, ask_callback, NULL);
 
-	while ((c = getopt_long(argc, argv, "b:Bc::C:hH:lL::o:sS:t:u::vVw:W:",
+	while ((c = getopt_long(argc, argv, "b:Bc::C:hH:lL::no:sS:t:u::vVw:W:x",
 				longopts, NULL)) != -1) {
 		switch (c) {
 		case 'b':
@@ -963,11 +1006,17 @@ int main(int argc, char **argv)
 		case 'l':
 			act = ACT_LIST;
 			break;
+		case 'x':
+			act = ACT_LIST_DETAILS;
+			break;
 		case 'L':
 			colormode = UL_COLORMODE_AUTO;
 			if (optarg)
 				colormode = colormode_or_err(optarg,
 						_("unsupported color mode"));
+			break;
+		case 'n':
+			noauto_pt = 1;
 			break;
 		case 'o':
 			outarg = optarg;
@@ -1012,6 +1061,14 @@ int main(int argc, char **argv)
 		case OPT_BYTES:
 			fdisk_set_size_unit(cxt, FDISK_SIZEUNIT_BYTES);
 			break;
+		case OPT_LOCK:
+			lockmode = "1";
+			if (optarg) {
+				if (*optarg == '=')
+					optarg++;
+				lockmode = optarg;
+			}
+			break;
 		default:
 			errtryhelp(EXIT_FAILURE);
 		}
@@ -1026,20 +1083,20 @@ int main(int argc, char **argv)
 
 	switch (act) {
 	case ACT_LIST:
+	case ACT_LIST_DETAILS:
 		fdisk_enable_listonly(cxt, 1);
+
+		if (act == ACT_LIST_DETAILS)
+			fdisk_enable_details(cxt, 1);
+
 		init_fields(cxt, outarg, NULL);
 
 		if (argc > optind) {
 			int k;
-			int ct = 0;
 
-			for (rc = 0, k = optind; k < argc; k++) {
-				if (ct)
-				    fputs("\n\n", stdout);
+			for (rc = 0, k = optind; k < argc; k++)
+				rc += print_device_pt(cxt, argv[k], 1, 0, k != optind);
 
-				rc += print_device_pt(cxt, argv[k], 1, 0);
-				ct++;
-			}
 			if (rc)
 				return EXIT_FAILURE;
 		} else
@@ -1075,23 +1132,32 @@ int main(int argc, char **argv)
 		fdisk_info(cxt, _("Changes will remain in memory only, until you decide to write them.\n"
 				  "Be careful before using the write command.\n"));
 
-		rc = fdisk_assign_device(cxt, argv[optind], 0);
+		devname = argv[optind];
+		rc = fdisk_assign_device(cxt, devname, 0);
 		if (rc == -EACCES) {
-			rc = fdisk_assign_device(cxt, argv[optind], 1);
+			rc = fdisk_assign_device(cxt, devname, 1);
 			if (rc == 0)
 				fdisk_warnx(cxt, _("Device is open in read-only mode."));
 		}
 		if (rc)
-			err(EXIT_FAILURE, _("cannot open %s"), argv[optind]);
+			err(EXIT_FAILURE, _("cannot open %s"), devname);
 
 		fflush(stdout);
+
+		if (!fdisk_is_readonly(cxt)
+		    && blkdev_lock(fdisk_get_devfd(cxt), devname, lockmode) != 0) {
+			fdisk_deassign_device(cxt, 1);
+			fdisk_unref_context(cxt);
+			return EXIT_FAILURE;
+		}
 
 		if (fdisk_get_collision(cxt))
 			follow_wipe_mode(cxt);
 
 		if (!fdisk_has_label(cxt)) {
 			fdisk_info(cxt, _("Device does not contain a recognized partition table."));
-			fdisk_create_disklabel(cxt, NULL);
+			if (!noauto_pt)
+				fdisk_create_disklabel(cxt, NULL);
 
 		} else if (fdisk_is_label(cxt, GPT) && fdisk_gpt_is_hybrid(cxt))
 			fdisk_warnx(cxt, _(
