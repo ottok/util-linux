@@ -9,9 +9,9 @@ CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
 CONFOPTS += --enable-partx
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	CONFOPTS += --without-systemd --without-udev --without-audit
+	CONFOPTS += --without-systemd --without-udev --without-audit --without-cryptsetup
 else
-	CONFOPTS += --with-systemd --with-udev --with-audit
+	CONFOPTS += --with-systemd --with-udev --with-audit --with-cryptsetup=dlopen
 endif
 endif
 
