@@ -1,3 +1,9 @@
+util-linux (2.36-2) unstable; urgency=medium
+
+  * Reinstate libblkid.a (Closes: #966330)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 01 Aug 2020 17:28:26 +0000
+
 util-linux (2.36-1) unstable; urgency=medium
 
   * New upstream release. (Closes: #956739, #959783, #953065, #879024)
