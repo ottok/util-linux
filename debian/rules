@@ -69,7 +69,8 @@ endif
 	rm -f debian/tmp/usr/lib/*/*.la
 	#
 	# Avoid shipping static libraries.
-	find debian/tmp/usr/lib -name 'lib*.a' \! -name 'libuuid.a' -delete
+	# - libblkid.a is used by e2fsprogs.
+	find debian/tmp/usr/lib -name 'lib*.a' \! -name 'libuuid.a' \! -name 'libblkid.a' -delete
 
 override_dh_auto_clean:
 	dh_auto_clean
