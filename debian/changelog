@@ -1,3 +1,9 @@
+util-linux (2.36-3) unstable; urgency=medium
+
+  * Fix sfdisk regression with upstream patch (Closes: #966992)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 29 Aug 2020 12:32:39 +0000
+
 util-linux (2.36-2) unstable; urgency=medium
 
   * Reinstate libblkid.a (Closes: #966330)
