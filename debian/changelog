@@ -1,3 +1,10 @@
+util-linux (2.36-4) UNRELEASED; urgency=medium
+
+  * Re-add Tajik debconf translation file (somehow lost from eject package).
+    Taken from bug #890079.
+
+ -- Holger Wansing <hwansing@mailbox.org>  Tue, 13 Oct 2020 23:37:43 +0200
+
 util-linux (2.36-3) unstable; urgency=medium
 
   * Fix sfdisk regression with upstream patch (Closes: #966992)
