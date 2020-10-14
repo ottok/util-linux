@@ -8,7 +8,7 @@ debian/hwclock-set => /usr/lib/udev/hwclock-set
 [linux-any] lib/systemd/system/fstrim.timer
 [linux-any] lib/systemd/system/fstrim.service
 bin/findmnt
-bin/more
+bin/more                                                        [linux-any]
 bin/mountpoint
 bin/su
 sbin/agetty
@@ -27,8 +27,8 @@ sbin/sulogin
 sbin/swaplabel
 sbin/wipefs
 sbin/zramctl                                                    [linux-any]
-usr/bin/choom							[linux-any]
-usr/bin/chrt							[!hurd-any]
+usr/bin/choom                                                   [linux-any]
+usr/bin/chrt                                                    [!hurd-any]
 usr/bin/flock
 usr/bin/getopt
 usr/bin/i386                                                    [amd64 i386]
@@ -38,16 +38,16 @@ usr/bin/ipcs
 usr/bin/isosize sbin/
 usr/bin/last
 usr/bin/lastb
-usr/bin/lsns							[linux-any]
+usr/bin/lsns                                                    [linux-any]
 usr/bin/mcookie
 usr/bin/mesg
 usr/bin/mips                                                    [mips mipsel]
 usr/bin/mips32                                                  [mips mipsel]
 usr/bin/mips64                                                  [mips mipsel]
 usr/bin/namei
-usr/bin/ppc                                          [powerpc ppc64 ppc64el]
-usr/bin/ppc32                                        [powerpc ppc64 ppc64el]
-usr/bin/ppc64                                        [powerpc ppc64 ppc64el]
+usr/bin/ppc                                                     [powerpc ppc64 ppc64el]
+usr/bin/ppc32                                                   [powerpc ppc64 ppc64el]
+usr/bin/ppc64                                                   [powerpc ppc64 ppc64el]
 usr/bin/rev
 usr/bin/s390                                                    [s390x]
 usr/bin/s390x                                                   [s390x]
