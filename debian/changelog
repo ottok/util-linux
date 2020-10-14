@@ -2,6 +2,8 @@ util-linux (2.36-4) UNRELEASED; urgency=medium
 
   * Re-add Tajik debconf translation file (somehow lost from eject package).
     Taken from bug #890079.
+  * Update Norwegian Bokmål debconf translation according to last state in
+    eject package (taken from bug #923919).
 
  -- Holger Wansing <hwansing@mailbox.org>  Tue, 13 Oct 2020 23:37:43 +0200
 
