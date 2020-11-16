@@ -1,3 +1,10 @@
+util-linux (2.36.1-1) unstable; urgency=medium
+
+  * New upstream stable release
+  * Remove upstream applied patches
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 16 Nov 2020 14:01:03 +0000
+
 util-linux (2.36-4) unstable; urgency=medium
 
   [ Holger Wansing ]
