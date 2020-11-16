@@ -1,11 +1,18 @@
-util-linux (2.36-4) UNRELEASED; urgency=medium
+util-linux (2.36-4) unstable; urgency=medium
 
+  [ Holger Wansing ]
   * Re-add Tajik debconf translation file (somehow lost from eject package).
     Taken from bug #890079.
   * Update Norwegian Bokmål debconf translation according to last state in
     eject package (taken from bug #923919).
 
- -- Holger Wansing <hwansing@mailbox.org>  Tue, 13 Oct 2020 23:37:43 +0200
+  [ Slimane Selyan Amiri ]
+  * Add Kabyle translation for eject (via Hoger Wansing)
+
+  [ Chris Hofstaedtler ]
+  * flock: keep -E exit status more restrictive (Closes: #973751)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 16 Nov 2020 09:18:06 +0000
 
 util-linux (2.36-3) unstable; urgency=medium
 
