@@ -335,9 +335,10 @@ static void motd(void)
 #endif
 		if (S_ISREG(st.st_mode) && st.st_size > 0) {
 			int fd = open(file, O_RDONLY, 0);
-			if (fd >= 0)
+			if (fd >= 0) {
 				sendfile(fileno(stdout), fd, NULL, st.st_size);
-			close(fd);
+				close(fd);
+			}
 			done++;
 		}
 		if (firstonly && done)
@@ -635,9 +636,9 @@ done:
  */
 static void log_utmp(struct login_context *cxt)
 {
-	struct utmpx ut;
-	struct utmpx *utp;
-	struct timeval tv;
+	struct utmpx ut = {0};
+	struct utmpx *utp = NULL;
+	struct timeval tv = {0};
 
 	utmpxname(_PATH_UTMP);
 	setutxent();

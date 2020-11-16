@@ -675,6 +675,14 @@ display_time(struct timeval hwctime)
  */
 #define __set_time(_tv)		settimeofday(_tv, NULL)
 
+#ifndef SYS_settimeofday
+# ifdef __NR_settimeofday
+#  define SYS_settimeofday	__NR_settimeofday
+# else
+#  define SYS_settimeofday	__NR_settimeofday_time32
+# endif
+#endif
+
 static inline int __set_timezone(const struct timezone *tz)
 {
 #ifdef SYS_settimeofday

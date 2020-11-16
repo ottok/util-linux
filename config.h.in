@@ -425,12 +425,6 @@
 /* Define to 1 if you have the `scandirat' function. */
 #undef HAVE_SCANDIRAT
 
-/* scanf %as modifier */
-#undef HAVE_SCANF_AS_MODIFIER
-
-/* scanf %ms modifier */
-#undef HAVE_SCANF_MS_MODIFIER
-
 /* Define to 1 if you have the `sched_setattr' function. */
 #undef HAVE_SCHED_SETATTR
 
