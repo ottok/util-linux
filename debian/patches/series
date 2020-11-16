@@ -1,5 +1,1 @@
-0001-flock-keep-E-exit-status-more-restrictive.patch
-0001-hexdump-automatically-use-C-when-called-as-hd.patch
-libfdisk-fix-last-free-sector-detection-if-partition-size-specified.patch
-libfdisk-fix-last-free-sector-detection-if-partition-size-specified-test.patch
 verbose-tests.patch
