@@ -1,0 +1,50 @@
+From c2104daf78159b05be5219c7ddd2fec2b480b3f9 Mon Sep 17 00:00:00 2001
+From: Karel Zak <kzak@redhat.com>
+Date: Mon, 9 Nov 2020 10:53:23 +0100
+Subject: flock: keep -E exit status more restrictive
+
+Addresses: https://github.com/karelzak/util-linux/issues/1180
+Signed-off-by: Karel Zak <kzak@redhat.com>
+---
+ sys-utils/flock.1 | 4 +++-
+ sys-utils/flock.c | 2 ++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/sys-utils/flock.1 b/sys-utils/flock.1
+index 20975f82c..5235f8303 100644
+--- a/sys-utils/flock.1
++++ b/sys-utils/flock.1
+@@ -68,6 +68,7 @@ Pass a single \fIcommand\fR, without arguments, to the shell with
+ The exit status used when the \fB\-n\fP option is in use, and the
+ conflicting lock exists, or the \fB\-w\fP option is in use,
+ and the timeout is reached.  The default value is \fB1\fR.
++The \fInumber\fR has to be in the range of 0 to 255.
+ .TP
+ .BR \-F , " \-\-no\-fork"
+ Do not fork before executing
+@@ -132,7 +133,8 @@ or
+ .B \-w
+ which report a failure to acquire the lock with a exit status given by the
+ .B \-E
+-option, or 1 by default.
++option, or 1 by default.  The exit status given by
++.B \-E has to be in the range of 0 to 255.
+ .PP
+ When using the \fIcommand\fR variant, and executing the child worked, then
+ the exit status is that of the child command.
+diff --git a/sys-utils/flock.c b/sys-utils/flock.c
+index 8dddebefd..670839c1d 100644
+--- a/sys-utils/flock.c
++++ b/sys-utils/flock.c
+@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
+ 		case 'E':
+ 			conflict_exit_code = strtos32_or_err(optarg,
+ 				_("invalid exit code"));
++			if (conflict_exit_code < 0 || conflict_exit_code > 255)
++				errx(EX_USAGE, _("exit code out of range (expected 0 to 255)"));
+ 			break;
+ 		case OPT_VERBOSE:
+ 			verbose = 1;
+-- 
+2.29.2
+
