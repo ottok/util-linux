@@ -1,1 +1,3 @@
+upstream_build-sys-do-not-build-plymouth-ctrl.c-w-disabled-pl.patch
+upstream_hwclock-do-not-assume-__NR_settimeofday_time32.patch
 verbose-tests.patch
