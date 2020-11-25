@@ -1,3 +1,14 @@
+util-linux (2.36.1-2) unstable; urgency=medium
+
+  [ Pino Toscano ]
+  * Register /bin/more as pager alternative only on Linux.
+  * Fix build on non-Linux architectures (Closes: #975008)
+
+  [ Chris Hofstaedtler ]
+  * Add upstream patch fixing user mounts on kernel < 5.10 (Closes: #975727)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 25 Nov 2020 21:07:38 +0000
+
 util-linux (2.36.1-1) unstable; urgency=medium
 
   * New upstream stable release
