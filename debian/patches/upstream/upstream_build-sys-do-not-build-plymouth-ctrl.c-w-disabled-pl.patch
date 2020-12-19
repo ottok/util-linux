@@ -16,7 +16,7 @@ diff --git a/login-utils/Makemodule.am b/login-utils/Makemodule.am
 index 4f52cea3c..8bc3ee37e 100644
 --- a/login-utils/Makemodule.am
 +++ b/login-utils/Makemodule.am
-@@ -31,8 +31,10 @@ dist_man_MANS += login-utils/sulogin.8
+@@ -19,8 +19,10 @@ dist_man_MANS += login-utils/sulogin.8
  sulogin_SOURCES = \
  	login-utils/sulogin.c \
  	login-utils/sulogin-consoles.c \
