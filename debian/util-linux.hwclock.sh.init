@@ -2,13 +2,12 @@
 
 ### BEGIN INIT INFO
 # Provides:          hwclock
-# Required-Start:    mountdevsubfs
+# Required-Start:
 # Required-Stop:     mountdevsubfs
 # Should-Stop:       umountfs
 # Default-Start:     S
-# X-Start-Before:    checkroot
 # Default-Stop:      0 6
-# Short-Description: Sync hardware and system clock time.
+# Short-Description: Sync hardware and system clock time on shutdown.
 ### END INIT INFO
 
 # These defaults are user-overridable in /etc/default/hwclock
@@ -38,37 +37,8 @@ hwclocksh()
 
     case "$1" in
         start)
-            # If the admin deleted the hwclock config, create a blank
-            # template with the defaults.
-            if [ -w /etc ] && [ ! -f /etc/adjtime ] && [ ! -e /etc/adjtime ]; then
-                printf "0.0 0 0.0\n0\nUTC\n" > /etc/adjtime
-            fi
-
-            if [ -d /run/udev ] || [ -d /dev/.udev ]; then
-                return 0
-            fi
-
-            if [ "$HWCLOCKACCESS" != no ]; then
-                log_action_msg "Setting the system clock"
-
-                # Just for reporting.
-                if sed '3!d' /etc/adjtime | grep -q '^UTC$'; then
-                    UTC="--utc"
-                else
-                    UTC=
-                fi
-                # Copies Hardware Clock time to System Clock using the correct
-                # timezone for hardware clocks in local time, and sets kernel
-                # timezone. DO NOT REMOVE.
-                if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --hctosys $HWCLOCKPARS $BADYEAR; then
-                    #        Announce the local time.
-                    verbose_log_action_msg "System Clock set to: `date $UTC`"
-                else
-                    log_warning_msg "Unable to set System Clock to: `date $UTC`"
-                fi
-            else
-                verbose_log_action_msg "Not setting System Clock"
-            fi
+            # start is handled by /usr/lib/udev/rules.d/85-hwclock.rules.
+            return 0
             ;;
         stop|restart|reload|force-reload)
             #
@@ -94,8 +64,7 @@ hwclocksh()
             fi
             ;;
         *)
-            log_success_msg "Usage: hwclock.sh {start|stop|reload|force-reload|show}"
-            log_success_msg "       start sets kernel (system) clock from hardware (RTC) clock"
+            log_success_msg "Usage: hwclock.sh {stop|reload|force-reload|show}"
             log_success_msg "       stop and reload set hardware (RTC) clock from kernel (system) clock"
             return 1
             ;;
