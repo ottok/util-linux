@@ -10,6 +10,9 @@
 # Short-Description: Save system clock to hardware on shutdown.
 ### END INIT INFO
 
+# Note: this init script and related code is only useful if you
+# run a sysvinit system, without NTP synchronization.
+
 if [ -e /run/systemd/system ] ; then
     exit 0
 fi
@@ -32,13 +35,9 @@ hwclocksh()
             return 0
             ;;
         stop|restart|reload|force-reload)
-            #
             # Updates the Hardware Clock with the System Clock time.
-            # This will *override* any changes made to the Hardware Clock.
-            #
-            # WARNING: If you disable this, any changes to the system
-            #          clock will not be carried across reboots.
-            #
+            # This will *override* any changes made to the Hardware Clock,
+            # for example by the Linux kernel when NTP is in use.
             log_action_msg "Saving the system clock to /dev/$HCTOSYS_DEVICE"
             if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --systohc; then
                 verbose_log_action_msg "Hardware Clock updated to `date`"
