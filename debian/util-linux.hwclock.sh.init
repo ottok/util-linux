@@ -7,33 +7,24 @@
 # Should-Stop:       umountfs
 # Default-Start:     S
 # Default-Stop:      0 6
-# Short-Description: Sync hardware and system clock time on shutdown.
+# Short-Description: Save system clock to hardware on shutdown.
 ### END INIT INFO
 
-# These defaults are user-overridable in /etc/default/hwclock
-BADYEAR=no
-HWCLOCKACCESS=yes
-HWCLOCKPARS=
-HCTOSYS_DEVICE=rtc0
+if [ -e /run/systemd/system ] ; then
+    exit 0
+fi
 
-# We only want to use the system timezone or else we'll get
-# potential inconsistency at startup.
 unset TZ
 
 hwclocksh()
 {
+    HCTOSYS_DEVICE=rtc0
     [ ! -x /sbin/hwclock ] && return 0
     [ ! -r /etc/default/rcS ] || . /etc/default/rcS
     [ ! -r /etc/default/hwclock ] || . /etc/default/hwclock
 
     . /lib/lsb/init-functions
     verbose_log_action_msg() { [ "$VERBOSE" = no ] || log_action_msg "$@"; }
-
-    case "$BADYEAR" in
-       no|"")        BADYEAR="" ;;
-       yes)        BADYEAR="--badyear" ;;
-       *)        log_action_msg "unknown BADYEAR setting: \"$BADYEAR\""; return 1 ;;
-    esac
 
     case "$1" in
         start)
@@ -48,20 +39,13 @@ hwclocksh()
             # WARNING: If you disable this, any changes to the system
             #          clock will not be carried across reboots.
             #
-
-            if [ "$HWCLOCKACCESS" != no ]; then
-                log_action_msg "Saving the system clock"
-                if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --systohc $HWCLOCKPARS $BADYEAR; then
-                    verbose_log_action_msg "Hardware Clock updated to `date`"
-                fi
-            else
-                verbose_log_action_msg "Not saving System Clock"
+            log_action_msg "Saving the system clock to /dev/$HCTOSYS_DEVICE"
+            if /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --systohc; then
+                verbose_log_action_msg "Hardware Clock updated to `date`"
             fi
             ;;
         show)
-            if [ "$HWCLOCKACCESS" != no ]; then
-                /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --show $HWCLOCKPARS $BADYEAR
-            fi
+            /sbin/hwclock --rtc=/dev/$HCTOSYS_DEVICE --show
             ;;
         *)
             log_success_msg "Usage: hwclock.sh {stop|reload|force-reload|show}"
