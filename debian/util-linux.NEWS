@@ -24,7 +24,7 @@ util-linux (2.32-0.4) unstable; urgency=medium
   plain 'su' is a really bad idea for many reasons, so using 'su -' is
   strongly recommended to always get a newly set up environment similar
   to a normal login. If you want to restore behaviour more similar to
-  the previous one you can add 'ALWAYS_SET_PATH yes' in /etc/login.defs.
+  the previous one you can add 'ALWAYS_SET_PATH=yes' in /etc/default/su.
 
  -- Andreas Henriksson <andreas@fatal.se>  Fri, 03 Aug 2018 10:52:22 +0200
 
