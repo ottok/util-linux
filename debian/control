@@ -42,7 +42,7 @@ Pre-Depends: ${misc:Pre-Depends},
 Depends: login (>= 1:4.5-1.1~),
          ${misc:Depends}
 Suggests: dosfstools,
-          kbd | console-tools,
+          kbd,
           util-linux-locales
 Replaces: bash-completion (<< 1:2.8),
           initscripts (<< 2.88dsf-59.2~),
