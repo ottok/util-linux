@@ -1,3 +1,29 @@
+util-linux (2.36.1-4) unstable; urgency=medium
+
+  * bsdextrautils: Install colcrt (Closes: #977871)
+  * hwclock.sh: remove obsolete startup code.
+    Let the on startup code always be handled by the udev rule we install.
+    On any normal system, systemd or sysvinit, "hwclock.sh start" was a
+    no-op for the last few Debian releases already. Also, with initramfs,
+    hwclock.sh never got executed *before* fsck for root.
+    If your system does not have udev but has an RTC in localtime or one
+    needing drift adjustments, you will need to handle this yourself.
+  * hwclock: remove all broken settings.
+    Since buster, BADYEAR was broken, because upstream removed the code in
+    v2.30-rc1.
+    Since buster, the alpha cmos support was broken, because upstream
+    removed the code.
+    Since stretch, HWCLOCKACCESS=no was broken on udev systems, because the
+    helper ignored it.
+    Remove all those settings; also remove HCTOSYS_DEVICE from the
+    default-shipped /etc/default/hwclock, as changing it is extremely
+    difficult to get right.
+  * hwclock.sh: add comments when to use this init script
+  * Update advice on ALWAYS_SET_PATH to use /etc/default/su (Closes: #905564)
+  * Remove Suggests: console-tools. Gone since 2013.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 29 Dec 2020 15:46:26 +0000
+
 util-linux (2.36.1-3) unstable; urgency=medium
 
   [ Quentin PAGÈS ]
