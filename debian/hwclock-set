@@ -12,10 +12,6 @@ if [ -e /run/udev/hwclock-set ]; then
     exit 0
 fi
 
-if [ -f /etc/default/rcS ] ; then
-    . /etc/default/rcS
-fi
-
 /sbin/hwclock --rtc=$dev --systz
 /sbin/hwclock --rtc=$dev --hctosys
 
