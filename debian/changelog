@@ -1,3 +1,16 @@
+util-linux (2.36.1-5) unstable; urgency=medium
+
+  * hwclock-set: remove useless source /etc/default/rcS
+  * hwclock-set: remove stamp file.
+    Since initramfs-tools 0.119 (jessie), hwclock-set is not installed
+    in the initramfs anymore. This was the original reason for having
+    the stamp file.
+  * man cfdisk: Add upstream patch documenting resize command.
+    Thanks to Vincent McIntyre <Vincent.Mcintyre@csiro.au>
+    (Closes: #915971, #906918)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 11 Jan 2021 22:03:06 +0000
+
 util-linux (2.36.1-4) unstable; urgency=medium
 
   * bsdextrautils: Install colcrt (Closes: #977871)
