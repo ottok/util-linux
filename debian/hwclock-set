@@ -8,12 +8,5 @@ if [ -e /run/systemd/system ] ; then
     exit 0
 fi
 
-if [ -e /run/udev/hwclock-set ]; then
-    exit 0
-fi
-
 /sbin/hwclock --rtc=$dev --systz
 /sbin/hwclock --rtc=$dev --hctosys
-
-# Note 'touch' may not be available in initramfs
-> /run/udev/hwclock-set
