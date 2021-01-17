@@ -4,3 +4,4 @@ upstream/0001-libmount-don-t-use-symfollow-for-helpers-on-user-mou.patch
 upstream/Manual-pages-document-the-resize-command.patch
 debian/man-getopt-examples.patch
 debian/verbose-tests.patch
+upstream/libmount-do-not-canonicalize-ZFS-source-dataset.patch
