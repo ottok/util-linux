@@ -1,4 +1,3 @@
-From 76bb9b30cfcf54b59591a57a3d2a747e514469b2 Mon Sep 17 00:00:00 2001
 From: Karel Zak <kzak@redhat.com>
 Date: Thu, 19 Nov 2020 09:49:16 +0100
 Subject: [PATCH] libmount: don't use "symfollow" for helpers on user mounts
@@ -10,7 +9,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/libmount/src/context_mount.c b/libmount/src/context_mount.c
-index 8c394c1ff..dd1786176 100644
+index 8c394c1..dd17861 100644
 --- a/libmount/src/context_mount.c
 +++ b/libmount/src/context_mount.c
 @@ -415,6 +415,9 @@ static int generate_helper_optstr(struct libmnt_context *cxt, char **optstr)
@@ -35,6 +34,3 @@ index 8c394c1ff..dd1786176 100644
  	if (cxt->flags & MNT_FL_SAVED_USER)
  		rc = mnt_optstr_set_option(optstr, "user", cxt->orig_user);
  	if (rc)
--- 
-2.29.2
-
