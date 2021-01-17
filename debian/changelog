@@ -1,3 +1,10 @@
+util-linux (2.36.1-6) unstable; urgency=medium
+
+  * libmount: do not canonicalize ZFS source dataset.
+    Upstream patch. (Closes: #980273)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 17 Jan 2021 20:27:00 +0000
+
 util-linux (2.36.1-5) unstable; urgency=medium
 
   * hwclock-set: remove useless source /etc/default/rcS
