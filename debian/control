@@ -23,9 +23,7 @@ Build-Conflicts: libcryptsetup-dev
 Section: base
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
-Uploaders: Adam Conrad <adconrad@0c3.net>,
-           Chris Hofstaedtler <zeha@debian.org>,
-           LaMont Jones <lamont@debian.org>
+Uploaders: Chris Hofstaedtler <zeha@debian.org>
 Standards-Version: 4.5.1
 Rules-Requires-Root: binary-targets
 Vcs-Browser: https://salsa.debian.org/debian/util-linux
