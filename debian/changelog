@@ -1,3 +1,11 @@
+util-linux (2.36.1-7) unstable; urgency=medium
+
+  * libmount: allow --read-only for not-root users.
+    Apply patch from upstream. (Closes: #980828)
+  * Cleanup Uploaders
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 07 Feb 2021 14:38:19 +0000
+
 util-linux (2.36.1-6) unstable; urgency=medium
 
   * libmount: do not canonicalize ZFS source dataset.
