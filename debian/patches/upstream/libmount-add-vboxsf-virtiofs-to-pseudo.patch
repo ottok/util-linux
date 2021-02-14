@@ -1,0 +1,28 @@
+From: Shahid Laher <govellius@gmail.com>
+Date: Wed, 20 Jan 2021 18:04:33 +0000
+Subject: libmount: add vboxsf, virtiofs to pseudo filesystems
+
+Filesystems provided by a hypervisor for guest kernels:
+* vboxsf: Linux 5.6
+* virtiofs: Linux 5.4
+
+Signed-off-by: Shahid Laher <govellius@gmail.com>
+---
+ libmount/src/utils.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libmount/src/utils.c b/libmount/src/utils.c
+index 92829eb..40f479f 100644
+--- a/libmount/src/utils.c
++++ b/libmount/src/utils.c
+@@ -333,7 +333,9 @@ int mnt_fstype_is_pseudofs(const char *type)
+ 		"spufs",
+ 		"sysfs",
+ 		"tmpfs",
+-		"tracefs"
++		"tracefs",
++		"vboxsf",
++		"virtiofs"
+ 	};
+ 
+ 	assert(type);
