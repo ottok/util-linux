@@ -148,7 +148,7 @@ Description: collection of partitioning utilities
 
 Package: fdisk-udeb
 Architecture: hurd-any linux-any
-Build-Profiles: <!stage1>
+Build-Profiles: <!stage1 !noudeb>
 Priority: optional
 Section: debian-installer
 Depends: ${misc:Depends},
@@ -178,6 +178,7 @@ Priority: optional
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 Description: stripped down block device ID library, for debian-installer
  The blkid library allows system programs such as fsck and mount to
  quickly and easily find block devices by filesystem UUID or label.
@@ -223,6 +224,7 @@ Priority: optional
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 Description: stripped down fdisk partitioning library, for debian-installer
  The libfdisk library is used for manipulating partition tables. It is
  the core of the fdisk, cfdisk, and sfdisk tools.
@@ -259,6 +261,7 @@ Description: device mounting library
 
 Package: libmount1-udeb
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 Section: debian-installer
 Priority: optional
 Depends: ${misc:Depends},
@@ -302,6 +305,7 @@ Priority: optional
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 Description: stripped down smart column output aligment library, for debian-installer
  This smart column output alignment library is used by fdisk utilities.
  .
@@ -372,6 +376,7 @@ Priority: optional
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 Description: stripped down Universally Unique ID library, for debian-installer
  The libuuid library generates and parses 128-bit Universally Unique IDs
  (UUIDs). See RFC 4122 for more information.
@@ -394,7 +399,7 @@ Description: Universally Unique ID library - headers and static libraries
 
 Package: util-linux-udeb
 Architecture: any
-Build-Profiles: <!stage1>
+Build-Profiles: <!stage1 !noudeb>
 Priority: optional
 Section: debian-installer
 Depends: ${misc:Depends},
@@ -444,5 +449,6 @@ Depends: ${misc:Depends},
          ${shlibs:Depends}
 Priority: optional
 Package-Type: udeb
+Build-Profiles: <!noudeb>
 XB-Installer-Menu-Item: 96000
 Description: ejects CDs from d-i menu
