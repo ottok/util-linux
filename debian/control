@@ -9,7 +9,7 @@ Build-Depends: bc <!stage1 !nocheck>,
                libncurses5-dev,
                libncursesw5-dev,
                libpam0g-dev <!stage1>,
-               libselinux1-dev (>= 2.6-3~) [linux-any],
+               libselinux1-dev [linux-any],
                libsystemd-dev [linux-any] <!stage1>,
                libtool,
                libudev-dev [linux-any] <!stage1>,
@@ -37,24 +37,11 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: login (>= 1:4.5-1.1~),
+Depends: login,
          ${misc:Depends}
 Suggests: dosfstools,
           kbd,
           util-linux-locales
-Replaces: bash-completion (<< 1:2.8),
-          initscripts (<< 2.88dsf-59.2~),
-          login (<< 1:4.5-1.1~),
-          mount (<< 2.29.2-3~),
-          s390-tools (<< 2.2.0-1~),
-          setpriv (<< 2.32.1-0.2~),
-          sysvinit-utils (<< 2.88dsf-59.1~)
-Breaks: bash-completion (<< 1:2.8),
-        grml-debootstrap (<< 0.68),
-        mount (<< 2.29.2-3~),
-        s390-tools (<< 2.2.0-1~),
-        setpriv (<< 2.32.1-0.2~),
-        sysvinit-utils (<< 2.88dsf-59.4~)
 Multi-Arch: foreign
 Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
@@ -84,7 +71,7 @@ Build-Profiles: <!stage1>
 Section: admin
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: util-linux (>= 2.29.2-3~),
+Depends: util-linux,
          ${misc:Depends}
 Suggests: nfs-common
 Multi-Arch: foreign
@@ -131,8 +118,6 @@ Priority: important
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Replaces: util-linux (<< 2.29.2-3~)
-Breaks: util-linux (<< 2.29.2-3~)
 Multi-Arch: foreign
 Description: collection of partitioning utilities
  This package contains the classic fdisk, sfdisk and cfdisk partitioning
@@ -347,7 +332,7 @@ Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
-Pre-Depends: libuuid1 (>= 2.25-5~),
+Pre-Depends: libuuid1,
              ${misc:Pre-Depends}
 Depends: adduser,
          ${misc:Depends},
@@ -417,8 +402,6 @@ Priority: optional
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Breaks: bash-completion (<< 1:2.8~)
-Replaces: bash-completion (<< 1:2.8~)
 Multi-Arch: foreign
 Description: tool for enabling and disabling wireless devices
  rfkill is a simple tool for accessing the Linux rfkill device interface,
