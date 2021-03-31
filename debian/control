@@ -113,8 +113,8 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends: ${misc:Pre-Depends},
+Depends: ${misc:Depends},
              ${shlibs:Depends}
-Depends: ${misc:Depends}
 Replaces: bsdmainutils (<< 12.1.3)
 Breaks: bsdmainutils (<< 12.1.3)
 Multi-Arch: foreign
