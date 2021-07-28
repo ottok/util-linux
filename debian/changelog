@@ -1,3 +1,9 @@
+util-linux (2.36.1-8) unstable; urgency=medium
+
+  * Apply upstream patch for CVE-2021-37600 (Closes: #991619)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 28 Jul 2021 19:09:07 +0000
+
 util-linux (2.36.1-7) unstable; urgency=medium
 
   * libmount: allow --read-only for not-root users.
