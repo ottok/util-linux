@@ -6,3 +6,4 @@ debian/man-getopt-examples.patch
 debian/verbose-tests.patch
 upstream/libmount-do-not-canonicalize-ZFS-source-dataset.patch
 upstream/libmount-allow-read-only-for-not-root-users.patch
+upstream/CVE-2021-37600-sys-utils-ipcutils-be-careful-when-call-calloc.patch
