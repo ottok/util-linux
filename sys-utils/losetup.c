@@ -508,7 +508,7 @@ static int create_loop(struct loopdev_cxt *lc,
 				errx(EXIT_FAILURE, _("%s: overlapping encrypted loop device exists"), file);
 			}
 
-			lc->info.lo_flags &= ~LO_FLAGS_AUTOCLEAR;
+			lc->config.info.lo_flags &= ~LO_FLAGS_AUTOCLEAR;
 			if (loopcxt_ioctl_status(lc)) {
 				loopcxt_deinit(lc);
 				errx(EXIT_FAILURE, _("%s: failed to re-use loop device"), file);
@@ -573,7 +573,7 @@ static int create_loop(struct loopdev_cxt *lc,
 		if (rc == 0)
 			break;			/* success */
 
-		if (errno == EBUSY && !hasdev && ntries < 64) {
+		if ((errno == EBUSY || errno == EAGAIN) && !hasdev && ntries < 64) {
 			xusleep(200000);
 			ntries++;
 			continue;

@@ -45,6 +45,9 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if you have the `close_range' function. */
+#undef HAVE_CLOSE_RANGE
+
 /* Define to 1 if the system has the type `cpu_set_t'. */
 #undef HAVE_CPU_SET_T
 
@@ -60,6 +63,10 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 #undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the declaration of `BLK_ZONE_REP_CAPACITY', and to
+   0 if you don't. */
+#undef HAVE_DECL_BLK_ZONE_REP_CAPACITY
 
 /* Define to 1 if you have the declaration of `CPU_ALLOC', and to 0 if you
    don't. */
@@ -115,9 +122,6 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
-
-/* Define to 1 if you have the `fmemopen' function. */
-#undef HAVE_FMEMOPEN
 
 /* Define to 1 if you have the `fpurge' function. */
 #undef HAVE_FPURGE
@@ -212,9 +216,6 @@
 /* Define to 1 if you have the `cap-ng' library (-lcap-ng). */
 #undef HAVE_LIBCAP_NG
 
-/* Do we need -lcrypt? */
-#undef HAVE_LIBCRYPT
-
 /* Define if libeconf is available */
 #undef HAVE_LIBECONF
 
@@ -284,6 +285,9 @@
 /* Define to 1 if you have the <linux/fd.h> header file. */
 #undef HAVE_LINUX_FD_H
 
+/* Define to 1 if you have the <linux/fiemap.h> header file. */
+#undef HAVE_LINUX_FIEMAP_H
+
 /* Define to 1 if you have the <linux/fs.h> header file. */
 #undef HAVE_LINUX_FS_H
 
@@ -295,6 +299,9 @@
 
 /* Define to 1 if you have the <linux/net_namespace.h> header file. */
 #undef HAVE_LINUX_NET_NAMESPACE_H
+
+/* Define to 1 if you have the <linux/nsfs.h> header file. */
+#undef HAVE_LINUX_NSFS_H
 
 /* Define to 1 if you have the <linux/raw.h> header file. */
 #undef HAVE_LINUX_RAW_H
@@ -374,9 +381,6 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
-/* Define if libpcre2 is available */
-#undef HAVE_PCRE
-
 /* Define to 1 if you have the `personality' function. */
 #undef HAVE_PERSONALITY
 
@@ -445,6 +449,9 @@
 
 /* Define to 1 if you have the <security/pam_misc.h> header file. */
 #undef HAVE_SECURITY_PAM_MISC_H
+
+/* Define to 1 if you have the `sendfile' function. */
+#undef HAVE_SENDFILE
 
 /* Define to 1 if you have the `setitimer' function. */
 #undef HAVE_SETITIMER
@@ -572,6 +579,9 @@
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
+/* Define to 1 if you have the <sys/sendfile.h> header file. */
+#undef HAVE_SYS_SENDFILE_H
+
 /* Define to 1 if you have the <sys/signalfd.h> header file. */
 #undef HAVE_SYS_SIGNALFD_H
 
@@ -610,6 +620,9 @@
 
 /* Define to 1 if you have the <sys/un.h> header file. */
 #undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <sys/xattr.h> header file. */
+#undef HAVE_SYS_XATTR_H
 
 /* Define to 1 if you have the <term.h> header file. */
 #undef HAVE_TERM_H
@@ -751,6 +764,9 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* Fallback syscall number for close_range */
+#undef SYS_close_range
+
 /* Fallback syscall number for fallocate */
 #undef SYS_fallocate
 
@@ -811,7 +827,7 @@
 /* Enable plymouth support feature for sulogin and aggety */
 #undef USE_PLYMOUTH_SUPPORT
 
-/* Should sulogin use a emergency mount of /dev and /proc? */
+/* Should sulogin use an emergency mount of /dev and /proc? */
 #undef USE_SULOGIN_EMERGENCY_MOUNT
 
 /* Enable extensions on AIX 3, Interix.  */
