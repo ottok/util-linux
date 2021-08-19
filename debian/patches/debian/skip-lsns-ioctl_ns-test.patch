@@ -1,0 +1,21 @@
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Thu, 19 Aug 2021 12:47:30 +0000
+Subject: Skip lsns/ioctl_ns test if unshare fails
+
+---
+ tests/ts/lsns/ioctl_ns | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tests/ts/lsns/ioctl_ns b/tests/ts/lsns/ioctl_ns
+index ef63606..15dd1af 100755
+--- a/tests/ts/lsns/ioctl_ns
++++ b/tests/ts/lsns/ioctl_ns
+@@ -34,6 +34,8 @@ ts_check_prog "mkfifo"
+ ts_check_prog "touch"
+ ts_check_prog "uniq"
+ 
++$TS_CMD_UNSHARE --user --pid --mount-proc true || ts_skip "Namespace support failure"
++
+ ts_cd "$TS_OUTDIR"
+ 
+ # The parent process receives namespaces ids via FIFO_DATA from bash

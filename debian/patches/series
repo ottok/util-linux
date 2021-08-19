@@ -1,2 +1,3 @@
 debian/man-getopt-examples.patch
 debian/verbose-tests.patch
+debian/skip-lsns-ioctl_ns-test.patch
