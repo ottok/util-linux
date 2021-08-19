@@ -60,6 +60,14 @@ Files: disk-utils/raw.c
 Copyright: 1999, 2000, Red Hat Software
 License: GPL-2
 
+Files: sys-utils/hwclock-parse-date.y
+Copyright: Steven M. Bellovin <smb@research.att.com>
+           Unknown Authors on Usenet
+           1990 Rich $alz <rsalz@bbn.com>
+           1990 Jim Berets <jberets@bbn.com>
+           1999, 2004 Paul Eggert <eggert@twinsun.com>
+License: GPL-3+
+
 Files: sys-utils/nsenter.c
 Copyright: 2012-2013 Eric Biederman <ebiederm@xmission.com>
 License: GPL-2
