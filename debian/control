@@ -40,8 +40,7 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: login,
-         ${misc:Depends}
+Depends: ${misc:Depends}
 Suggests: dosfstools,
           kbd,
           util-linux-locales
@@ -74,8 +73,7 @@ Build-Profiles: <!stage1>
 Section: admin
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: util-linux,
-         ${misc:Depends}
+Depends: ${misc:Depends}
 Suggests: nfs-common
 Multi-Arch: foreign
 Description: tools for mounting and manipulating filesystems
