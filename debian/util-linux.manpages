@@ -1,6 +1,4 @@
 #!/usr/bin/dh-exec --with=install
-[linux-any] debian/tmp/usr/share/man/man8/linux32.8 => /usr/share/man/man1/linux32.1
-[linux-any] debian/tmp/usr/share/man/man8/linux64.8 => /usr/share/man/man1/linux64.1
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] debian/tmp/usr/share/man/man8/mkswap.8
 [!linux-any] debian/tmp/usr/share/man/man8/mkswap.8 => /usr/share/man/man8/mkswap.linux.8
@@ -77,6 +75,8 @@ debian/tmp/usr/share/man/man8/delpart.8                         [linux-any]
 debian/tmp/usr/share/man/man8/fsfreeze.8                        [linux-any]
 debian/tmp/usr/share/man/man8/fstrim.8                          [linux-any]
 debian/tmp/usr/share/man/man8/ldattach.8                        [linux-any]
+debian/tmp/usr/share/man/man8/linux32.8                         [linux-any]
+debian/tmp/usr/share/man/man8/linux64.8                         [linux-any]
 debian/tmp/usr/share/man/man8/lsblk.8                           [linux-any]
 debian/tmp/usr/share/man/man8/lslocks.8                         [linux-any]
 debian/tmp/usr/share/man/man8/partx.8                           [linux-any]
