@@ -9,6 +9,7 @@ Build-Depends: bc <!stage1 !nocheck>,
                libncurses5-dev,
                libncursesw5-dev,
                libpam0g-dev <!stage1>,
+               libreadline-dev,
                libselinux1-dev [linux-any],
                libsystemd-dev [linux-any] <!stage1>,
                libtool,
@@ -19,7 +20,8 @@ Build-Depends: bc <!stage1 !nocheck>,
                socat <!stage1 !nocheck>,
                systemd [linux-any] <!stage1>,
                zlib1g-dev
-Build-Conflicts: libcryptsetup-dev
+Build-Conflicts: libcryptsetup-dev,
+                 libedit-dev
 Section: base
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
