@@ -1,5 +1,6 @@
 Source: util-linux
-Build-Depends: bc <!stage1 !nocheck>,
+Build-Depends: asciidoctor,
+               bc <!stage1 !nocheck>,
                bison,
                debhelper-compat (= 13),
                dh-exec,
