@@ -7,6 +7,7 @@ debian/tmp/usr/share/man/man1/choom.1                           [linux-any]
 debian/tmp/usr/share/man/man1/chrt.1                            [!hurd-i386]
 debian/tmp/usr/share/man/man1/flock.1
 debian/tmp/usr/share/man/man1/getopt.1
+debian/tmp/usr/share/man/man1/hardlink.1
 debian/tmp/usr/share/man/man1/ipcmk.1
 debian/tmp/usr/share/man/man1/ipcrm.1
 debian/tmp/usr/share/man/man1/ipcs.1

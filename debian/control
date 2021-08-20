@@ -44,6 +44,9 @@ Depends: ${misc:Depends}
 Suggests: dosfstools,
           kbd,
           util-linux-locales
+Provides: hardlink
+Conflicts: hardlink
+Replaces: hardlink
 Multi-Arch: foreign
 Description: miscellaneous system utilities
  This package contains a number of important utilities, most of which
