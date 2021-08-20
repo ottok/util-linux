@@ -1,3 +1,38 @@
+util-linux (2.37.2-1) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Update to upstream version 2.37.2, rebase patches
+    * Skip lsns/ioctl_ns test if unshare fails
+    * Stop installing fdformat, following upstream
+    * Follow upstream rename of getopt examples
+    * libblkid1: update symbols
+    * libmount1: update symbols
+    * Install new uclampset binary
+  * Depend on asciidoctor for man pages.
+    We should figure out how to skip asciidoctor for stage1 builds, as it is
+    not strictly necessary except for some edge cases.
+  * d/copyright: remove non-existing files (Closes: #987942)
+  * d/rules: fix space/tab confusion in stage1 part
+  * Disable GPL3+ parts in hwclock (Closes: #987944)
+  * Explicitly conflict with libedit-dev, causes build failures
+  * Install linux32, linux64 manpages as upstream intended (section 8)
+  * Remove relations that are fulfilled in at least buster
+  * Bump Standards-Version to 4.6.0
+
+  [ Matthias Klose ]
+  * Allow building without udeb packages (Closes: #983557)
+    Tag all *-udeb packages with the !noudeb build-profile to
+    allow building without the udebs.
+
+  [ Andreas Henriksson ]
+  * bsdextrautils: Make shlibs:Depends regular Depends
+    As described in the bug report, bsdextrautils is a normal
+    package (not Essential: yes), so doesn't need to Pre-Depend
+    on libraries. Thanks to Sven Joachim for a keen eye to catch
+    this detail. (Closes: #982557)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 20 Aug 2021 09:31:11 +0000
+
 util-linux (2.36.1-8) unstable; urgency=medium
 
   * Apply upstream patch for CVE-2021-37600 (Closes: #991619)
