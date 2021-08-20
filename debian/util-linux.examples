@@ -1,4 +1,3 @@
-Documentation/example.files/*
-debian/fstab.example2
+Documentation/example.files/udev-raw.rules
 usr/share/doc/util-linux/getopt-example.bash
 usr/share/doc/util-linux/getopt-example.tcsh
