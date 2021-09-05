@@ -1,3 +1,25 @@
+util-linux (2.37.2-2) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Take over hardlink binary (Closes: #992498)
+  * Tidy up installed example files
+
+  [ Luca Boccassi ]
+  * Build with libcryptsetup-dev in dlopen mode to enable dm-verity.
+    Re-enable dm-verity support. Use the new dlopen configure flag, so that
+    instead of linking against libcryptsetup.so, it is loaded dynamically
+    at runtime, and only if the verity feature options (-o verity...) are
+    used, to avoid the dependency on the libcryptsetup package being pulled
+    in unconditionally. Add it as a Suggests on cryptsetup-bin.
+    (Closes: #951048)
+
+  [ Chris Hofstaedtler ]
+  * Remove obsolete upgrade code
+  * Introduce pkg.util-linux.noverity build profile, disables dm-verity
+    support. Add debian/README.build-profiles.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 05 Sep 2021 15:15:21 +0000
+
 util-linux (2.37.2-1) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
