@@ -1,3 +1,9 @@
+util-linux (2.37.2-3) unstable; urgency=medium
+
+  * Disable --enable-raw (Closes: #994798)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 21 Sep 2021 12:58:03 +0000
+
 util-linux (2.37.2-2) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
