@@ -1,0 +1,21 @@
+From: Vincent Smeets <Vincent.VSmeets@GMail.com>
+Date: Fri, 20 Aug 2021 11:00:33 +0200
+Subject: Erase line before writing the filename
+
+---
+ text-utils/more.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/text-utils/more.c b/text-utils/more.c
+index e2898e5..c5f7ddb 100644
+--- a/text-utils/more.c
++++ b/text-utils/more.c
+@@ -1907,6 +1907,8 @@ static void display_file(struct more_control *ctl, int left)
+ 			if (ctl->clear_line_ends)
+ 				putp(ctl->erase_line);
+ 			print_separator(':', 14);
++			if (ctl->clear_line_ends)
++				putp(ctl->erase_line);
+ 			puts(ctl->file_names[ctl->argv_position]);
+ 			if (ctl->clear_line_ends)
+ 				putp(ctl->erase_line);
