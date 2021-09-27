@@ -1,3 +1,6 @@
 debian/man-getopt-examples.patch
 debian/verbose-tests.patch
 debian/skip-lsns-ioctl_ns-test.patch
+upstream/Let-user-choose-larger-buffers-for-IO-reading.patch
+upstream/hardlink-use-more-passive-wording-in-hardlink.1.patch
+upstream/include-Rename-HiFive-partition-UUIDs.patch
