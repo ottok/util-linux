@@ -1,0 +1,52 @@
+From: Mark Hindley <mark@hindley.org.uk>
+Date: Mon, 18 Oct 2021 17:53:01 +0000
+Subject: tests: Fix test/misc/swaplabel failure due to change in mkswap
+ behaviour.
+
+mkswap now warns if the image file has holes. If fallocate is used to create the
+file, use POSIX semantics to ensure the file has no holes.
+
+This fixes the test failure
+
+misc: swaplabel                      ... FAILED (misc/swaplabel)
+========= script: /build/util-linux-2.37.2/tests/ts/misc/swaplabel =================
+================= OUTPUT =====================
+     1  Setting up swapspace version 1, size = 9 pages (9xPGSZ bytes)
+     2  LABEL=1234567890abcde, UUID=12345678-abcd-abcd-abcd-1234567890ab
+     3  LABEL: 1234567890abcde
+     4  UUID:  12345678-abcd-abcd-abcd-1234567890ab
+================= EXPECTED ===================
+     1  Setting up swapspace version 1, size = 9 pages (9xPGSZ bytes)
+     2  LABEL=1234567890abcde, UUID=12345678-abcd-abcd-abcd-1234567890ab
+     3  LABEL: 1234567890abcde
+     4  UUID:  12345678-abcd-abcd-abcd-1234567890ab
+================= O/E diff ===================
+==============================================
+
+The additional error appears in swaplabel.err:
+
+ mkswap: <swapfile> contains holes or other unsupported extents.
+         This swap file can be rejected by kernel on swap activation!
+         Use --verbose for more details.
+
+[zeha@debian.org: this appears to be important/required when building
+inside cowbuilder, on an ext3 filesystem.]
+
+Signed-off-by: Mark Hindley <mark@hindley.org.uk>
+---
+ tests/ts/misc/swaplabel | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/ts/misc/swaplabel b/tests/ts/misc/swaplabel
+index 0801cb2..8b1abb5 100755
+--- a/tests/ts/misc/swaplabel
++++ b/tests/ts/misc/swaplabel
+@@ -25,7 +25,7 @@ ts_check_test_command "$TS_HELPER_SYSINFO"
+ # fallocate does not work on most file systems
+ function fallocate_or_skip()
+ {
+-	$TS_CMD_FALLOCATE -l $1 $2 2>/dev/null || \
++	$TS_CMD_FALLOCATE -x -l $1 $2 2>/dev/null || \
+ 	truncate -s $1 $2 || \
+ 	ts_skip "no way to create test image"
+ }

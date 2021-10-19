@@ -6,3 +6,4 @@ upstream/hardlink-use-more-passive-wording-in-hardlink.1.patch
 upstream/include-Rename-HiFive-partition-UUIDs.patch
 upstream/Erase-line-before-writing-the-filename.patch
 upstream/remove-accidental-nbsp.patch
+upstream/test-misc-swaplabel-hole.patch
