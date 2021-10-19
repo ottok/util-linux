@@ -1,0 +1,27 @@
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Mon, 18 Oct 2021 07:40:01 +0000
+Subject: blockdev: remove accidental non-breaking spaces
+
+commit 9147d2ad8abb73cea5799323fc73ccdaf675826f introduced these
+C2A0 spaces, but without saying anything. Likely this was an
+accident.
+
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=996751
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+---
+ disk-utils/blockdev.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/disk-utils/blockdev.c b/disk-utils/blockdev.c
+index c16cb10..6721560 100644
+--- a/disk-utils/blockdev.c
++++ b/disk-utils/blockdev.c
+@@ -491,7 +491,7 @@ static void report_device(char *device, int quiet)
+ 	    ioctl(fd, BLKSSZGET, &ssz) == 0 &&
+ 	    ioctl(fd, BLKBSZGET, &bsz) == 0 &&
+ 	    blkdev_get_size(fd, &bytes) == 0) {
+-		printf("%s %5ld %5d %5d %s %15lld   %s\n",
++		printf("%s %5ld %5d %5d %s %15lld   %s\n",
+ 			ro ? "ro" : "rw", ra, ssz, bsz, start_str, bytes, device);
+ 	} else {
+ 		if (!quiet)
