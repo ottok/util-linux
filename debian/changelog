@@ -1,3 +1,25 @@
+util-linux (2.37.2-4) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Use secure URI in Homepage field.
+  * Remove 1 obsolete maintscript entry.
+  * Re-export upstream signing key without extra signatures.
+
+  [ Chris Hofstaedtler ]
+  * Add upstream-applied patches for requested features
+    * Use more passive wording in hardlink.1
+    * fallocate: Let user choose larger buffers for IO reading
+    * Update HiFive partition names
+      Thanks to Alexandre Ghiti, Eduard Bloch (Closes: #994941)
+    * more: add upstream patch for "Erase line before writing the filename"
+      Thanks to Vincent Smeets (Closes: #992516)
+  * Apply upstream patch to remove accidental nbsp from blockdev output
+    (Closes: #996751)
+  * Apply upstreamed patch to fix FTBFS with mkswap on ext3 in cowbuilder.
+    Thanks to Mark Hindley <mark@hindley.org.uk> (Closes: #996764)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 19 Oct 2021 14:02:14 +0000
+
 util-linux (2.37.2-3) unstable; urgency=medium
 
   * Disable --enable-raw (Closes: #994798)
