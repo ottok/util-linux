@@ -1,3 +1,13 @@
+util-linux (2.37.2-5) unstable; urgency=medium
+
+  * Stop supporting alternatives for /usr/bin/write (Closes: #995667)
+  * Install disabled logcheck file for util-linux.
+    I do not feel comfortable enough to install this by default (and also
+    it would be a new conffile). Users can symlink it. (Closes: #997822)
+  * Update copyright file (Closes: #990067)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 24 Dec 2021 12:41:50 +0000
+
 util-linux (2.37.2-4) unstable; urgency=medium
 
   [ Debian Janitor ]
