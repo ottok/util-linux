@@ -1,6 +1,7 @@
 #!/usr/bin/dh-exec --with=install
 debian/hwclock.rules => /usr/lib/udev/rules.d/85-hwclock.rules
 debian/hwclock-set => /usr/lib/udev/hwclock-set
+debian/logcheck/ignore.d.server/util-linux => /usr/share/util-linux/logcheck/ignore.d.server/util-linux
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] sbin/mkswap
 [!linux-any] debian/tmp/sbin/mkswap => /sbin/mkswap.linux
