@@ -106,8 +106,9 @@ Priority: optional
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Replaces: bsdmainutils (<< 12.1.3)
-Breaks: bsdmainutils (<< 12.1.3)
+Replaces: bsdmainutils (<< 12.1.3), nwrite
+Breaks: bsdmainutils (<< 12.1.3), nwrite
+Conflicts: nwrite
 Multi-Arch: foreign
 Description: extra utilities from 4.4BSD-Lite
  This package contains some extra BSD utilities: col, colcrt, colrm, column,
