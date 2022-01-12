@@ -1,3 +1,11 @@
+util-linux (2.37.2-6) unstable; urgency=medium
+
+  * Import upstream patch to make agetty and systemd v250 play nice.
+    Fixes: #1003595
+    Thanks to Sven Joachim
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 12 Jan 2022 12:07:45 +0000
+
 util-linux (2.37.2-5) unstable; urgency=medium
 
   * Stop supporting alternatives for /usr/bin/write (Closes: #995667)
