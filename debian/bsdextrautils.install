@@ -1,4 +1,3 @@
-#!/usr/bin/dh-exec --with=install
 usr/bin/col
 usr/bin/colcrt
 usr/bin/colrm
