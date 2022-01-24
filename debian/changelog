@@ -1,3 +1,12 @@
+util-linux (2.37.3-1) unstable; urgency=medium
+
+  * New upstream release:
+    * libmount: fix UID check for FUSE umount, fixes CVE-2021-3995
+    * libmount: fix (deleted) suffix issue, fixes CVE-2021-3996
+  * d/bsdextrautils.install: remove useless use of dh-exec
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 24 Jan 2022 13:25:57 +0000
+
 util-linux (2.37.2-6) unstable; urgency=medium
 
   * Import upstream patch to make agetty and systemd v250 play nice.
