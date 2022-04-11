@@ -374,6 +374,8 @@ CLEANFILES = $(PO_STAMPS)
 EXTRA_DIST = README.md $(PO_FILES) po4a.cfg util-linux-man.pot
 @ENABLE_POMAN_TRUE@asciidoc_man_cmd = $(ASCIIDOCTOR) \
 @ENABLE_POMAN_TRUE@	-b manpage \
+@ENABLE_POMAN_TRUE@	-a 'release-version=$(VERSION)' \
+@ENABLE_POMAN_TRUE@	-a 'package-docdir=$(docdir)' \
 @ENABLE_POMAN_TRUE@	-a 'VERSION=$(VERSION)' \
 @ENABLE_POMAN_TRUE@	-a 'ADJTIME_PATH=$(ADJTIME_PATH)'
 
@@ -490,8 +492,8 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-@ENABLE_POMAN_FALSE@uninstall-local:
 @ENABLE_POMAN_FALSE@install-data-local:
+@ENABLE_POMAN_FALSE@uninstall-local:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-local mostlyclean-am
@@ -583,6 +585,15 @@ uninstall-am: uninstall-local
 @ENABLE_POMAN_TRUE@	@echo 'po4a: generate man-pages translations'
 @ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) po4a.cfg
 @ENABLE_POMAN_TRUE@	@touch po4a-gen.stamp
+
+# We need to call po4a --force only on 'make dist', otherwise .po and .pot
+# files has to be unmodified. This update has to be done before 'make' copies
+# sources to the $distdir. $EXTRA_DIST (where is util-linux-man.pot) is used as
+# a dependence for 'distdir' automake target, so it's trigered by "make dist*"
+# only.
+@ENABLE_POMAN_TRUE@util-linux-man.pot:
+@ENABLE_POMAN_TRUE@	@echo 'po4a: force pot-update'
+@ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) --force po4a.cfg
 
 @ENABLE_POMAN_TRUE@gen-trans: $(PO_STAMPS)
 
