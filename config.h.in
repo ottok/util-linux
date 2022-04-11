@@ -165,6 +165,9 @@
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
 
+/* Define to 1 if you have the `getttynam' function. */
+#undef HAVE_GETTTYNAM
+
 /* Define to 1 if you have the `getusershell' function. */
 #undef HAVE_GETUSERSHELL
 
@@ -206,6 +209,9 @@
 
 /* Define to 1 if you have the `lchown' function. */
 #undef HAVE_LCHOWN
+
+/* Define to 1 if you have the `lgetxattr' function. */
+#undef HAVE_LGETXATTR
 
 /* Define to 1 if you have the `audit' library (-laudit). */
 #undef HAVE_LIBAUDIT
@@ -294,6 +300,12 @@
 /* Define to 1 if you have the <linux/gsmmux.h> header file. */
 #undef HAVE_LINUX_GSMMUX_H
 
+/* Define to 1 if you have the <linux/if_alg.h> header file. */
+#undef HAVE_LINUX_IF_ALG_H
+
+/* Define to 1 if you have the <linux/kcmp.h> header file. */
+#undef HAVE_LINUX_KCMP_H
+
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
 
@@ -317,6 +329,9 @@
 
 /* Define to 1 if you have the <linux/watchdog.h> header file. */
 #undef HAVE_LINUX_WATCHDOG_H
+
+/* Define to 1 if you have the `llistxattr' function. */
+#undef HAVE_LLISTXATTR
 
 /* Define to 1 if you have the `llseek' function. */
 #undef HAVE_LLSEEK
@@ -369,6 +384,9 @@
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
+/* Define to 1 if you have the `newlocale' function. */
+#undef HAVE_NEWLOCALE
+
 /* Define to 1 if you have the `ntp_gettime' function. */
 #undef HAVE_NTP_GETTIME
 
@@ -399,7 +417,7 @@
 /* Define to 1 if you have the `prctl' function. */
 #undef HAVE_PRCTL
 
-/* Define to 1 if you have the `prlimit' function. */
+/* Have valid prlimit() function */
 #undef HAVE_PRLIMIT
 
 /* Define if program_invocation_short_name is defined */
@@ -456,7 +474,7 @@
 /* Define to 1 if you have the `setitimer' function. */
 #undef HAVE_SETITIMER
 
-/* Define to 1 if you have the `setns' function. */
+/* Have valid setns() function */
 #undef HAVE_SETNS
 
 /* Define to 1 if you have the `setprogname' function. */
@@ -521,6 +539,9 @@
 
 /* Define to 1 if have strsignal function prototype */
 #undef HAVE_STRSIGNAL_DECL
+
+/* Define to 1 if you have the `strtod_l' function. */
+#undef HAVE_STRTOD_L
 
 /* Define to 1 if `st_mtim.tv_nsec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
@@ -656,11 +677,14 @@
 /* Define to 1 if you have the `unlinkat' function. */
 #undef HAVE_UNLINKAT
 
-/* Define to 1 if you have the `unshare' function. */
+/* Have valid unshare() function */
 #undef HAVE_UNSHARE
 
 /* Define to 1 if you have the `updwtmpx' function. */
 #undef HAVE_UPDWTMPX
+
+/* Define to 1 if you have the `uselocale' function. */
+#undef HAVE_USELOCALE
 
 /* Define if curses library has the use_default_colors(). */
 #undef HAVE_USE_DEFAULT_COLORS
@@ -829,6 +853,9 @@
 
 /* Should sulogin use an emergency mount of /dev and /proc? */
 #undef USE_SULOGIN_EMERGENCY_MOUNT
+
+/* Define if systemd support is wanted */
+#undef USE_SYSTEMD
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
