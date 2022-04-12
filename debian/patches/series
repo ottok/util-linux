@@ -1,3 +1,4 @@
 debian/man-getopt-examples.patch
 debian/verbose-tests.patch
 debian/chown-non-deprecated.patch
+debian/hardlink-tests-known-failed.patch
