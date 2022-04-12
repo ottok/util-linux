@@ -40,7 +40,7 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, util-linux-extra
 Suggests: dosfstools,
           kbd,
           util-linux-locales
@@ -441,3 +441,16 @@ Package-Type: udeb
 Build-Profiles: <!noudeb>
 XB-Installer-Menu-Item: 96000
 Description: ejects CDs from d-i menu
+
+Package: util-linux-extra
+Architecture: any
+Build-Profiles: <!stage1>
+Section: utils
+Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
+Replaces: util-linux (<< 2.38~)
+Breaks: util-linux (<< 2.38~)
+Priority: standard
+Multi-Arch: foreign
+Description: interactive login tools
+ Tools commonly found on systems where humans login interactively,
+ or are needed with non-standard system configurations.

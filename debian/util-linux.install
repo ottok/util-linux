@@ -1,6 +1,4 @@
 #!/usr/bin/dh-exec --with=install
-debian/hwclock.rules => /usr/lib/udev/rules.d/85-hwclock.rules
-debian/hwclock-set => /usr/lib/udev/hwclock-set
 debian/logcheck/ignore.d.server/util-linux => /usr/share/util-linux/logcheck/ignore.d.server/util-linux
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] sbin/mkswap
@@ -18,7 +16,6 @@ sbin/findfs
 sbin/fsck
 sbin/fsck.cramfs
 sbin/fsck.minix
-sbin/hwclock
 sbin/mkfs
 sbin/mkfs.bfs
 sbin/mkfs.cramfs
@@ -93,5 +90,4 @@ usr/sbin/readprofile                                            [linux-any]
 usr/sbin/rtcwake                                                [linux-any]
 usr/bin/lsmem                                                   [linux-any]
 usr/bin/chmem usr/sbin/                                         [linux-any]
-usr/bin/fincore                                                 [linux-any]
 sbin/blkzone                                                    [linux-any]

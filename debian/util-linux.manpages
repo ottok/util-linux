@@ -2,7 +2,6 @@
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] debian/tmp/usr/share/man/man8/mkswap.8
 [!linux-any] debian/tmp/usr/share/man/man8/mkswap.8 => /usr/share/man/man8/mkswap.linux.8
-debian/hwclock.5
 debian/tmp/usr/share/man/man1/choom.1                           [linux-any]
 debian/tmp/usr/share/man/man1/chrt.1                            [!hurd-i386]
 debian/tmp/usr/share/man/man1/flock.1
@@ -36,7 +35,6 @@ debian/tmp/usr/share/man/man8/findmnt.8
 debian/tmp/usr/share/man/man8/fsck.8
 debian/tmp/usr/share/man/man8/fsck.cramfs.8
 debian/tmp/usr/share/man/man8/fsck.minix.8
-debian/tmp/usr/share/man/man8/hwclock.8
 debian/tmp/usr/share/man/man8/i386.8                            [amd64 i386]
 debian/tmp/usr/share/man/man8/isosize.8
 debian/tmp/usr/share/man/man8/lsns.8                            [linux-any]
@@ -90,5 +88,4 @@ debian/tmp/usr/share/man/man8/switch_root.8                     [linux-any]
 debian/tmp/usr/share/man/man8/wdctl.8                           [linux-any]
 debian/tmp/usr/share/man/man1/lsmem.1                           [linux-any]
 debian/tmp/usr/share/man/man8/chmem.8                           [linux-any]
-debian/tmp/usr/share/man/man1/fincore.1                         [linux-any]
 debian/tmp/usr/share/man/man8/blkzone.8                         [linux-any]

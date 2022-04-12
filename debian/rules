@@ -142,9 +142,9 @@ override_dh_installinit:
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 ifeq (,$(findstring s390,$(DEB_HOST_ARCH)))
 	# install /etc/init.d/hwclock.sh
-	dh_installinit --name=hwclock.sh --no-start
+	dh_installinit --package=util-linux-extra --name=hwclock.sh --no-start
 	# install /etc/default/hwclock
-	dh_installinit --name=hwclock
+	dh_installinit --package=util-linux-extra --name=hwclock
 endif
 endif
 	# install uuidd sysvinit script
