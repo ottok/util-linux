@@ -1,3 +1,9 @@
+util-linux (2.38-2) unstable; urgency=medium
+
+  * hardlink tests: set known failed
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 12 Apr 2022 20:37:24 +0000
+
 util-linux (2.38-1) unstable; urgency=medium
 
   * New upstream release.
