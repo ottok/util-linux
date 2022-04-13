@@ -1,3 +1,9 @@
+util-linux (2.38-3) unstable; urgency=medium
+
+  * Update fdisk test data for ppc64le, fixing FTBFS there.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 13 Apr 2022 20:33:06 +0000
+
 util-linux (2.38-2) unstable; urgency=medium
 
   * hardlink tests: set known failed
