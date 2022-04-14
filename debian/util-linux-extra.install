@@ -1,6 +1,6 @@
 #!/usr/bin/dh-exec --with=install
 debian/hwclock.rules => /usr/lib/udev/rules.d/85-hwclock.rules
 debian/hwclock-set => /usr/lib/udev/hwclock-set
-debian/tmp/bin/lsfd => /usr/bin/lsfd                            [linux-any]
 usr/bin/fincore                                                 [linux-any]
+usr/bin/lsfd                                                    [linux-any]
 sbin/hwclock
