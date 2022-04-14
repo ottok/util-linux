@@ -1,3 +1,18 @@
+util-linux (2.38-4) unstable; urgency=medium
+
+  * Ship empty /var/lib/libuuid again.
+    In 2014 we stopped creating this directory as part of the package. For
+    some more time, this was the home directory of the uuid runtime user,
+    but that got changed to /run/uuidd then. Ship this directory again,
+    as libuuid puts a file there, and since 2.38 the uuidd.service
+    definition also wants to bind-mount it. (Closes: #1009686)
+  * Update libfdisk1, libmount1, libsmartcols1 symbol files
+  * util-linux-extra: fix misc:Pre-Depends mixup in Depends:
+  * Use different method to install lsfd into /usr/bin
+  * Install lsirq into util-linux-extra
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 14 Apr 2022 11:50:55 +0000
+
 util-linux (2.38-3) unstable; urgency=medium
 
   * Update fdisk test data for ppc64le, fixing FTBFS there.
