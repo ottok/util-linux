@@ -446,7 +446,7 @@ Package: util-linux-extra
 Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
-Depends: ${misc:Pre-Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Replaces: util-linux (<< 2.38~)
 Breaks: util-linux (<< 2.38~)
 Priority: standard
