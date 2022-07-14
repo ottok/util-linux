@@ -1,3 +1,11 @@
+util-linux (2.38-5) unstable; urgency=medium
+
+  * Use sensible-pager instead of less by default.
+    Adds Recommends: sensible-utils, so sensible-pager is available in
+    default installations. (Closes: #1014368)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 14 Jul 2022 09:56:00 +0000
+
 util-linux (2.38-4) unstable; urgency=medium
 
   * Ship empty /var/lib/libuuid again.
