@@ -4,3 +4,4 @@ debian/chown-non-deprecated.patch
 debian/hardlink-tests-known-failed.patch
 debian/ppc64le-tests-fdisk-bsd-expected.patch
 debian/lsfd-usrbin.patch
+debian/sensible-pager.patch

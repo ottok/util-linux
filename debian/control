@@ -41,6 +41,7 @@ Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
 Depends: ${misc:Depends}, util-linux-extra
+Recommends: sensible-utils
 Suggests: dosfstools,
           kbd,
           util-linux-locales
@@ -123,6 +124,7 @@ Priority: important
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
+Recommends: sensible-utils
 Multi-Arch: foreign
 Description: collection of partitioning utilities
  This package contains the classic fdisk, sfdisk and cfdisk partitioning
