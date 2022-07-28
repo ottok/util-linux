@@ -1,3 +1,10 @@
+util-linux (2.38-6) unstable; urgency=medium
+
+  * autopkgtest: bump oversized-chunk size limit, empty chunks have
+    regressed on arm64, armel, armhf. Cf. #785075
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 28 Jul 2022 10:28:10 +0000
+
 util-linux (2.38-5) unstable; urgency=medium
 
   * Use sensible-pager instead of less by default.
