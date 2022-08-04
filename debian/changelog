@@ -1,3 +1,13 @@
+util-linux (2.38.1-1) unstable; urgency=medium
+
+  * New upstream release.
+    * Rebase patches, drop upstream applied patches
+  * uuid-runtime: Quiet adduser warnings.
+    Thanks to Diederik de Haas <didi.debian@cknow.org> (Closes: #1016372)
+  * d/README.source: fix tarball name in example
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 04 Aug 2022 16:18:17 +0000
+
 util-linux (2.38-6) unstable; urgency=medium
 
   * autopkgtest: bump oversized-chunk size limit, empty chunks have
