@@ -1,4 +1,5 @@
 #!/usr/bin/dh-exec --with=install
+debian/tmp/usr/share/man/man1/rename.1 => /usr/share/man/man1/rename.ul.1
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] debian/tmp/usr/share/man/man8/mkswap.8
 [!linux-any] debian/tmp/usr/share/man/man8/mkswap.8 => /usr/share/man/man8/mkswap.linux.8

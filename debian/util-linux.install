@@ -1,5 +1,7 @@
 #!/usr/bin/dh-exec --with=install
 debian/logcheck/ignore.d.server/util-linux => /usr/share/util-linux/logcheck/ignore.d.server/util-linux
+# perl gets to do rename, not us.
+debian/tmp/usr/bin/rename => /usr/bin/rename.ul
 # Rename mkswap to mkswap.linux on non-linux.
 [linux-any] sbin/mkswap
 [!linux-any] debian/tmp/sbin/mkswap => /sbin/mkswap.linux
