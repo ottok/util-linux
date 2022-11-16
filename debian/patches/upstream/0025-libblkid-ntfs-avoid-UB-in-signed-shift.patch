@@ -36,28 +36,3 @@ index dced69941..217e7e8be 100644
  
  	nr_clusters = le64_to_cpu(ns->number_of_sectors) / sectors_per_cluster;
  
-diff --git a/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142 b/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142
-new file mode 100644
-index 0000000000000000000000000000000000000000..b671bcd89ff4fec0a4b15452e4bd509bf85d1641
-GIT binary patch
-literal 1025
-zcmY#TQ1A<J3swLDCItov0MZKofdD855&+48*x0~BY=Xpzfo#AEh|^B0Dmq$4s?!F&
-XdaPjw5*+j{$Kt?Y<rysgBTWbZm4(;Z
-
-literal 0
-HcmV?d00001
-
-diff --git a/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160 b/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160
-new file mode 100644
-index 0000000000000000000000000000000000000000..b3586ec74864e876f2abf405326dec4964f4f1be
-GIT binary patch
-literal 1024
-zcmY#TQ1A<J3swLDCItov0McLqAOR8pvHybzH1Hn?9%7R~Q%6%S!hQscrWOt+!x_*V
-cLn=RX6`BE~T&jftD0lqFns2CP1r-be0937vFaQ7m
-
-literal 0
-HcmV?d00001
-
--- 
-2.38.1
-

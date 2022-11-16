@@ -121,31 +121,3 @@ index 289a325c8..8c3addc9d 100644
  		blkid_probe_set_utf8label(pr, buf, len, UL_ENCODE_UTF16BE);
  	else if (joliet)
  		blkid_probe_set_utf8label(pr, joliet->volume_id, sizeof(joliet->volume_id), UL_ENCODE_UTF16BE);
-diff --git a/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53149 b/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53149
-new file mode 100644
-index 0000000000000000000000000000000000000000..f1c6c3cf392b950d1b6b0215a91dc5e4995f26f4
-GIT binary patch
-literal 35663
-zcmeI2QBT@X6vt0}>Uh|T%d!|vZp@ZwmSL$=)5oTCSO;{0GUdr=#A(7HftYNcVjpns
-z1MFMuT(A;nS=I*ZZTr83_VjS??YY0^UM~Lwk>-;u+K<)MiGc$MfB*=900@8p2qY$;
-z{f=s?(FVJ<sE^<S0T5U`f%m4lxA<PsW2Onb{+8+R5j+Th00@8p2&hcpG<k8`-FDzM
-zgwt~Ez;B5yXIoS(Ygf4CuHR|as&?HCod@qs!`K%`<xj5NYWvNdqjK9h^y+o5S)0_6
-zAImxi!l|}CdVvUByCI&sZ~&HJnP$b@GtFJY&>uOBzY0C7q0v)Ejr*xZK;`+4*a}8q
-z#i<%bh4rjDdDNs1osfup1$0H%G^S%3(ts|gM<cqV8|rh*Gdd5k-A;|$H#=_Viahfj
-zHTfo8r_!`W>D8>}nlv{jS{oZ1q|0lazCL?iT6?RnOcXfT{yx^93CgboZ6-}-xBZ7D
-zBbLQwtRA(==VOCxs<B7hc?4Os&o6^c>5x8fEx|{Rk-BVm`5my;V6Q_hwrsxk*%GwH
-zo^3u?xCe`N*>b7OEqs22O}<B!>&jm40X?+TS`ou&roeCnft(OPwjd`D62kxi5C8!X
-z009sH0T2KI5KxYQcBf`>-k@_5stOV3;OcsOJRDr~Mwd7J`q_D}?~OnAM&ISTJ{)`r
-z2NtSX;q|<;7NKUnm{oo$%}rXLde-NuSt5C|1ud6M0NE_gY$2N!v6d9vHCyFifk4Ux
-zkj+Yv(t4N~nsXICSY)%}ulFH4oIwBtKmY_l00h(_0M%&8;z?n<hiU}XDE{w-0<=(P
-z@kb<uCjiwbJE{@>`&{_x3IHGg0w4eaAOHd&00K%7Sf0oS6%8s{0W`7rLsVkkBM1<X
-z1fZfpMT@_LEw}}yA_#y02!H?xC`thTHd>xiQ0$(elRzg~@P0ZU-6{G_fUt^406GbD
-zlGK;gTur=U@A_hn9-BmL5>sD(R16?jOCko7Z35UNVw0HqBAM+egy=y41V8`;a!dfp
-rw3t8tQT;y&KqrAtlKKu@#Q<{rZGxd?jR15K=p?Bxl3ANH^W*&kQ}~Ax
-
-literal 0
-HcmV?d00001
-
--- 
-2.38.1
-
