@@ -1,3 +1,37 @@
+util-linux (2.38.1-2) unstable; urgency=medium
+
+  * Import upstream patches
+    * fsck: Processes may kill other processes.
+    * lscpu: Add Kryo 3XX Gold core
+    * lscpu: Even more Arm part numbers
+    * Remove closing braces in Apple cores names
+    * lscpu: (arm) don't use space in names
+    * lscpu: add missing Apple parts
+    * lscpu: make Apple part names human-friendly
+    * Fix formatting.
+    * Adding Apple core names, distinguish by SoC/SiP name
+    * Add Makalu/Makalu-ELP (A715/X3)
+    * lscpu: Add Snapdragon parts
+    * sfdisk: inform about failed fsync() [coverity scan]
+    * libfdisk: (gpt) don't ignore fsync() errors
+    * sfdisk: improve code readability for coverity scan
+    * libfdisk: make scripts portable between different sector sizes
+    * fdisk: make it more obvious that DOS means MBR
+    * fdisk: fix --output option parsing
+    * kill: Support mandating the presence of a userspace signal handler
+    * lib/procfs: add function to parse /proc/#/stat
+    * lsblk: fix endless loop if device specified more than once
+    * libuuid: check clock value from LIBUUID_CLOCK_FILE
+    * uuidd: fix random UUIDs
+    * libuuid: Implement continuous clock handling for time based UUIDs
+    * lib/path: ul_path_cpuparse: fix parsing of empty sysfs files
+    * libblkid: ntfs: avoid UB in signed shift
+    * libblkid: iso9660: allocate enough space for UTF16 decoding
+  * Make /var/lib/libuuid writable by uuidd (Closes: #1021657)
+  * Add new __uuid_generate_time_cont@UUIDD_PRIVATE symbol
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 16 Nov 2022 10:32:57 +0000
+
 util-linux (2.38.1-1.1) unstable; urgency=medium
 
   * Non-maintainer upload.
