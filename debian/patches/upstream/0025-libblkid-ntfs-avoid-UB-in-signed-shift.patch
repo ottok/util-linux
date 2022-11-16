@@ -1,0 +1,63 @@
+From d235a5db4e2740e4c2e78ee3e959379c912a509e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Thu, 10 Nov 2022 18:35:00 +0100
+Subject: [PATCH 25/26] libblkid: ntfs: avoid UB in signed shift
+
+Fix OSS-Fuzz issue 53142 ( #1886 )
+Fix OSS-Fuzz issue 53160 ( #1888 )
+---
+ libblkid/src/superblocks/ntfs.c                  |  10 +++++++---
+ .../fuzzers/test_blkid_fuzz_files/oss-fuzz-53142 | Bin 0 -> 1025 bytes
+ .../fuzzers/test_blkid_fuzz_files/oss-fuzz-53160 | Bin 0 -> 1024 bytes
+ 3 files changed, 7 insertions(+), 3 deletions(-)
+ create mode 100644 tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142
+ create mode 100644 tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160
+
+diff --git a/libblkid/src/superblocks/ntfs.c b/libblkid/src/superblocks/ntfs.c
+index dced69941..217e7e8be 100644
+--- a/libblkid/src/superblocks/ntfs.c
++++ b/libblkid/src/superblocks/ntfs.c
+@@ -135,11 +135,15 @@ static int __probe_ntfs(blkid_probe pr, const struct blkid_idmag *mag, int save_
+ 		}
+ 	}
+ 
+-	if (ns->clusters_per_mft_record > 0)
++	if (ns->clusters_per_mft_record > 0) {
+ 		mft_record_size = ns->clusters_per_mft_record *
+ 				  sectors_per_cluster * sector_size;
+-	else
+-		mft_record_size = 1 << (0 - ns->clusters_per_mft_record);
++	} else {
++		int8_t mft_record_size_shift = 0 - ns->clusters_per_mft_record;
++		if (mft_record_size_shift < 0 || mft_record_size_shift >= 31)
++			return 1;
++		mft_record_size = 1 << mft_record_size_shift;
++	}
+ 
+ 	nr_clusters = le64_to_cpu(ns->number_of_sectors) / sectors_per_cluster;
+ 
+diff --git a/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142 b/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142
+new file mode 100644
+index 0000000000000000000000000000000000000000..b671bcd89ff4fec0a4b15452e4bd509bf85d1641
+GIT binary patch
+literal 1025
+zcmY#TQ1A<J3swLDCItov0MZKofdD855&+48*x0~BY=Xpzfo#AEh|^B0Dmq$4s?!F&
+XdaPjw5*+j{$Kt?Y<rysgBTWbZm4(;Z
+
+literal 0
+HcmV?d00001
+
+diff --git a/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160 b/tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160
+new file mode 100644
+index 0000000000000000000000000000000000000000..b3586ec74864e876f2abf405326dec4964f4f1be
+GIT binary patch
+literal 1024
+zcmY#TQ1A<J3swLDCItov0McLqAOR8pvHybzH1Hn?9%7R~Q%6%S!hQscrWOt+!x_*V
+cLn=RX6`BE~T&jftD0lqFns2CP1r-be0937vFaQ7m
+
+literal 0
+HcmV?d00001
+
+-- 
+2.38.1
+
