@@ -31,3 +31,5 @@ upstream/0024-fsck-Processes-may-kill-other-processes.patch
 upstream/0025-libblkid-ntfs-avoid-UB-in-signed-shift.patch
 upstream/0026-libblkid-iso9660-allocate-enough-space-for-UTF16-dec.patch
 upstream/PATCH-rfkill-man-List-options-for-supported-device-types.patch
+upstream/PATCH-1-2-lib-pty-Put-master-PTY-into-non-blocking-mode-a.patch
+upstream/PATCH-2-2-lib-pty-minor-cleanups.patch
