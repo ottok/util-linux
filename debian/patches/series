@@ -30,3 +30,4 @@ upstream/0023-lscpu-Add-Kryo-3XX-Gold-core.patch
 upstream/0024-fsck-Processes-may-kill-other-processes.patch
 upstream/0025-libblkid-ntfs-avoid-UB-in-signed-shift.patch
 upstream/0026-libblkid-iso9660-allocate-enough-space-for-UTF16-dec.patch
+upstream/PATCH-rfkill-man-List-options-for-supported-device-types.patch
