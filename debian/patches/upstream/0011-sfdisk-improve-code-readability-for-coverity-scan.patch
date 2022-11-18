@@ -1,4 +1,3 @@
-From 6b4f902b406a2a6553fe5b82e89e6b7d37bb349f Mon Sep 17 00:00:00 2001
 From: Karel Zak <kzak@redhat.com>
 Date: Thu, 11 Aug 2022 13:04:58 +0200
 Subject: [PATCH 11/24] sfdisk: improve code readability for coverity scan
@@ -9,7 +8,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/disk-utils/sfdisk.c b/disk-utils/sfdisk.c
-index 38c7b1798..112bc7c61 100644
+index 38c7b17..112bc7c 100644
 --- a/disk-utils/sfdisk.c
 +++ b/disk-utils/sfdisk.c
 @@ -435,7 +435,6 @@ static int move_partition_data(struct sfdisk *sf, size_t partno, struct fdisk_pa
@@ -39,6 +38,3 @@ index 38c7b1798..112bc7c61 100644
  		int x = get_terminal_width(80);
  		for (; x > 0; x--)
  			fputc(' ', stdout);
--- 
-2.38.1
-

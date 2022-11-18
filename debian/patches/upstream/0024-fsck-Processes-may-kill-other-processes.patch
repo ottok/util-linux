@@ -1,4 +1,3 @@
-From facbfd7c8bc778b34dd9c0005cef38ae63fd0107 Mon Sep 17 00:00:00 2001
 From: zhanchengbin <zhanchengbin1@huawei.com>
 Date: Mon, 10 Oct 2022 17:23:24 +0800
 Subject: [PATCH 24/24] fsck: Processes may kill other processes.
@@ -18,7 +17,7 @@ Reviewed-by: Lukas Czerner <lczerner@redhat.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/disk-utils/fsck.c b/disk-utils/fsck.c
-index 505952c81..800d3ce08 100644
+index 505952c..800d3ce 100644
 --- a/disk-utils/fsck.c
 +++ b/disk-utils/fsck.c
 @@ -730,6 +730,8 @@ static int kill_all(int signum)
@@ -30,6 +29,3 @@ index 505952c81..800d3ce08 100644
  		kill(inst->pid, signum);
  		n++;
  	}
--- 
-2.38.1
-

@@ -1,10 +1,9 @@
-From 25bc6aa2104881a224292d0381a2382352015680 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Petr=20=C5=A0tetiar?= <ynezz@true.cz>
+From: =?utf-8?q?Petr_=C5=A0tetiar?= <ynezz@true.cz>
 Date: Thu, 22 Sep 2022 11:49:13 +0200
 Subject: [PATCH 01/24] lib/path: ul_path_cpuparse: fix parsing of empty sysfs
  files
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
 Kernel 5.15 returns empty content for topology/thread_siblings on
@@ -39,7 +38,7 @@ Signed-off-by: Petr Štetiar <ynezz@true.cz>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/lib/path.c b/lib/path.c
-index 42b4eadf1..8da6c06db 100644
+index 42b4ead..8da6c06 100644
 --- a/lib/path.c
 +++ b/lib/path.c
 @@ -1028,7 +1028,7 @@ static int ul_path_cpuparse(struct path_cxt *pc, cpu_set_t **set, int maxcpus, i
@@ -51,6 +50,3 @@ index 42b4eadf1..8da6c06db 100644
  	fclose(f);
  
  	if (rc)
--- 
-2.38.1
-

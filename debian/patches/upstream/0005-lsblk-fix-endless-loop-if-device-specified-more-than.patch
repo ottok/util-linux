@@ -1,4 +1,3 @@
-From fbd022f3d1b3e255f242bf8d17ac6a25d8d3693e Mon Sep 17 00:00:00 2001
 From: Karel Zak <kzak@redhat.com>
 Date: Mon, 19 Sep 2022 14:23:25 +0200
 Subject: [PATCH 05/24] lsblk: fix endless loop if device specified more than
@@ -11,7 +10,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  1 file changed, 17 insertions(+)
 
 diff --git a/misc-utils/lsblk-devtree.c b/misc-utils/lsblk-devtree.c
-index ce9d3e84f..6f9dc54b3 100644
+index ce9d3e8..6f9dc54 100644
 --- a/misc-utils/lsblk-devtree.c
 +++ b/misc-utils/lsblk-devtree.c
 @@ -282,8 +282,25 @@ void lsblk_unref_devtree(struct lsblk_devtree *tr)
@@ -40,6 +39,3 @@ index ce9d3e84f..6f9dc54b3 100644
  	if (!lsblk_devtree_has_device(tr, dev))
  		lsblk_devtree_add_device(tr, dev);
  
--- 
-2.38.1
-

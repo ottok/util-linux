@@ -1,4 +1,3 @@
-From 0fe6451a46c75942e47c82562060bf6f41160282 Mon Sep 17 00:00:00 2001
 From: ThomasKaiser <ThomasKaiser@users.noreply.github.com>
 Date: Fri, 30 Sep 2022 10:53:25 +0200
 Subject: [PATCH 23/24] lscpu: Add Kryo 3XX Gold core
@@ -11,7 +10,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/sys-utils/lscpu-arm.c b/sys-utils/lscpu-arm.c
-index 9222b77ed..b30e0e754 100644
+index 9222b77..b30e0e7 100644
 --- a/sys-utils/lscpu-arm.c
 +++ b/sys-utils/lscpu-arm.c
 @@ -134,6 +134,7 @@ static const struct id_part qcom_part[] = {
@@ -22,6 +21,3 @@ index 9222b77ed..b30e0e754 100644
      { 0x803, "Kryo-3XX-Silver" },
      { 0x804, "Kryo-4XX-Gold" },
      { 0x805, "Kryo-4XX-Silver" },
--- 
-2.38.1
-

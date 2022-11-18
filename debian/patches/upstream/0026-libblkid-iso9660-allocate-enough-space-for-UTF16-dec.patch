@@ -1,5 +1,4 @@
-From 6a657112761fdfc50b6e8509e01f938429ede691 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
 Date: Thu, 10 Nov 2022 19:48:20 +0100
 Subject: [PATCH 26/26] libblkid: iso9660: allocate enough space for UTF16
  decoding
@@ -17,13 +16,11 @@ buffer end.
 
 Fix OSS-Fuzz issue 53149 ( #1887 )
 ---
- libblkid/src/superblocks/iso9660.c            |  23 ++++++++++--------
- .../test_blkid_fuzz_files/oss-fuzz-53149      | Bin 0 -> 35663 bytes
- 2 files changed, 13 insertions(+), 10 deletions(-)
- create mode 100644 tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53149
+ libblkid/src/superblocks/iso9660.c | 23 +++++++++++++----------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
 
 diff --git a/libblkid/src/superblocks/iso9660.c b/libblkid/src/superblocks/iso9660.c
-index 289a325c8..8c3addc9d 100644
+index 289a325..8c3addc 100644
 --- a/libblkid/src/superblocks/iso9660.c
 +++ b/libblkid/src/superblocks/iso9660.c
 @@ -70,6 +70,8 @@ struct boot_record {

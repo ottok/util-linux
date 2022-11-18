@@ -1,4 +1,3 @@
-From ad0e4ba69d0ab85677ccee90e954dd8e7c6d5c63 Mon Sep 17 00:00:00 2001
 From: Thomas Kaiser <ThomasKaiser@users.noreply.github.com>
 Date: Fri, 1 Jul 2022 14:16:49 +0200
 Subject: [PATCH 17/24] Fix formatting.
@@ -8,7 +7,7 @@ Subject: [PATCH 17/24] Fix formatting.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sys-utils/lscpu-arm.c b/sys-utils/lscpu-arm.c
-index 7b9b36400..7986fa3f2 100644
+index 7b9b364..7986fa3 100644
 --- a/sys-utils/lscpu-arm.c
 +++ b/sys-utils/lscpu-arm.c
 @@ -167,7 +167,7 @@ static const struct id_part apple_part[] = {
@@ -20,6 +19,3 @@ index 7b9b36400..7986fa3f2 100644
  };
  
  static const struct id_part faraday_part[] = {
--- 
-2.38.1
-

@@ -1,4 +1,3 @@
-From b11e0bef9e3af753d4772747b628510a8851053e Mon Sep 17 00:00:00 2001
 From: Karel Zak <kzak@redhat.com>
 Date: Mon, 24 Oct 2022 09:57:07 +0200
 Subject: [PATCH 08/24] fdisk: fix --output option parsing
@@ -11,7 +10,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/disk-utils/fdisk.c b/disk-utils/fdisk.c
-index 2bd2ef41b..79b904f25 100644
+index 2bd2ef4..79b904f 100644
 --- a/disk-utils/fdisk.c
 +++ b/disk-utils/fdisk.c
 @@ -928,7 +928,7 @@ int main(int argc, char **argv)
@@ -23,6 +22,3 @@ index 2bd2ef41b..79b904f25 100644
  		{ "protect-boot",   no_argument,       NULL, 'B' },
  		{ "wipe",           required_argument, NULL, 'w' },
  		{ "wipe-partitions",required_argument, NULL, 'W' },
--- 
-2.38.1
-

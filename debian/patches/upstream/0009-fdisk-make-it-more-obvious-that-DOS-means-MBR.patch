@@ -1,4 +1,3 @@
-From 5e8dc87bed8ed313fecdac727a4d2641a5048048 Mon Sep 17 00:00:00 2001
 From: Karel Zak <kzak@redhat.com>
 Date: Thu, 10 Nov 2022 09:24:23 +0100
 Subject: [PATCH 09/24] fdisk: make it more obvious that DOS means MBR
@@ -11,7 +10,7 @@ Signed-off-by: Karel Zak <kzak@redhat.com>
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/disk-utils/fdisk-menu.c b/disk-utils/fdisk-menu.c
-index 2f22e59f4..b41754b56 100644
+index 2f22e59..b41754b 100644
 --- a/disk-utils/fdisk-menu.c
 +++ b/disk-utils/fdisk-menu.c
 @@ -122,7 +122,7 @@ static const struct menu menu_generic = {
@@ -33,7 +32,7 @@ index 2f22e59f4..b41754b56 100644
  
  		/* backward compatibility -- be sensitive to 'g', but don't
 diff --git a/libfdisk/src/dos.c b/libfdisk/src/dos.c
-index 98bc61409..7970ae139 100644
+index 98bc614..7970ae1 100644
 --- a/libfdisk/src/dos.c
 +++ b/libfdisk/src/dos.c
 @@ -708,7 +708,7 @@ static int dos_create_disklabel(struct fdisk_context *cxt)
@@ -45,6 +44,3 @@ index 98bc61409..7970ae139 100644
  			 "identifier 0x%08x."), id);
  	return 0;
  }
--- 
-2.38.1
-

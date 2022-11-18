@@ -1,4 +1,3 @@
-From 83821597017db30ced34db0c8f70e905704602fa Mon Sep 17 00:00:00 2001
 From: Chris Down <chris@chrisdown.name>
 Date: Wed, 26 Oct 2022 15:47:36 +0100
 Subject: [PATCH 07/24] kill: Support mandating the presence of a userspace
@@ -52,7 +51,7 @@ Signed-off-by: Chris Down <chris@chrisdown.name>
  2 files changed, 38 insertions(+)
 
 diff --git a/misc-utils/kill.1.adoc b/misc-utils/kill.1.adoc
-index 4a6996a38..40ab0248d 100644
+index 4a6996a..40ab024 100644
 --- a/misc-utils/kill.1.adoc
 +++ b/misc-utils/kill.1.adoc
 @@ -62,6 +62,8 @@ Similar to *-l*, but it will print signal names and their corresponding numbers.
@@ -65,7 +64,7 @@ index 4a6996a38..40ab0248d 100644
  Print PID(s) that will be signaled with *kill* along with the signal.
  *-q*, *--queue* _value_::
 diff --git a/misc-utils/kill.c b/misc-utils/kill.c
-index f557aacaa..c469074b9 100644
+index f557aac..c469074 100644
 --- a/misc-utils/kill.c
 +++ b/misc-utils/kill.c
 @@ -95,6 +95,7 @@ struct kill_control {
@@ -146,6 +145,3 @@ index f557aacaa..c469074b9 100644
  
  				if (kill_verbose(&ctl) != 0)
  					nerrs++;
--- 
-2.38.1
-

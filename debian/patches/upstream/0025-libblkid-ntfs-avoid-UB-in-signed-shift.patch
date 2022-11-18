@@ -1,20 +1,15 @@
-From d235a5db4e2740e4c2e78ee3e959379c912a509e Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
 Date: Thu, 10 Nov 2022 18:35:00 +0100
 Subject: [PATCH 25/26] libblkid: ntfs: avoid UB in signed shift
 
 Fix OSS-Fuzz issue 53142 ( #1886 )
 Fix OSS-Fuzz issue 53160 ( #1888 )
 ---
- libblkid/src/superblocks/ntfs.c                  |  10 +++++++---
- .../fuzzers/test_blkid_fuzz_files/oss-fuzz-53142 | Bin 0 -> 1025 bytes
- .../fuzzers/test_blkid_fuzz_files/oss-fuzz-53160 | Bin 0 -> 1024 bytes
- 3 files changed, 7 insertions(+), 3 deletions(-)
- create mode 100644 tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53142
- create mode 100644 tests/ts/fuzzers/test_blkid_fuzz_files/oss-fuzz-53160
+ libblkid/src/superblocks/ntfs.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/libblkid/src/superblocks/ntfs.c b/libblkid/src/superblocks/ntfs.c
-index dced69941..217e7e8be 100644
+index dced699..217e7e8 100644
 --- a/libblkid/src/superblocks/ntfs.c
 +++ b/libblkid/src/superblocks/ntfs.c
 @@ -135,11 +135,15 @@ static int __probe_ntfs(blkid_probe pr, const struct blkid_idmag *mag, int save_

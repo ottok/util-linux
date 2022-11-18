@@ -1,4 +1,3 @@
-From 549007d5dc68653c7bc6606e7154593059281a83 Mon Sep 17 00:00:00 2001
 From: Michael Trapp <michael.trapp@sap.com>
 Date: Mon, 20 Jun 2022 17:10:36 +0200
 Subject: [PATCH 02/24] libuuid: Implement continuous clock handling for time
@@ -12,15 +11,15 @@ is extended by a continuous handling of the clock updates - instead of
 updating the value to the current timestamp, it is incremented by
 the number of requested UUIDs.
 ---
- libuuid/src/gen_uuid.c  | 91 ++++++++++++++++++++++++++++++++++++++---
+ libuuid/src/gen_uuid.c  | 91 ++++++++++++++++++++++++++++++++++++++++++++++---
  libuuid/src/libuuid.sym |  1 +
  libuuid/src/uuidd.h     |  1 +
  misc-utils/uuidd.8.adoc |  3 ++
- misc-utils/uuidd.c      | 54 +++++++++++++++++++++---
+ misc-utils/uuidd.c      | 54 ++++++++++++++++++++++++++---
  5 files changed, 140 insertions(+), 10 deletions(-)
 
 diff --git a/libuuid/src/gen_uuid.c b/libuuid/src/gen_uuid.c
-index 805b40d90..807dcd115 100644
+index 805b40d..807dcd1 100644
 --- a/libuuid/src/gen_uuid.c
 +++ b/libuuid/src/gen_uuid.c
 @@ -209,6 +209,8 @@ static int get_node_id(unsigned char *node_id)
@@ -164,7 +163,7 @@ index 805b40d90..807dcd115 100644
   * Generate time-based UUID and store it to @out
   *
 diff --git a/libuuid/src/libuuid.sym b/libuuid/src/libuuid.sym
-index 342453368..96372a857 100644
+index 3424533..96372a8 100644
 --- a/libuuid/src/libuuid.sym
 +++ b/libuuid/src/libuuid.sym
 @@ -60,6 +60,7 @@ global:
@@ -176,7 +175,7 @@ index 342453368..96372a857 100644
  local:
  	*;
 diff --git a/libuuid/src/uuidd.h b/libuuid/src/uuidd.h
-index fbe821ff3..f76acc8b2 100644
+index fbe821f..f76acc8 100644
 --- a/libuuid/src/uuidd.h
 +++ b/libuuid/src/uuidd.h
 @@ -49,6 +49,7 @@
@@ -188,7 +187,7 @@ index fbe821ff3..f76acc8b2 100644
  
  #endif /* _UUID_UUID_H */
 diff --git a/misc-utils/uuidd.8.adoc b/misc-utils/uuidd.8.adoc
-index 49e7b6359..8eee3e91b 100644
+index 49e7b63..8eee3e9 100644
 --- a/misc-utils/uuidd.8.adoc
 +++ b/misc-utils/uuidd.8.adoc
 @@ -24,6 +24,9 @@ The *uuidd* daemon is used by the UUID library to generate universally unique id
@@ -202,7 +201,7 @@ index 49e7b6359..8eee3e91b 100644
  Run *uuidd* in debugging mode. This prevents *uuidd* from running as a daemon.
  
 diff --git a/misc-utils/uuidd.c b/misc-utils/uuidd.c
-index dfcd1487b..b25439db3 100644
+index dfcd148..b25439d 100644
 --- a/misc-utils/uuidd.c
 +++ b/misc-utils/uuidd.c
 @@ -72,6 +72,8 @@ struct uuidd_cxt_t {
@@ -331,6 +330,3 @@ index dfcd1487b..b25439db3 100644
  	struct uuidd_options_t uuidd_opts = { .socket_path = UUIDD_SOCKET_PATH };
  
  	setlocale(LC_ALL, "");
--- 
-2.38.1
-

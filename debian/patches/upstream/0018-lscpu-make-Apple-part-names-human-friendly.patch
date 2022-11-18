@@ -1,4 +1,3 @@
-From f7291397d1accd728cf2b76784a58b0ca76910da Mon Sep 17 00:00:00 2001
 From: James Calligeros <jcalligeros99@gmail.com>
 Date: Sat, 9 Jul 2022 14:52:35 +1000
 Subject: [PATCH 18/24] lscpu: make Apple part names human-friendly
@@ -14,7 +13,7 @@ Signed-off-by: James Calligeros <jcalligeros99@gmail.com>
  1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/sys-utils/lscpu-arm.c b/sys-utils/lscpu-arm.c
-index 7986fa3f2..a26601553 100644
+index 7986fa3..a266015 100644
 --- a/sys-utils/lscpu-arm.c
 +++ b/sys-utils/lscpu-arm.c
 @@ -159,14 +159,14 @@ static const struct id_part marvell_part[] = {
@@ -40,6 +39,3 @@ index 7986fa3f2..a26601553 100644
      { -1, "unknown" },
  };
  
--- 
-2.38.1
-
