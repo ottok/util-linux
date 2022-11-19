@@ -11,7 +11,6 @@ if ! getent passwd uuidd >/dev/null; then
 		uuidd
 fi
 
-# Relies on libuuid1 shipping the directory.
 chown uuidd:uuidd /var/lib/libuuid
 chmod 2775 /var/lib/libuuid
 
