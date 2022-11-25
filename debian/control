@@ -41,7 +41,8 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: ${misc:Depends}, util-linux-extra
+Depends: util-linux-extra,
+         ${misc:Depends}
 Recommends: sensible-utils
 Suggests: dosfstools,
           kbd,
@@ -108,8 +109,10 @@ Priority: optional
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
          ${shlibs:Depends}
-Replaces: bsdmainutils (<< 12.1.3), nwrite
-Breaks: bsdmainutils (<< 12.1.3), nwrite
+Replaces: bsdmainutils (<< 12.1.3),
+          nwrite
+Breaks: bsdmainutils (<< 12.1.3),
+        nwrite
 Conflicts: nwrite
 Multi-Arch: foreign
 Description: extra utilities from 4.4BSD-Lite
@@ -449,7 +452,8 @@ Package: util-linux-extra
 Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
 Replaces: util-linux (<< 2.38~)
 Breaks: util-linux (<< 2.38~)
 Priority: standard
