@@ -64,14 +64,6 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	dh_auto_install
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	# Manually generate and install units to avoid missing files when
-	# util-linux.install gets executed in stage1 builds.
-	install -d debian/tmp/lib/systemd/system
-	make PATHFILES=sys-utils/fstrim.service sys-utils/fstrim.service
-	install -m644 sys-utils/fstrim.service debian/tmp/lib/systemd/system/fstrim.service
-	install -m644 sys-utils/fstrim.timer debian/tmp/lib/systemd/system/fstrim.timer
-endif
 	#
 	# remove *.la files
 	rm -f debian/tmp/usr/lib/*/*.la
@@ -87,6 +79,7 @@ override_dh_auto_clean:
 		debian/util-linux.install.$(DEB_HOST_ARCH)
 
 override_dh_install:
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# generate arch-override, as dh-exec install-rename can only run once.
 	[ -f debian/util-linux.install.$(DEB_HOST_ARCH) ] || \
 		debian/util-linux.install > \
@@ -94,6 +87,7 @@ override_dh_install:
 	[ -f debian/uuid-runtime.install.$(DEB_HOST_ARCH) ] || \
 		debian/uuid-runtime.install > \
 		debian/uuid-runtime.install.$(DEB_HOST_ARCH)
+endif
 	#
 	install -D -p -m644 debian/fdisk-udeb.lintian-overrides \
 		debian/fdisk-udeb/usr/share/lintian/overrides/fdisk-udeb
@@ -147,11 +141,13 @@ ifeq (,$(findstring s390,$(DEB_HOST_ARCH)))
 	dh_installinit --package=util-linux-extra --name=hwclock
 endif
 endif
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# install uuidd sysvinit script
 	make misc-utils/uuidd.rc
 	ln -s ../misc-utils/uuidd.rc debian/uuid-runtime.uuidd.init
 	dh_installinit --name=uuidd --restart-after-upgrade
 	rm -f debian/uuid-runtime.uuidd.init
+endif
 
 override_dh_installpam:
 	dh_installpam --package=util-linux --name=runuser

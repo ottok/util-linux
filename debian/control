@@ -422,6 +422,7 @@ Description: tool for enabling and disabling wireless devices
 
 Package: eject
 Architecture: linux-any
+Build-Profiles: <!stage1>
 Section: utils
 Depends: ${misc:Depends},
          ${shlibs:Depends}
@@ -439,12 +440,12 @@ Description: ejects CDs and operates CD-Changers under Linux
 
 Package: eject-udeb
 Architecture: linux-any
+Build-Profiles: <!stage1 !noudeb>
 Section: debian-installer
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Priority: optional
 Package-Type: udeb
-Build-Profiles: <!noudeb>
 XB-Installer-Menu-Item: 96000
 Description: ejects CDs from d-i menu
 
