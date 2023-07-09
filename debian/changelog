@@ -1,3 +1,11 @@
+util-linux (2.38.1-6) unstable; urgency=medium
+
+  * Skip some problematic code for stage1 builds
+  * Add upstream patch to fix logger --id
+  * Update lintian overrides
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 09 Jul 2023 22:21:57 +0200
+
 util-linux (2.38.1-5) unstable; urgency=medium
 
   * Apply upstream patch to fix logger timestamp for stdin (Closes: #1030285)
