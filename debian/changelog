@@ -1,3 +1,9 @@
+util-linux (2.38.1-5) unstable; urgency=medium
+
+  * Apply upstream patch to fix logger timestamp for stdin (Closes: #1030285)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 13 Feb 2023 08:48:21 +0000
+
 util-linux (2.38.1-4) unstable; urgency=medium
 
   [ Helmut Grohne ]
