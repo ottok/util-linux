@@ -87,6 +87,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_POMAN_TRUE@@HAVE_ASCIIDOCTOR_FAILURE_LEVEL_TRUE@am__append_1 = --failure-level ERROR
 subdir = po-man
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_vscript.m4 \
@@ -370,19 +371,23 @@ usrbin_execdir = @usrbin_execdir@
 usrlib_execdir = @usrlib_execdir@
 usrsbin_execdir = @usrsbin_execdir@
 vendordir = @vendordir@
+with_bashcompletiondir = @with_bashcompletiondir@
+with_systemdsystemunitdir = @with_systemdsystemunitdir@
 PO_FILES = $(wildcard *.po)
 PO_LANGS = $(PO_FILES:.po=)
 PO_STAMPS = po4a-gen.stamp
 MAN_SECTIONS = 1 3 5 8
 CLEANFILES = $(PO_STAMPS)
 EXTRA_DIST = README.md $(PO_FILES) po4a.cfg util-linux-man.pot
-@ENABLE_POMAN_TRUE@asciidoc_man_cmd = $(ASCIIDOCTOR) \
-@ENABLE_POMAN_TRUE@	-b manpage \
-@ENABLE_POMAN_TRUE@	-a 'release-version=$(VERSION)' \
-@ENABLE_POMAN_TRUE@	-a 'package-docdir=$(docdir)' \
-@ENABLE_POMAN_TRUE@	-a 'VERSION=$(VERSION)' \
-@ENABLE_POMAN_TRUE@	-a 'ADJTIME_PATH=$(ADJTIME_PATH)'
-
+DISTCLEANFILES = util-linux-man.pot $(PO_FILES)
+@ENABLE_POMAN_TRUE@asciidoc_man_cmd = $(ASCIIDOCTOR) -b manpage -a \
+@ENABLE_POMAN_TRUE@	'release-version=$(VERSION)' -a \
+@ENABLE_POMAN_TRUE@	'package-docdir=$(docdir)' -a \
+@ENABLE_POMAN_TRUE@	'VERSION=$(VERSION)' -a \
+@ENABLE_POMAN_TRUE@	'ADJTIME_PATH=$(ADJTIME_PATH)' --load-path \
+@ENABLE_POMAN_TRUE@	'$(top_srcdir)/tools' --require \
+@ENABLE_POMAN_TRUE@	asciidoctor-unicodeconverter \
+@ENABLE_POMAN_TRUE@	$(am__append_1)
 all: all-am
 
 .SUFFIXES:
@@ -491,6 +496,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -586,7 +592,7 @@ uninstall-am: uninstall-local
 
 @ENABLE_POMAN_TRUE@po4a-gen.stamp: $(PO_FILES)
 @ENABLE_POMAN_TRUE@	@echo 'po4a: generate man-pages translations'
-@ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) po4a.cfg
+@ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) --srcdir $(srcdir) $(srcdir)/po4a.cfg
 @ENABLE_POMAN_TRUE@	@touch po4a-gen.stamp
 
 # We need to call po4a --force only on 'make dist', otherwise .po and .pot
@@ -596,15 +602,16 @@ uninstall-am: uninstall-local
 # only.
 @ENABLE_POMAN_TRUE@util-linux-man.pot:
 @ENABLE_POMAN_TRUE@	@echo 'po4a: force pot-update'
-@ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) --force po4a.cfg
+@ENABLE_POMAN_TRUE@	$(AM_V_GEN) $(PO4A) --force --srcdir $(srcdir) $(srcdir)/po4a.cfg
 
 @ENABLE_POMAN_TRUE@gen-trans: $(PO_STAMPS)
 
 @ENABLE_POMAN_TRUE@gen-mans: gen-trans
-@ENABLE_POMAN_TRUE@	@for l in $(PO_LANGS); do \
+@ENABLE_POMAN_TRUE@	@set -e; \
+@ENABLE_POMAN_TRUE@	  for l in $(PO_LANGS); do \
 @ENABLE_POMAN_TRUE@	  gendir="$(abs_builddir)/$$l"; \
 @ENABLE_POMAN_TRUE@	  genfiles=`echo $${gendir}/*.adoc`; \
-@ENABLE_POMAN_TRUE@	  if test "$$genfiles" != '$${gendir}/*.adoc'; then \
+@ENABLE_POMAN_TRUE@	  if test "$$genfiles" != "$${gendir}/*.adoc"; then \
 @ENABLE_POMAN_TRUE@	    for file in $${genfiles}; do \
 @ENABLE_POMAN_TRUE@	      manname=`echo $$file | sed -e 's|^.*/||' -e 's|\.adoc||'`;  \
 @ENABLE_POMAN_TRUE@	      test -f $${gendir}/$${manname} || { \
@@ -629,7 +636,7 @@ uninstall-am: uninstall-local
 @ENABLE_POMAN_TRUE@	  mansrcdir="$(abs_builddir)/$$l"; \
 @ENABLE_POMAN_TRUE@	  for s in $(MAN_SECTIONS); do \
 @ENABLE_POMAN_TRUE@	    installfiles=`echo $${mansrcdir}/*.$$s`; \
-@ENABLE_POMAN_TRUE@	    if test "$$installfiles" != '$${mansrcdir}/*.$$s'; then \
+@ENABLE_POMAN_TRUE@	    if test "$$installfiles" != "$${mansrcdir}/*.$$s"; then \
 @ENABLE_POMAN_TRUE@	      installdir="$(DESTDIR)$(mandir)/$$l/man$$s"; \
 @ENABLE_POMAN_TRUE@	      $(MKDIR_P) "$${installdir}" || exit 1; \
 @ENABLE_POMAN_TRUE@	      for file in $$installfiles; do \
@@ -646,7 +653,7 @@ uninstall-am: uninstall-local
 @ENABLE_POMAN_TRUE@	  mansrcdir="$(abs_builddir)/$$l"; \
 @ENABLE_POMAN_TRUE@	  for s in $(MAN_SECTIONS); do \
 @ENABLE_POMAN_TRUE@	    installfiles=`echo $${mansrcdir}/*.$$s`; \
-@ENABLE_POMAN_TRUE@	    if test "$$installfiles" != '$${mansrcdir}/*.$$s'; then \
+@ENABLE_POMAN_TRUE@	    if test "$$installfiles" != "$${mansrcdir}/*.$$s"; then \
 @ENABLE_POMAN_TRUE@	      installdir="$(DESTDIR)$(mandir)/$$l/man$$s"; \
 @ENABLE_POMAN_TRUE@	      for file in $$installfiles; do \
 @ENABLE_POMAN_TRUE@	        manname=`echo $$file | sed -e 's|^.*/||'`;  \

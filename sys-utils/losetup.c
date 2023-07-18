@@ -70,7 +70,7 @@ struct colinfo {
 
 static struct colinfo infos[] = {
 	[COL_AUTOCLR]     = { "AUTOCLEAR",    1, SCOLS_FL_RIGHT, N_("autoclear flag set"), SCOLS_JSON_BOOLEAN},
-	[COL_BACK_FILE]   = { "BACK-FILE",  0.3, 0, N_("device backing file")},
+	[COL_BACK_FILE]   = { "BACK-FILE",  0.3, SCOLS_FL_NOEXTREMES, N_("device backing file")},
 	[COL_BACK_INO]    = { "BACK-INO",     4, SCOLS_FL_RIGHT, N_("backing file inode number"), SCOLS_JSON_NUMBER},
 	[COL_BACK_MAJMIN] = { "BACK-MAJ:MIN", 6, 0, N_("backing file major:minor device number")},
 	[COL_NAME]        = { "NAME",      0.25, 0, N_("loop device name")},
@@ -470,6 +470,25 @@ static void warn_size(const char *filename, uint64_t size, uint64_t offset, int 
 			filename);
 }
 
+static int find_unused(struct loopdev_cxt *lc)
+{
+	int rc;
+
+	rc = loopcxt_find_unused(lc);
+	if (!rc)
+		return 0;
+
+	if (access(_PATH_DEV_LOOPCTL, F_OK) == 0 &&
+			access(_PATH_DEV_LOOPCTL, W_OK) != 0)
+		;
+	else
+		errno = -rc;
+
+	warn(_("cannot find an unused loop device"));
+
+	return rc;
+}
+
 static int create_loop(struct loopdev_cxt *lc,
 		       int nooverlap, int lo_flags, int flags,
 		       const char *file, uint64_t offset, uint64_t sizelimit,
@@ -551,10 +570,8 @@ static int create_loop(struct loopdev_cxt *lc,
 		/* Note that loopcxt_{find_unused,set_device}() resets
 		 * loopcxt struct.
 		 */
-		if (!hasdev && (rc = loopcxt_find_unused(lc))) {
-			warnx(_("cannot find an unused loop device"));
+		if (!hasdev && (rc = find_unused(lc)))
 			break;
-		}
 		if (flags & LOOPDEV_FL_OFFSET)
 			loopcxt_set_offset(lc, offset);
 		if (flags & LOOPDEV_FL_SIZELIMIT)
@@ -868,18 +885,8 @@ int main(int argc, char **argv)
 		res = delete_all_loops(&lc);
 		break;
 	case A_FIND_FREE:
-		res = loopcxt_find_unused(&lc);
-		if (res) {
-			int errsv = errno;
-
-			if (access(_PATH_DEV_LOOPCTL, F_OK) == 0 &&
-			    access(_PATH_DEV_LOOPCTL, W_OK) != 0)
-				;
-			else
-				errno = errsv;
-
-			warn(_("cannot find an unused loop device"));
-		} else
+		res = find_unused(&lc);
+		if (!res)
 			printf("%s\n", loopcxt_get_device(&lc));
 		break;
 	case A_SHOW:

@@ -1,4 +1,10 @@
 /*
+ * No copyright is claimed.  This code is in the public domain; do with
+ * it what you wish.
+ *
+ * Copyright (C) 2018 Karel Zak <kzak@redhat.com>
+ *
+ *
  * Simple functions to access files. Paths can be globally prefixed to read
  * data from an alternative source (e.g. a /proc dump for regression tests).
  *
@@ -7,11 +13,6 @@
  *
  * The ul_path_read_* API is possible to use without path_cxt handler. In this
  * case is not possible to use global prefix and printf-like formatting.
- *
- * No copyright is claimed.  This code is in the public domain; do with
- * it what you wish.
- *
- * Written by Karel Zak <kzak@redhat.com> [February 2018]
  */
 #include <stdarg.h>
 #include <string.h>
@@ -1028,7 +1029,7 @@ static int ul_path_cpuparse(struct path_cxt *pc, cpu_set_t **set, int maxcpus, i
 	if (!f)
 		return -errno;
 
-	rc = fgets(buf, len, f) == NULL ? -errno : 0;
+	rc = fgets(buf, len, f) == NULL ? -EIO : 0;
 	fclose(f);
 
 	if (rc)
