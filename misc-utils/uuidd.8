@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: uuidd
 .\"    Author: [see the "AUTHOR(S)" section]
-.\" Generator: Asciidoctor 2.0.15
-.\"      Date: 2022-08-04
+.\" Generator: Asciidoctor 2.0.17
+.\"      Date: 2023-06-14
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.38.1
+.\"    Source: util-linux 2.39.1
 .\"  Language: English
 .\"
-.TH "UUIDD" "8" "2022-08-04" "util\-linux 2.38.1" "System Administration"
+.TH "UUIDD" "8" "2023-06-14" "util\-linux 2.39.1" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,6 +36,11 @@ uuidd \- UUID generation daemon
 .sp
 The \fBuuidd\fP daemon is used by the UUID library to generate universally unique identifiers (UUIDs), especially time\-based UUIDs, in a secure and guaranteed\-unique fashion, even in the face of large numbers of threads running on different CPUs trying to grab UUIDs.
 .SH "OPTIONS"
+.sp
+\fB\-C\fP, \fB\-\-cont\-clock\fP \fIopt_arg\fP
+.RS 4
+Activate continuous clock handling for time based UUIDs. \fBuuidd\fP could use all possible clock values, beginning with the daemon\(cqs start time. The optional argument can be used to set a value for the max_clock_offset. This gurantees, that a clock value of a UUID will always be within the range of the max_clock_offset. \*(Aq\-C\*(Aq or \*(Aq\-\-cont\-clock\*(Aq enables the feature with a default max_clock_offset of 2 hours. \*(Aq\-C<NUM>[hd]\*(Aq or \*(Aq\-\-cont\-clock=<NUM>[hd]\*(Aq enables the feature with a max_clock_offset of NUM seconds. In case of an appended h or d, the NUM value is read in hours or days. The minimum value is 60 seconds, the maximum value is 365 days.
+.RE
 .sp
 \fB\-d\fP, \fB\-\-debug\fP
 .RS 4

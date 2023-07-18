@@ -388,6 +388,8 @@ usrbin_execdir = @usrbin_execdir@
 usrlib_execdir = @usrlib_execdir@
 usrsbin_execdir = @usrsbin_execdir@
 vendordir = @vendordir@
+with_bashcompletiondir = @with_bashcompletiondir@
+with_systemdsystemunitdir = @with_systemdsystemunitdir@
 
 # We require automake 1.10 at least.
 AUTOMAKE_OPTIONS = 1.10
