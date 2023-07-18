@@ -20,6 +20,7 @@ Build-Depends: asciidoctor,
                netbase <!stage1 !nocheck>,
                pkg-config,
                po-debconf,
+               po4a,
                socat <!stage1 !nocheck>,
                systemd [linux-any] <!stage1>,
                zlib1g-dev
