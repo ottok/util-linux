@@ -15,9 +15,11 @@ libmount.so.1 libmount1 #MINVER#
  MOUNT_2_35@MOUNT_2_35 2.35.1
  MOUNT_2_37@MOUNT_2_37 2.37.2
  MOUNT_2_38@MOUNT_2_38 2.38
+ MOUNT_2_39@MOUNT_2_39 2.39.1
  mnt_cache_device_has_tag@MOUNT_2.19 2.19.1
  mnt_cache_find_tag_value@MOUNT_2.19 2.19.1
  mnt_cache_read_tags@MOUNT_2.19 2.19.1
+ mnt_cache_set_sbprobe@MOUNT_2_39 2.39.1
  mnt_cache_set_targets@MOUNT_2.25 2.25
  (arch=linux-any)mnt_context_append_options@MOUNT_2.19 2.19.1
  (arch=linux-any)mnt_context_apply_fstab@MOUNT_2.19 2.19.1
@@ -32,6 +34,8 @@ libmount.so.1 libmount1 #MINVER#
  (arch=linux-any)mnt_context_enable_fork@MOUNT_2.21 2.24.2
  (arch=linux-any)mnt_context_enable_lazy@MOUNT_2.19 2.19.1
  (arch=linux-any)mnt_context_enable_loopdel@MOUNT_2.19 2.19.1
+ mnt_context_enable_noautofs@MOUNT_2_39 2.39.1
+ mnt_context_enable_onlyonce@MOUNT_2_39 2.39.1
  (arch=linux-any)mnt_context_enable_rdonly_umount@MOUNT_2.19 2.19.1
  (arch=linux-any)mnt_context_enable_rwonly_mount@MOUNT_2.30 2.30.2
  (arch=linux-any)mnt_context_enable_sloppy@MOUNT_2.19 2.19.1
@@ -256,6 +260,7 @@ libmount.so.1 libmount1 #MINVER#
  mnt_table_append_intro_comment@MOUNT_2.24 2.24.2
  mnt_table_append_trailing_comment@MOUNT_2.24 2.24.2
  mnt_table_enable_comments@MOUNT_2.24 2.24.2
+ mnt_table_enable_noautofs@MOUNT_2_39 2.39.1
  mnt_table_find_devno@MOUNT_2.22 2.24.2
  mnt_table_find_fs@MOUNT_2.34 2.34
  mnt_table_find_mountpoint@MOUNT_2.23 2.24.2
@@ -276,6 +281,7 @@ libmount.so.1 libmount1 #MINVER#
  mnt_table_insert_fs@MOUNT_2.34 2.34
  mnt_table_is_empty@MOUNT_2.24 2.24.2
  mnt_table_is_fs_mounted@MOUNT_2.20 2.20.1
+ mnt_table_is_noautofs@MOUNT_2_39 2.39.1
  mnt_table_last_fs@MOUNT_2.24 2.24.2
  mnt_table_move_fs@MOUNT_2.34 2.34
  mnt_table_next_child_fs@MOUNT_2.19 2.19.1
