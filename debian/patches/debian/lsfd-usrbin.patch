@@ -7,10 +7,10 @@ Subject: Install lsfd into /usr/bin
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/misc-utils/Makemodule.am b/misc-utils/Makemodule.am
-index cc18acb..9a91c88 100644
+index 71548c9..67af544 100644
 --- a/misc-utils/Makemodule.am
 +++ b/misc-utils/Makemodule.am
-@@ -247,7 +247,7 @@ hardlink_CFLAGS = $(AM_CFLAGS)
+@@ -248,7 +248,7 @@ hardlink_CFLAGS = $(AM_CFLAGS)
  endif
  
  if BUILD_LSFD
