@@ -1,3 +1,19 @@
+util-linux (2.39.1-1) experimental; urgency=medium
+
+  * New upstream release. (Closes: #990243)
+    * umount: properly handle special characters in completion
+      (Closes: #1011401)
+    * fdisk: fix --output option parsing (Closes: #1022249)
+    * logger: initialize socket credentials contol union (Closes: #1040710)
+    * wall: use fputs_careful() (Closes: #826596)
+    * Use non-deprecated chown syntax (Closes: #1007139)
+  * Drop upstream patches, refresh Debian-specific patches.
+  * Fix fincore test.
+  * Update debian/copyright.
+  * Build-Depend on po4a, but do not install translated manpages just yet.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 18 Jul 2023 23:12:16 +0200
+
 util-linux (2.38.1-6) unstable; urgency=medium
 
   * Skip some problematic code for stage1 builds
