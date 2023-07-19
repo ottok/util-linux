@@ -66,13 +66,50 @@ Section: localization
 Priority: optional
 Depends: util-linux (>= ${source:Upstream-Version}),
          ${misc:Depends}
+Breaks: manpages-cs (<< 4.19.0-4~),
+        manpages-da (<< 4.19.0-4~),
+        manpages-de (<< 4.19.0-4~),
+        manpages-de-dev (<< 4.19.0-4~),
+        manpages-es (<< 4.19.0-4~),
+        manpages-fi (<< 4.19.0-4~),
+        manpages-fr (<< 4.19.0-4~),
+        manpages-fr-dev (<< 4.19.0-4~),
+        manpages-hu (<< 4.19.0-4~),
+        manpages-id (<< 4.19.0-4~),
+        manpages-it (<< 4.19.0-4~),
+        manpages-nl (<< 4.19.0-4~),
+        manpages-pl (<< 4.19.0-4~),
+        manpages-ro (<< 4.19.0-4~),
+        manpages-ro-dev (<< 4.19.0-4~),
+        manpages-sr (<< 4.19.0-4~),
+        manpages-uk (<< 4.19.0-4~),
+        manpages-uk-dev (<< 4.19.0-4~)
+Replaces: manpages-cs (<< 4.19.0-4~),
+          manpages-da (<< 4.19.0-4~),
+          manpages-de (<< 4.19.0-4~),
+          manpages-de-dev (<< 4.19.0-4~),
+          manpages-es (<< 4.19.0-4~),
+          manpages-fi (<< 4.19.0-4~),
+          manpages-fr (<< 4.19.0-4~),
+          manpages-fr-dev (<< 4.19.0-4~),
+          manpages-hu (<< 4.19.0-4~),
+          manpages-id (<< 4.19.0-4~),
+          manpages-it (<< 4.19.0-4~),
+          manpages-nl (<< 4.19.0-4~),
+          manpages-pl (<< 4.19.0-4~),
+          manpages-ro (<< 4.19.0-4~),
+          manpages-ro-dev (<< 4.19.0-4~),
+          manpages-sr (<< 4.19.0-4~),
+          manpages-uk (<< 4.19.0-4~),
+          manpages-uk-dev (<< 4.19.0-4~)
 Multi-Arch: foreign
 Description: locales files for util-linux
  This package contains the internationalization files for the util-linux
  package.
  .
  They are needed when you want the programs in util-linux to print their
- messages in other languages than English.
+ messages in other languages than English, or read manual pages in another
+ language than English.
 
 Package: mount
 Architecture: linux-any
