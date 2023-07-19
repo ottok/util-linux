@@ -42,11 +42,11 @@ Section: utils
 Essential: yes
 Pre-Depends: ${misc:Pre-Depends},
              ${shlibs:Depends}
-Depends: util-linux-extra,
-         ${misc:Depends}
+Depends: ${misc:Depends}
 Recommends: sensible-utils
 Suggests: dosfstools,
           kbd,
+          util-linux-extra,
           util-linux-locales
 Provides: hardlink
 Conflicts: hardlink
