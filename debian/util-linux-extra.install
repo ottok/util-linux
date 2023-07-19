@@ -1,7 +1,14 @@
 #!/usr/bin/dh-exec --with=install
 debian/hwclock.rules => /usr/lib/udev/rules.d/85-hwclock.rules
 debian/hwclock-set => /usr/lib/udev/hwclock-set
+bin/pipesz => /usr/bin/pipesz                                   [linux-any]
+sbin/blkpr => /usr/sbin/blkpr                                   [linux-any]
+sbin/hwclock
+usr/bin/fadvise                                                 [linux-any]
 usr/bin/fincore                                                 [linux-any]
 usr/bin/lsfd                                                    [linux-any]
 usr/bin/lsirq                                                   [linux-any]
-sbin/hwclock
+usr/bin/waitpid                                                 [linux-any]
+usr/share/bash-completion/completions/fadvise                   [linux-any]
+usr/share/bash-completion/completions/pipesz                    [linux-any]
+usr/share/bash-completion/completions/waitpid                   [linux-any]
