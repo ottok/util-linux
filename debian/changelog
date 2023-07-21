@@ -1,3 +1,14 @@
+util-linux (2.39.1-2) experimental; urgency=medium
+
+  * Install localized manpages
+  * Stop hard-depending on util-linux-extra
+  * Install new blkpr, fadvise, pipesz, waitpid utilities
+  * Fix libmount1 symbols on non-linux
+  * Build-Depend on libncurses-dev instead of old libncurses5-dev,
+    libncursesw5-dev
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 21 Jul 2023 11:44:22 +0200
+
 util-linux (2.39.1-1) experimental; urgency=medium
 
   * New upstream release. (Closes: #990243)
