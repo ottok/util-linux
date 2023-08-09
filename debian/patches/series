@@ -4,3 +4,4 @@ debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 fincore-tests-fix-double-log-output.patch
+debian/Fix-build-on-hppa.patch
