@@ -5,3 +5,7 @@ debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 fincore-tests-fix-double-log-output.patch
 upstream/enosys-fix-build-on-hppa.patch
+upstream/fadvise-test-dynamically-calculate-expected-test-values.patch
+upstream/fadvise-tests-factor-out-calls-to-fincore.patch
+upstream/fadvise-test-don-t-compare-fincore-page-counts.patch
+upstream/fadvise-test-test-with-64k-blocks.patch

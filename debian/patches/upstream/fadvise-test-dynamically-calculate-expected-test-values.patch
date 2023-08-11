@@ -1,0 +1,54 @@
+From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Sun, 21 May 2023 21:42:14 +0200
+Subject: fadvise: (test) dynamically calculate expected test values
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Thomas Weißschuh <thomas@t-8ch.de>
+---
+ tests/ts/fadvise/drop | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/tests/ts/fadvise/drop b/tests/ts/fadvise/drop
+index 7c7eee5..86c0d5b 100755
+--- a/tests/ts/fadvise/drop
++++ b/tests/ts/fadvise/drop
+@@ -16,7 +16,7 @@ ts_check_prog "sleep"
+ ts_cd "$TS_OUTDIR"
+ 
+ FILE="ddtest"
+-BS=4k
++BS=4096
+ COUNT=8
+ 
+ FILE_FS="$("$TS_CMD_FINDMNT" -nr -o FSTYPE -T "$PWD")"
+@@ -41,22 +41,22 @@ create_file() {
+     echo
+ 
+     create_file
+-    echo "offset: 8192"
+-    "$TS_CMD_FADVISE" -o 8192 "$FILE"
++    echo "offset: $(( 2 * $BS ))"
++    "$TS_CMD_FADVISE" -o $(( 2 * $BS )) "$FILE"
+     echo status: $?
+     "$TS_CMD_FINCORE" "$FILE"
+     echo
+ 
+     create_file
+-    echo "length: 16384"
+-    "$TS_CMD_FADVISE" -l 16384 "$FILE"
++    echo "length: $(( 4 * $BS ))"
++    "$TS_CMD_FADVISE" -l $(( 4 * $BS )) "$FILE"
+     echo status: $?
+     "$TS_CMD_FINCORE" "$FILE"
+     echo
+ 
+     create_file
+-    echo "offset: 8192, length: 16384 fd: 42"
+-    "$TS_CMD_FADVISE" -o 8192 -l 16384 --fd 42 42<"$FILE"
++    echo "offset: $(( 2 * $BS )), length: $(( 4 * $BS )) fd: 42"
++    "$TS_CMD_FADVISE" -o $(( 2 * $BS )) -l $(( 4 * $BS )) --fd 42 42<"$FILE"
+     echo status: $?
+     "$TS_CMD_FINCORE" "$FILE"
+     echo
