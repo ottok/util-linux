@@ -2,6 +2,12 @@ From: Chris Hofstaedtler <zeha@debian.org>
 Date: Tue, 18 Jul 2023 23:34:51 +0200
 Subject: fincore: (tests) fix double log output
 
+The fincore tests call ts_log_both inside an output redirection of both stdout
+and stderr, leading to the ts_log_both output ending up twice in both stdout
+and stderr.
+Call ts_log_both before setting up the output redirection.
+
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
 ---
  tests/ts/fincore/count | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)

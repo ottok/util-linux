@@ -3,7 +3,7 @@ debian/verbose-tests.patch
 debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
-fincore-tests-fix-double-log-output.patch
+upstream/fincore-tests-fix-double-log-output.patch
 upstream/enosys-fix-build-on-hppa.patch
 upstream/fadvise-test-dynamically-calculate-expected-test-values.patch
 upstream/fadvise-tests-factor-out-calls-to-fincore.patch
