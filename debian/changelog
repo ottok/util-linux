@@ -1,3 +1,14 @@
+util-linux (2.39.1-4) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Update Breaks/Replaces manpages-l10n to << 4.19.0-7~ (Closes: #1042773)
+  * Import upstream patches to fix fadvise tests
+
+  [ John David Anglin ]
+  * Fix build on hppa (Closes: #1042990)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 11 Aug 2023 18:52:26 +0200
+
 util-linux (2.39.1-3) unstable; urgency=medium
 
   * Release to unstable.
