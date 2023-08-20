@@ -11,3 +11,4 @@ upstream/fadvise-test-don-t-compare-fincore-page-counts.patch
 upstream/fadvise-test-test-with-64k-blocks.patch
 upstream/libmount-Fix-regression-when-mounting-with-atime.patch
 upstream/setarch-add-riscv64-riscv32-support.patch
+upstream/cfdisk-fix-menu-behavior-after-writing-changes.patch

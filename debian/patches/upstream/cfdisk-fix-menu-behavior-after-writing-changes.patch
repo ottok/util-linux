@@ -1,0 +1,38 @@
+From: Karel Zak <kzak@redhat.com>
+Date: Mon, 26 Jun 2023 13:25:11 +0200
+Subject: cfdisk: fix menu behavior after writing changes
+
+Florian wrote:
+  after a successful write, cfdisk remains on the "Write" cursor and
+  furthermore when navigating to "Quit" will continue to  show
+  "...without writing changes", despite there were writes. This patch
+  addresses that.
+
+Based on patch from Florian Zimmermann <florian.zimmermann@gmail.com>
+
+Signed-off-by: Karel Zak <kzak@redhat.com>
+Closes: #927041
+---
+ disk-utils/cfdisk.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/disk-utils/cfdisk.c b/disk-utils/cfdisk.c
+index 3d741c9..cd9aadd 100644
+--- a/disk-utils/cfdisk.c
++++ b/disk-utils/cfdisk.c
+@@ -2523,11 +2523,15 @@ static int main_menu_action(struct cfdisk *cf, int key)
+ 		if (rc)
+ 			warn = _("Failed to write disklabel.");
+ 		else {
++			size_t q_idx = 0;
++
+ 			if (cf->device_is_used)
+ 				fdisk_reread_changes(cf->cxt, cf->original_layout);
+ 			else
+ 				fdisk_reread_partition_table(cf->cxt);
+ 			info = _("The partition table has been altered.");
++			if (menu_get_menuitem_by_key(cf, 'q', &q_idx))
++				ui_menu_goto(cf, q_idx);
+ 		}
+ 		cf->nwrites++;
+ 		break;
