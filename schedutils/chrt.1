@@ -2,12 +2,12 @@
 .\"     Title: chrt
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.17
-.\"      Date: 2023-06-14
+.\"      Date: 2023-08-17
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.1
+.\"    Source: util-linux 2.39.2
 .\"  Language: English
 .\"
-.TH "CHRT" "1" "2023-06-14" "util\-linux 2.39.1" "User Commands"
+.TH "CHRT" "1" "2023-08-17" "util\-linux 2.39.2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -77,7 +77,7 @@ Specifies runtime parameter for \fBSCHED_DEADLINE\fP policy (Linux\-specific).
 .sp
 \fB\-P\fP, \fB\-\-sched\-period\fP \fInanoseconds\fP
 .RS 4
-Specifies period parameter for \fBSCHED_DEADLINE\fP policy (Linux\-specific).
+Specifies period parameter for \fBSCHED_DEADLINE\fP policy (Linux\-specific). Note that the kernel\(cqs lower limit is 100 milliseconds.
 .RE
 .sp
 \fB\-D\fP, \fB\-\-sched\-deadline\fP \fInanoseconds\fP
