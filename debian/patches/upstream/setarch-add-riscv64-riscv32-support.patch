@@ -1,0 +1,26 @@
+From: Michal Biesek <michalbiesek@gmail.com>
+Date: Mon, 14 Aug 2023 02:37:45 +0200
+Subject: setarch: add riscv64/riscv32 support
+
+Signed-off-by: Michal Biesek <michalbiesek@gmail.com>
+---
+ sys-utils/setarch.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/sys-utils/setarch.c b/sys-utils/setarch.c
+index 1a255e4..0a6af83 100644
+--- a/sys-utils/setarch.c
++++ b/sys-utils/setarch.c
+@@ -270,6 +270,12 @@ static struct arch_domain *init_arch_domains(void)
+ 		{PER_LINUX32,	"arm",		"arm"},
+ 		{PER_LINUX,	"arm64",	"aarch64"},
+ 		{PER_LINUX,	"aarch64",	"aarch64"},
++#endif
++#if defined(__riscv)
++		{PER_LINUX32,	"riscv32",	"riscv32"},
++		{PER_LINUX32,	"rv32",	"riscv32"},
++		{PER_LINUX,	"riscv64",	"riscv64"},
++		{PER_LINUX,	"rv64",	"riscv64"},
+ #endif
+ 		/* place holder, will be filled up at runtime */
+ 		{-1,		NULL,		NULL},
