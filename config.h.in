@@ -334,6 +334,9 @@
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
 
+/* Define to 1 if you have the <linux/mount.h> header file. */
+#undef HAVE_LINUX_MOUNT_H
+
 /* Define to 1 if you have the <linux/net_namespace.h> header file. */
 #undef HAVE_LINUX_NET_NAMESPACE_H
 
@@ -597,6 +600,12 @@
 
 /* Define to 1 if the system has the type `struct mount_attr'. */
 #undef HAVE_STRUCT_MOUNT_ATTR
+
+/* Define to 1 if the system has the type `struct statx'. */
+#undef HAVE_STRUCT_STATX
+
+/* Define to 1 if `stx_mnt_id' is a member of `struct statx'. */
+#undef HAVE_STRUCT_STATX_STX_MNT_ID
 
 /* Define to 1 if `st_mtim.tv_nsec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC

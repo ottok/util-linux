@@ -2,12 +2,12 @@
 .\"     Title: zramctl
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.17
-.\"      Date: 2023-06-14
+.\"      Date: 2023-08-17
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.1
+.\"    Source: util-linux 2.39.2
 .\"  Language: English
 .\"
-.TH "ZRAMCTL" "8" "2023-06-14" "util\-linux 2.39.1" "System Administration"
+.TH "ZRAMCTL" "8" "2023-08-17" "util\-linux 2.39.2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -62,6 +62,8 @@ Note that \fIzramdev\fP node specified on command line has to already exist. The
 \fB\-a\fP, \fB\-\-algorithm lzo\fP|\fBlz4\fP|\fBlz4hc\fP|\fBdeflate\fP|\fB842\fP|\fBzstd\fP
 .RS 4
 Set the compression algorithm to be used for compressing data in the zram device.
+.sp
+The \fBlist of supported algorithms could be inaccurate\fP as it depends on the current kernel configuration. A basic overview can be obtained by using the command "cat /sys/block/zram0/comp_algorithm"; however, please note that this list might also be incomplete. This is due to the fact that ZRAM utilizes the Crypto API, and if certain algorithms were built as modules, it becomes impossible to enumerate all of them.
 .RE
 .sp
 \fB\-f\fP, \fB\-\-find\fP

@@ -2,12 +2,12 @@
 .\"     Title: mount
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.17
-.\"      Date: 2023-06-27
+.\"      Date: 2023-08-17
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.1
+.\"    Source: util-linux 2.39.2
 .\"  Language: English
 .\"
-.TH "MOUNT" "8" "2023-06-27" "util\-linux 2.39.1" "System Administration"
+.TH "MOUNT" "8" "2023-08-17" "util\-linux 2.39.2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -387,7 +387,11 @@ Note that \fBmount\fP does not pass this option to the \fB/sbin/mount.\fP\fItype
 .sp
 \fB\-f, \-\-fake\fP
 .RS 4
-Causes everything to be done except for the actual system call; if it\(cqs not obvious, this "fakes" mounting the filesystem. This option is useful in conjunction with the \fB\-v\fP flag to determine what the \fBmount\fP command is trying to do. It can also be used to add entries for devices that were mounted earlier with the \fB\-n\fP option. The \fB\-f\fP option checks for an existing record in \fI/etc/mtab\fP and fails when the record already exists (with a regular non\-fake mount, this check is done by the kernel).
+Causes everything to be done except for the mount\-related system calls. The \-\-fake option was originally designed to write an entry to /etc/mtab without actually mounting.
+.sp
+The /etc/mtab is no longer maintained in userspace, and starting from version 2.39, the mount operation can be a complex chain of operations with dependencies between the syscalls. The \-\-fake option forces libmount to skip all mount source preparation, mount option analysis, and the actual mounting process.
+.sp
+The difference between fake and non\-fake execution is huge. This is the reason why the \-\-fake option has minimal significance for the current mount(8) implementation and it is maintained mostly for backward compatibility.
 .RE
 .sp
 \fB\-i, \-\-internal\-only\fP
