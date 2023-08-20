@@ -1,3 +1,14 @@
+util-linux (2.39.2-1) unstable; urgency=medium
+
+  * New upstream version 2.39.2, fixing various libmount issues.
+  * Refresh patches
+  * Apply additional patches from upstream:
+    * libmount: Fix regression when mounting with atime (Closes: #1042714)
+    * setarch: add riscv64 support
+    * cfdisk: fix menu behavior after writing changes (Closes: #927041)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 20 Aug 2023 22:14:58 +0200
+
 util-linux (2.39.1-4) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
