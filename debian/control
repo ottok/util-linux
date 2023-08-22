@@ -493,7 +493,8 @@ Section: utils
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Replaces: util-linux (<< 2.38~)
-Breaks: util-linux (<< 2.38~)
+Breaks: initscripts (<< 3.08-1~),
+	util-linux (<< 2.38~),
 Priority: standard
 Multi-Arch: foreign
 Description: interactive login tools
