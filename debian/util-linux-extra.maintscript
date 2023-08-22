@@ -1,2 +1,0 @@
-rm_conffile /etc/default/hwclock 2.39.2-1.1~ 
-rm_conffile /etc/init.d/hwclock.sh 2.39.2-1.1~ 
