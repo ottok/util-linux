@@ -1,6 +1,6 @@
 Source: util-linux
 Build-Depends:
- asciidoctor <!stage1>,
+ asciidoctor <!stage1 !nodoc>,
  bc <!stage1 !nocheck>,
  bison,
  debhelper-compat (= 13),
