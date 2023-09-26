@@ -1,3 +1,13 @@
+util-linux (2.39.2-2) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Apply wrap-and-sort -kas
+
+  [ Helmut Grohne ]
+  * Fix FTBFS when systemd.pc changes systemdsystemunitdir (Closes: #1052981)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 26 Sep 2023 17:39:54 +0200
+
 util-linux (2.39.2-1) unstable; urgency=medium
 
   * New upstream version 2.39.2, fixing various libmount issues.
