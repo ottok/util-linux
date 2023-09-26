@@ -53,6 +53,10 @@ BINARYPACKAGES := $(shell awk '/^Package: /{if($$2 !~ /^lib|-udeb$$/) print $$2}
 # hardening
 export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES))-$(DEB_HOST_ARCH_OS),-linux)
+export deb_systemdsystemunitdir = $(shell pkg-config --variable=systemdsystemunitdir systemd | sed s,^/,,)
+endif
+
 %:
 	dh $@
 
