@@ -493,7 +493,7 @@ Section: utils
 Depends: ${misc:Depends},
          ${shlibs:Depends}
 Replaces: util-linux (<< 2.38~)
-Breaks: initscripts (<< 3.08-1~),
+Breaks: initscripts (<< 3.08-2~),
 	util-linux (<< 2.38~),
 Priority: standard
 Multi-Arch: foreign
