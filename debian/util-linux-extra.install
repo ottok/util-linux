@@ -1,6 +1,4 @@
 #!/usr/bin/dh-exec --with=install
-debian/hwclock.rules => /usr/lib/udev/rules.d/85-hwclock.rules
-debian/hwclock-set => /usr/lib/udev/hwclock-set
 bin/pipesz => /usr/bin/pipesz                                   [linux-any]
 sbin/blkpr => /usr/sbin/blkpr                                   [linux-any]
 sbin/hwclock
