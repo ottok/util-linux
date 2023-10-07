@@ -1,0 +1,4 @@
+#!/usr/bin/dh-exec
+debian/tmp/usr/share/man/man1/uuidgen.1
+debian/tmp/usr/share/man/man1/uuidparse.1
+debian/tmp/usr/share/man/man8/uuidd.8                             [linux-any]
