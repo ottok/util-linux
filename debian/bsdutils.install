@@ -1,4 +1,4 @@
-#!/usr/bin/dh-exec --with=install
+#!/usr/bin/dh-exec
 usr/bin/logger
 usr/bin/renice
 usr/bin/script                                               [linux-any]

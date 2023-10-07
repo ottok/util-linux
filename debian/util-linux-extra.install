@@ -1,4 +1,4 @@
-#!/usr/bin/dh-exec --with=install
+#!/usr/bin/dh-exec
 bin/pipesz => /usr/bin/pipesz                                   [linux-any]
 sbin/blkpr => /usr/sbin/blkpr                                   [linux-any]
 sbin/hwclock
