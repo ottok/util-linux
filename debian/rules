@@ -123,7 +123,11 @@ endif
 	rm -rf debian/*-udeb/usr/share/doc
 
 override_dh_installman:
+ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+	:
+else
 	dh_installman --language=C
+endif
 
 override_dh_missing:
 	dh_missing --list-missing
