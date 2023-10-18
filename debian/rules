@@ -55,6 +55,8 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
 
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES))-$(DEB_HOST_ARCH_OS),-linux)
 export deb_systemdsystemunitdir = $(shell pkg-config --variable=systemdsystemunitdir systemd | sed s,^/,,)
+else
+export deb_systemdsystemunitdir = debhelper needs this variable even when it doesn't need it
 endif
 
 %:
