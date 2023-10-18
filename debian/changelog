@@ -1,3 +1,10 @@
+util-linux (2.39.2-4) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Fix FTBFS with stage1 profile (Closes: #1054162)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 18 Oct 2023 15:36:05 +0200
+
 util-linux (2.39.2-3) unstable; urgency=medium
 
   [ Samuel Thibault ]
