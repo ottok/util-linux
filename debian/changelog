@@ -1,3 +1,9 @@
+util-linux (2.39.2-5) unstable; urgency=medium
+
+  * Fix setterm --resize
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 30 Oct 2023 23:02:25 +0100
+
 util-linux (2.39.2-4) unstable; urgency=medium
 
   [ Helmut Grohne ]
