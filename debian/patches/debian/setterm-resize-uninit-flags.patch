@@ -1,0 +1,34 @@
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Mon, 30 Oct 2023 22:59:33 +0100
+Subject: setterm: avoid restoring flags from uninitialized memory
+
+Depending on the used compiler and flags, previously either F_SETFL was called
+with 0 or with a random value. Never with the intended previous flags.
+
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+---
+ term-utils/setterm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/term-utils/setterm.c b/term-utils/setterm.c
+index 22afc76..dfc55ab 100644
+--- a/term-utils/setterm.c
++++ b/term-utils/setterm.c
+@@ -846,7 +846,7 @@ static void tty_raw(struct termios *saved_attributes, int *saved_fl)
+ {
+ 	struct termios tattr;
+ 
+-	fcntl(STDIN_FILENO, F_GETFL, saved_fl);
++	*saved_fl = fcntl(STDIN_FILENO, F_GETFL);
+ 	tcgetattr(STDIN_FILENO, saved_attributes);
+ 	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+ 	memcpy(&tattr, saved_attributes, sizeof(struct termios));
+@@ -898,7 +898,7 @@ static int resizetty(void)
+ 	ssize_t rc;
+ 	struct winsize ws;
+ 	struct termios saved_attributes;
+-	int saved_fl;
++	int saved_fl = 0;
+ 
+ 	if (!isatty(STDIN_FILENO))
+ 		errx(EXIT_FAILURE, _("stdin does not refer to a terminal"));
