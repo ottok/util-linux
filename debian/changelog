@@ -1,3 +1,10 @@
+util-linux (2.39.2-6) UNRELEASED; urgency=medium
+
+  * d/util-linux.manpages,util-linux-locales.install: Generalize hurd-i386 into
+    hurd-any.
+
+ -- Samuel Thibault <sthibault@debian.org>  Sun, 12 Nov 2023 22:43:00 +0100
+
 util-linux (2.39.2-5) unstable; urgency=medium
 
   * Fix setterm --resize
