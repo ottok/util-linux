@@ -13,3 +13,4 @@ upstream/libmount-Fix-regression-when-mounting-with-atime.patch
 upstream/setarch-add-riscv64-riscv32-support.patch
 upstream/cfdisk-fix-menu-behavior-after-writing-changes.patch
 upstream/setterm-resize-uninit-flags.patch
+upstream/build-sys-fix-libmount-src-hooks-c-use.patch
