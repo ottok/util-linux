@@ -1,9 +1,14 @@
-util-linux (2.39.2-6) UNRELEASED; urgency=medium
+util-linux (2.39.2-6) unstable; urgency=medium
 
+  [ Samuel Thibault ]
   * d/util-linux.manpages,util-linux-locales.install: Generalize hurd-i386 into
     hurd-any.
 
- -- Samuel Thibault <sthibault@debian.org>  Sun, 12 Nov 2023 22:43:00 +0100
+  [ Chris Hofstaedtler ]
+  * Fix FTBFS on hurd-i386 using upstreamed patch.
+    Thanks to Samuel Thibault <sthibault@debian.org> (Closes: #1055875)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 13 Nov 2023 12:48:34 +0100
 
 util-linux (2.39.2-5) unstable; urgency=medium
 
