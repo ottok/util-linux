@@ -352,9 +352,6 @@
 /* Define to 1 if you have the <linux/securebits.h> header file. */
 #undef HAVE_LINUX_SECUREBITS_H
 
-/* Define to 1 if you have the <linux/stat.h> header file. */
-#undef HAVE_LINUX_STAT_H
-
 /* Define to 1 if you have the <linux/tiocl.h> header file. */
 #undef HAVE_LINUX_TIOCL_H
 
@@ -947,7 +944,7 @@
 /* Define to 1 if want to support namepaces. */
 #undef USE_LIBMOUNT_SUPPORT_NAMESPACES
 
-/* Enable plymouth support feature for sulogin and aggety */
+/* Enable plymouth support feature for sulogin and agetty */
 #undef USE_PLYMOUTH_SUPPORT
 
 /* Should sulogin use an emergency mount of /dev and /proc? */
