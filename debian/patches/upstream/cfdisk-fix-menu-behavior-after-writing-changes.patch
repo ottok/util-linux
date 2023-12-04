@@ -17,10 +17,10 @@ Closes: #927041
  1 file changed, 4 insertions(+)
 
 diff --git a/disk-utils/cfdisk.c b/disk-utils/cfdisk.c
-index 3d741c9..cd9aadd 100644
+index fde2029..3fe852a 100644
 --- a/disk-utils/cfdisk.c
 +++ b/disk-utils/cfdisk.c
-@@ -2523,11 +2523,15 @@ static int main_menu_action(struct cfdisk *cf, int key)
+@@ -2525,11 +2525,15 @@ static int main_menu_action(struct cfdisk *cf, int key)
  		if (rc)
  			warn = _("Failed to write disklabel.");
  		else {

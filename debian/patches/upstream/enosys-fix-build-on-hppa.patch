@@ -11,10 +11,10 @@ Signed-off-by: John David Anglin <dave.anglin@bell.net>
  1 file changed, 6 insertions(+)
 
 diff --git a/include/audit-arch.h b/include/audit-arch.h
-index 63d9eb5..f1354ee 100644
+index db14560..679964f 100644
 --- a/include/audit-arch.h
 +++ b/include/audit-arch.h
-@@ -57,6 +57,12 @@
+@@ -59,6 +59,12 @@
  #    else
  # 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_LOONGARCH64
  #    endif

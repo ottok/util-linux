@@ -22,7 +22,7 @@ index d5422be..a3462fb 100644
  TESTS_COMMAND = $(top_srcdir)/tests/run.sh \
  	--srcdir=$(abs_top_srcdir) \
 diff --git a/tests/functions.sh b/tests/functions.sh
-index c5e42b1..e279c4b 100644
+index 5a562a3..493c1d7 100644
 --- a/tests/functions.sh
 +++ b/tests/functions.sh
 @@ -183,6 +183,17 @@ function ts_failed_subtest {
