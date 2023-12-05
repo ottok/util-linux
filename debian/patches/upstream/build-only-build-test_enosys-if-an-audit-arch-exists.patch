@@ -1,0 +1,84 @@
+From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Fri, 1 Dec 2023 09:35:02 +0100
+Subject: build: only build test_enosys if an audit arch exists
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Link: https://lore.kernel.org/util-linux/9211accf8670f28778166a1acdc186e8dd28f2e8.camel@physik.fu-berlin.de/
+Signed-off-by: Thomas Weißschuh <thomas@t-8ch.de>
+---
+ configure.ac                | 13 +++++++++++++
+ meson.build                 | 13 ++++++++-----
+ tests/helpers/Makemodule.am |  2 ++
+ 3 files changed, 23 insertions(+), 5 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 36c24b4..c84d295 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1878,6 +1878,19 @@ UL_REQUIRES_LINUX([waitpid])
+ UL_REQUIRES_SYSCALL_CHECK([waitpid], [UL_CHECK_SYSCALL([pidfd_open])], [pidfd_open])
+ AM_CONDITIONAL([BUILD_WAITPID], [test "x$build_waitpid" = xyes])
+ 
++UL_BUILD_INIT([test_enosys], [check])
++UL_REQUIRES_LINUX([test_enosys])
++AS_IF([test "x$build_test_enosys" = xyes], [
++  AC_MSG_CHECKING([for valid audit arch])
++  AC_COMPILE_IFELSE(
++    [AC_LANG_PROGRAM([[#include "${srcdir}/include/audit-arch.h"]])],
++    [AC_MSG_RESULT([yes])],
++    [AC_MSG_RESULT([no])
++     build_test_enosys=no
++    ])
++])
++AM_CONDITIONAL([BUILD_TEST_ENOSYS], [test "x$build_test_enosys" = xyes])
++
+ UL_BUILD_INIT([getopt], [yes])
+ AM_CONDITIONAL([BUILD_GETOPT], [test "x$build_getopt" = xyes])
+ 
+diff --git a/meson.build b/meson.build
+index baca755..b10028f 100644
+--- a/meson.build
++++ b/meson.build
+@@ -3,6 +3,7 @@ project('util-linux', 'c',
+         meson_version: '>=0.57.0',
+         license : 'GPLv2+')
+ 
++fs = import('fs')
+ pkgconfig = import('pkgconfig')
+ 
+ libblkid_version = '1.1.0'
+@@ -3285,11 +3286,13 @@ if LINUX
+   exes += exe
+ endif
+ 
+-exe = executable(
+-  'test_enosys',
+-  'tests/helpers/test_enosys.c',
+-  include_directories : includes)
+-exes += exe
++if cc.compiles(fs.read('include/audit-arch.h'), name : 'has AUDIT_ARCH_NATIVE')
++  exe = executable(
++    'test_enosys',
++    'tests/helpers/test_enosys.c',
++    include_directories : includes)
++  exes += exe
++endif
+ 
+ ############################################################
+ 
+diff --git a/tests/helpers/Makemodule.am b/tests/helpers/Makemodule.am
+index 2b1df3c..6705eaf 100644
+--- a/tests/helpers/Makemodule.am
++++ b/tests/helpers/Makemodule.am
+@@ -34,7 +34,9 @@ test_uuid_namespace_SOURCES = tests/helpers/test_uuid_namespace.c \
+ if LINUX
+ check_PROGRAMS += test_mkfds
+ test_mkfds_SOURCES = tests/helpers/test_mkfds.c
++endif
+ 
++if BUILD_TEST_ENOSYS
+ check_PROGRAMS += test_enosys
+ test_enosys_SOURCES = tests/helpers/test_enosys.c
+ endif

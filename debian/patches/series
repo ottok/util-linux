@@ -12,3 +12,4 @@ upstream/fadvise-test-test-with-64k-blocks.patch
 upstream/setarch-add-riscv64-riscv32-support.patch
 upstream/cfdisk-fix-menu-behavior-after-writing-changes.patch
 upstream/fincore-tests-also-use-nosize-error-file.patch
+upstream/build-only-build-test_enosys-if-an-audit-arch-exists.patch
