@@ -1,5 +1,5 @@
-bin/mount
-bin/umount
-sbin/losetup
-sbin/swapoff
-sbin/swapon
+bin/mount usr/bin/
+bin/umount usr/bin/
+sbin/losetup usr/sbin/
+sbin/swapoff usr/sbin/
+sbin/swapon usr/sbin/

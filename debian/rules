@@ -3,6 +3,8 @@
 include /usr/share/dpkg/architecture.mk
 include /usr/share/dpkg/pkg-info.mk
 
+CONFOPTS += --enable-usrdir-path
+
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
@@ -156,7 +158,7 @@ override_dh_installpam:
 	dh_installpam --package=util-linux --name=su-l
 
 override_dh_fixperms:
-	dh_fixperms -i -a -Xusr/bin/wall -Xusr/bin/write -Xbin/mount -Xbin/umount -Xbin/su
+	dh_fixperms -i -a -Xusr/bin/wall -Xusr/bin/write -Xusr/bin/mount -Xusr/bin/umount -Xusr/bin/su
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 override_dh_installsystemd:

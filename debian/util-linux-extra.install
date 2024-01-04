@@ -1,7 +1,7 @@
 #!/usr/bin/dh-exec
 bin/pipesz => /usr/bin/pipesz                                   [linux-any]
 sbin/blkpr => /usr/sbin/blkpr                                   [linux-any]
-sbin/hwclock
+sbin/hwclock => /usr/sbin/hwclock
 usr/bin/fadvise                                                 [linux-any]
 usr/bin/fincore                                                 [linux-any]
 usr/bin/lsfd                                                    [linux-any]
