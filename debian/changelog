@@ -1,3 +1,9 @@
+util-linux (2.39.3-4) experimental; urgency=medium
+
+  * Install programs into /usr{/bin,/sbin}
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 04 Jan 2024 01:41:07 +0100
+
 util-linux (2.39.3-3) unstable; urgency=medium
 
   * Add patch from upstream to fix build on alpha
