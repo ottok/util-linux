@@ -1,3 +1,9 @@
+util-linux (2.39.3-3) unstable; urgency=medium
+
+  * Add patch from upstream to fix build on alpha
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 04 Jan 2024 01:32:22 +0100
+
 util-linux (2.39.3-2) unstable; urgency=medium
 
   [ Gioele Barabucci ]
