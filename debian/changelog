@@ -1,3 +1,9 @@
+util-linux (2.39.3-6) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 05 Jan 2024 15:25:05 +0100
+
 util-linux (2.39.3-5) experimental; urgency=medium
 
   * Install /bin/more in the old location again, to avoid breaking bootstrap
