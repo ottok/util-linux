@@ -85,6 +85,8 @@ override_dh_auto_clean:
 	# drop arch-overrides, generated in dh_install by dh-exec usage.
 	rm -f debian/uuid-runtime.install.$(DEB_HOST_ARCH) \
 		debian/util-linux.install.$(DEB_HOST_ARCH)
+	# remove postinst generated in dh_installdeb
+	rm -f debian/util-linux.postinst
 
 override_dh_install:
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
@@ -173,4 +175,12 @@ ifeq ($(DEB_HOST_ARCH_OS), linux)
 else
 	@echo "WARNING: non-linux detected, making tests non-fatal."
 	dh_auto_test --max-parallel=1 || true
+endif
+
+execute_before_dh_installdeb:
+ifeq ($(DEB_HOST_ARCH_OS), linux)
+	# due to UL_REQUIRES_LINUX([more]), only set up pager alternative
+	# on linux -- this avoids running uname in the maintainer script
+	# as doing so would be unreliable for chrootless installations
+	cp debian/util-linux.postinst.linux debian/util-linux.postinst
 endif
