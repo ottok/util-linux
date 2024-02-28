@@ -1,4 +1,4 @@
-libuuid.so.1 libuuid1 #MINVER#
+libuuid.so.1 libuuid1t64 #MINVER#
 * Build-Depends-Package: uuid-dev
  UUIDD_PRIVATE@UUIDD_PRIVATE 2.20.1
  UUID_1.0@UUID_1.0 2.16

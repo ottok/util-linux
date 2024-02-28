@@ -1,5 +1,5 @@
 Source: util-linux
-Build-Depends:
+Build-Depends: dpkg-dev (>= 1.22.5),
  asciidoctor <!stage1 !nodoc>,
  bc <!stage1 !nocheck>,
  bison,
@@ -406,7 +406,10 @@ Description: smart column output alignment library - headers
  .
  This package contains the development environment for the mount library.
 
-Package: libuuid1
+Package: libuuid1t64
+Provides: ${t64:Provides}
+Replaces: libuuid1
+Breaks: libuuid1 (<< ${source:Version})
 Architecture: any
 Section: libs
 Priority: optional
@@ -433,7 +436,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends:
- libuuid1,
+ libuuid1t64,
  ${misc:Pre-Depends}
 Depends:
  adduser,
@@ -477,7 +480,7 @@ Section: libdevel
 Priority: optional
 Depends:
  libc6-dev | libc-dev,
- libuuid1 (= ${binary:Version}),
+ libuuid1t64 (= ${binary:Version}),
  ${misc:Depends}
 Multi-Arch: same
 Description: Universally Unique ID library - headers and static libraries
