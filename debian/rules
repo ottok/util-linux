@@ -5,7 +5,7 @@ include /usr/share/dpkg/pkg-info.mk
 include /usr/share/debhelper/dh_package_notes/package-notes.mk
 
 CONFOPTS += --enable-usrdir-path
-
+CONFOPTS += --disable-makeinstall-chown
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 CONFOPTS += --with-selinux
 CONFOPTS += --with-smack
@@ -157,12 +157,6 @@ endif
 override_dh_missing:
 	dh_missing --list-missing
 
-override_dh_gencontrol:
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	dh_gencontrol --package=bsdutils -- -v1:$(DEB_VERSION_UPSTREAM_REVISION)
-endif
-	dh_gencontrol --remaining-packages
-
 override_dh_installinit:
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# install uuidd sysvinit script
@@ -177,9 +171,6 @@ override_dh_installpam:
 	dh_installpam --package=util-linux --name=runuser-l
 	dh_installpam --package=util-linux --name=su
 	dh_installpam --package=util-linux --name=su-l
-
-override_dh_fixperms:
-	dh_fixperms -i -a -Xusr/bin/wall -Xusr/bin/write -Xusr/bin/mount -Xusr/bin/umount -Xusr/bin/su
 
 ifeq (linux,$(DEB_HOST_ARCH_OS))
 override_dh_installsystemd:
