@@ -16,6 +16,7 @@ libmount.so.1 libmount1 #MINVER#
  MOUNT_2_37@MOUNT_2_37 2.37.2
  MOUNT_2_38@MOUNT_2_38 2.38
  MOUNT_2_39@MOUNT_2_39 2.39.1
+ MOUNT_2_40@MOUNT_2_40 2.40~rc2
  mnt_cache_device_has_tag@MOUNT_2.19 2.19.1
  mnt_cache_find_tag_value@MOUNT_2.19 2.19.1
  mnt_cache_read_tags@MOUNT_2.19 2.19.1
@@ -218,6 +219,7 @@ libmount.so.1 libmount1 #MINVER#
  (arch=linux-any)mnt_monitor_event_cleanup@MOUNT_2.26 2.26.2
  (arch=linux-any)mnt_monitor_get_fd@MOUNT_2.26 2.26.2
  (arch=linux-any)mnt_monitor_next_change@MOUNT_2.26 2.26.2
+ (arch=linux-any)mnt_monitor_veil_kernel@MOUNT_2_40 2.40~rc2
  (arch=linux-any)mnt_monitor_wait@MOUNT_2.26 2.26.2
  mnt_new_cache@MOUNT_2.19 2.19.1
  (arch=linux-any)mnt_new_context@MOUNT_2.19 2.19.1
@@ -244,6 +246,7 @@ libmount.so.1 libmount1 #MINVER#
  mnt_pretty_path@MOUNT_2.20 2.20.1
  mnt_ref_cache@MOUNT_2.24 2.24.2
  mnt_ref_fs@MOUNT_2.24 2.24.2
+ mnt_ref_lock@MOUNT_2_40 2.40~rc2
  (arch=linux-any)mnt_ref_monitor@MOUNT_2.26 2.26.2
  mnt_ref_table@MOUNT_2.24 2.24.2
  (arch=linux-any)mnt_reset_context@MOUNT_2.19 2.19.1
@@ -309,6 +312,7 @@ libmount.so.1 libmount1 #MINVER#
  mnt_unmangle@MOUNT_2.19 2.19.1
  mnt_unref_cache@MOUNT_2.24 2.24.2
  mnt_unref_fs@MOUNT_2.24 2.24.2
+ mnt_unref_lock@MOUNT_2_40 2.40~rc2
  (arch=linux-any)mnt_unref_monitor@MOUNT_2.26 2.26.2
  mnt_unref_table@MOUNT_2.24 2.24.2
  mnt_update_force_rdonly@MOUNT_2.19 2.19.1
