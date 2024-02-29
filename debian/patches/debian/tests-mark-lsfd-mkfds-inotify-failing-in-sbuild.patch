@@ -1,0 +1,22 @@
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Thu, 29 Feb 2024 23:22:41 +0100
+Subject: tests: mark lsfd/mkfds-inotify failing in sbuild
+
+---
+ tests/ts/lsfd/mkfds-inotify | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/tests/ts/lsfd/mkfds-inotify b/tests/ts/lsfd/mkfds-inotify
+index 3f26849..489b27f 100755
+--- a/tests/ts/lsfd/mkfds-inotify
++++ b/tests/ts/lsfd/mkfds-inotify
+@@ -25,6 +25,9 @@ ts_check_test_command "$TS_CMD_FINDMNT"
+ ts_check_prog "stat"
+ ts_check_prog "sed"
+ 
++# fails for unknown reasons in sbuild, https://github.com/util-linux/util-linux/issues/2819
++TS_KNOWN_FAIL="yes"
++
+ ts_cd "$TS_OUTDIR"
+ 
+ PID=
