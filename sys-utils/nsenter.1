@@ -2,12 +2,12 @@
 .\"     Title: nsenter
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "NSENTER" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "NSENTER" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -173,6 +173,12 @@ Enter the PID namespace. If no file is specified, enter the PID namespace of the
 Enter the user namespace. If no file is specified, enter the user namespace of the target process. If \fIfile\fP is specified, enter the user namespace specified by \fIfile\fP. See also the \fB\-\-setuid\fP and \fB\-\-setgid\fP options.
 .RE
 .sp
+\fB\-\-user\-parent\fP
+.RS 4
+Enter the parent user namespace. Parent user namespace will be acquired from any other enabled namespace.
+If combined with \fB\-\-user\fP option the parent user namespace will be fetched from the user namespace and replace it.
+.RE
+.sp
 \fB\-C\fP, \fB\-\-cgroup\fP[=\fIfile\fP]
 .RS 4
 Enter the cgroup namespace. If no file is specified, enter the cgroup namespace of the target process. If \fIfile\fP is specified, enter the cgroup namespace specified by \fIfile\fP.
@@ -195,6 +201,11 @@ If the argument "follow" is specified the GID of the target process is used.
 Set the user ID which will be used in the entered namespace.
 \fBnsenter\fP always sets UID for user namespaces, the default is 0.
 If the argument "follow" is specified the UID of the target process is used.
+.RE
+.sp
+\fB\-\-keep\-caps\fP
+.RS 4
+When the \fB\-\-user\fP option is given, ensure that capabilities granted in the user namespace are preserved in the child process.
 .RE
 .sp
 \fB\-\-preserve\-credentials\fP
@@ -232,6 +243,11 @@ Do not fork before exec\(cqing the specified program. By default, when entering 
 Set the SELinux security context used for executing a new process according to already running process specified by \fB\-\-target\fP PID. (The util\-linux has to be compiled with SELinux support otherwise the option is unavailable.)
 .RE
 .sp
+\fB\-c\fP, \fB\-\-join\-cgroup\fP
+.RS 4
+Add the initiated process to the cgroup of the target process.
+.RE
+.sp
 \fB\-h\fP, \fB\-\-help\fP
 .RS 4
 Display help text and exit.
@@ -241,6 +257,9 @@ Display help text and exit.
 .RS 4
 Print version and exit.
 .RE
+.SH "NOTES"
+.sp
+The \fB\-\-user\-parent\fP option requires Linux 4.9 or higher, older kernels will raise inappropriate ioctl for device error.
 .SH "AUTHORS"
 .sp
 .MTO "biederm\(atxmission.com" "Eric Biederman" ","

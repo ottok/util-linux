@@ -2,12 +2,12 @@
 .\"     Title: agetty
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "AGETTY" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "AGETTY" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -573,6 +573,16 @@ problem reports (if \fBsyslog\fP(3) is not used).
 \fI/etc/inittab\fP
 .RS 4
 \fBinit\fP(8) configuration file for SysV\-style init daemon.
+.RE
+.SH "CREDENTIALS"
+.sp
+\fBagetty\fP supports configuration via systemd credentials (see \c
+.URL "https://systemd.io/CREDENTIALS/" "" ")."
+\fBagetty\fP reads the following systemd credentials:
+.sp
+\fBagetty.autologin\fP (string)
+.RS 4
+If set, configures \fBagetty\fP to automatically log in the specified user without asking for a username or password, similarly to the \fB\-\-autologin\fP option.
 .RE
 .SH "BUGS"
 .sp

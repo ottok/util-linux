@@ -2,12 +2,12 @@
 .\"     Title: runuser
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-10-23
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "RUNUSER" "1" "2023-10-23" "util\-linux 2.39.3" "User Commands"
+.TH "RUNUSER" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -118,16 +118,16 @@ sets argv[0] of the shell to \*(Aq\fB\-\fP\*(Aq in order to make the shell a log
 .RE
 .RE
 .sp
+\fB\-m\fP, \fB\-p\fP, \fB\-\-preserve\-environment\fP
+.RS 4
+Preserve the entire environment, i.e., do not set \fBHOME\fP, \fBSHELL\fP, \fBUSER\fP or \fBLOGNAME\fP. The option is ignored if the option \fB\-\-login\fP is specified.
+.RE
+.sp
 \fB\-P\fP, \fB\-\-pty\fP
 .RS 4
 Create a pseudo\-terminal for the session. The independent terminal provides better security as the user does not share a terminal with the original session. This can be used to avoid TIOCSTI ioctl terminal injection and other security attacks against terminal file descriptors. The entire session can also be moved to the background (e.g., \fBrunuser \-\-pty\fP \fB\-u\fP \fIusername\fP \fB\-\-\fP \fIcommand\fP \fB&\fP). If the pseudo\-terminal is enabled, then \fBrunuser\fP works as a proxy between the sessions (sync stdin and stdout).
 .sp
 This feature is mostly designed for interactive sessions. If the standard input is not a terminal, but for example a pipe (e.g., \fBecho "date" | runuser \-\-pty \-u\fP \fIuser\fP), then the \fBECHO\fP flag for the pseudo\-terminal is disabled to avoid messy output.
-.RE
-.sp
-\fB\-m\fP, \fB\-p\fP, \fB\-\-preserve\-environment\fP
-.RS 4
-Preserve the entire environment, i.e., do not set \fBHOME\fP, \fBSHELL\fP, \fBUSER\fP or \fBLOGNAME\fP. The option is ignored if the option \fB\-\-login\fP is specified.
 .RE
 .sp
 \fB\-s\fP, \fB\-\-shell\fP=\fIshell\fP
@@ -184,6 +184,12 @@ If the target user has a restricted shell (i.e., not listed in \fI/etc/shells\fP
 \fB\-\-session\-command=\fP\fIcommand\fP
 .RS 4
 Same as \fB\-c\fP, but do not create a new session. (Discouraged.)
+.RE
+.sp
+\fB\-T\fP, \fB\-\-no\-pty\fP*
+.RS 4
+Do not create a pseudo\-terminal, opposite of \fB\-\-pty\fP and \fB\-P\fP.
+Note that running without a pseudo\-terminal opens the security risk of privilege escalation through TIOCSTI/TIOCLINUX ioctl command injection.
 .RE
 .sp
 \fB\-w\fP, \fB\-\-whitelist\-environment\fP=\fIlist\fP

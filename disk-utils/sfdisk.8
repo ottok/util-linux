@@ -2,12 +2,12 @@
 .\"     Title: sfdisk
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-11-21
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "SFDISK" "8" "2023-11-21" "util\-linux 2.39.3" "System Administration"
+.TH "SFDISK" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -527,7 +527,7 @@ This can later be restored by:
 .RE
 .ll
 .sp
-Note that sfdisk completely restores partition types and partition UUIDs. This could potentially become problematic if you duplicate the same layout to different disks, as it may result in duplicate UUIDs within your system.
+Note that \fBsfdisk\fP completely restores partition types and partition UUIDs. This could potentially become problematic if you duplicate the same layout to different disks, as it may result in duplicate UUIDs within your system.
 .SS "Full binary backup"
 .sp
 If you want to do a full binary backup of all sectors where the partition table is stored, then use the \fB\-\-backup\-pt\-sectors\fP command. It writes the sectors to \fI~/sfdisk\-<device>\-<offset>.bak\fP files. The default name of the backup file can be changed with the \fB\-\-backup\-file\fP option. The backup files contain only raw data from the \fIdevice\fP. For example:

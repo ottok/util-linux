@@ -34,6 +34,9 @@
 /* Define to 1 if you have the <byteswap.h> header file. */
 #undef HAVE_BYTESWAP_H
 
+/* Define to 1 if you have the `cachestat' function. */
+#undef HAVE_CACHESTAT
+
 /* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
 #undef HAVE_CFLOCALECOPYCURRENT
@@ -82,6 +85,10 @@
 /* Define to 1 if you have the declaration of `PR_REP_CAPACITY', and to 0 if
    you don't. */
 #undef HAVE_DECL_PR_REP_CAPACITY
+
+/* Define to 1 if you have the declaration of `sd_session_get_username', and
+   to 0 if you don't. */
+#undef HAVE_DECL_SD_SESSION_GET_USERNAME
 
 /* Define to 1 if you have the declaration of `tzname', and to 0 if you don't.
    */
@@ -220,6 +227,15 @@
 /* Define to 1 if you have the `jrand48' function. */
 #undef HAVE_JRAND48
 
+/* Define to 1 if you have the `landlock_add_rule' function. */
+#undef HAVE_LANDLOCK_ADD_RULE
+
+/* Define to 1 if you have the `landlock_create_ruleset' function. */
+#undef HAVE_LANDLOCK_CREATE_RULESET
+
+/* Define to 1 if you have the `landlock_restrict_self' function. */
+#undef HAVE_LANDLOCK_RESTRICT_SELF
+
 /* Define if langinfo.h defines ALTMON_x constants */
 #undef HAVE_LANGINFO_ALTMON
 
@@ -330,6 +346,9 @@
 
 /* Define to 1 if you have the <linux/kcmp.h> header file. */
 #undef HAVE_LINUX_KCMP_H
+
+/* Define to 1 if you have the <linux/landlock.h> header file. */
+#undef HAVE_LINUX_LANDLOCK_H
 
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
@@ -478,8 +497,14 @@
 /* Define to 1 if you have the `qsort_r' function. */
 #undef HAVE_QSORT_R
 
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
+
 /* Define to 1 if you have the `reboot' function. */
 #undef HAVE_REBOOT
+
+/* Define to 1 if you have the `renameat2' function. */
+#undef HAVE_RENAMEAT2
 
 /* Define if curses library has the resizeterm(). */
 #undef HAVE_RESIZETERM
@@ -513,6 +538,9 @@
 
 /* Define to 1 if you have the <security/pam_misc.h> header file. */
 #undef HAVE_SECURITY_PAM_MISC_H
+
+/* Define to 1 if you have the <security/pam_modules.h> header file. */
+#undef HAVE_SECURITY_PAM_MODULES_H
 
 /* Define to 1 if you have the `sendfile' function. */
 #undef HAVE_SENDFILE
@@ -810,6 +838,9 @@
 /* libfdisk version string */
 #undef LIBFDISK_VERSION
 
+/* liblastlog2 version string */
+#undef LIBLASTLOG2_VERSION
+
 /* libmount version string */
 #undef LIBMOUNT_VERSION
 
@@ -907,6 +938,9 @@
 
 /* Fallback syscall number for prlimit64 */
 #undef SYS_prlimit64
+
+/* Fallback syscall number for renameat2 */
+#undef SYS_renameat2
 
 /* Fallback syscall number for sched_getaffinity */
 #undef SYS_sched_getaffinity
@@ -1064,6 +1098,12 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
+
+/* Number of bits in time_t, on hosts where this is settable. */
+#undef _TIME_BITS
+
+/* Define to 1 on platforms where this makes time_t a 64-bit type. */
+#undef __MINGW_USE_VC2005_COMPAT
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

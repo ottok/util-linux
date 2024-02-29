@@ -2,12 +2,12 @@
 .\"     Title: fstab
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-02-15
 .\"    Manual: File formats
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "FSTAB" "5" "2023-12-01" "util\-linux 2.39.3" "File formats"
+.TH "FSTAB" "5" "2024-02-15" "util\-linux 2.40\-rc2" "File formats"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,6 +35,8 @@ fstab \- static information about the filesystems
 .SH "DESCRIPTION"
 .sp
 The file \fBfstab\fP contains descriptive information about the filesystems the system can mount. \fBfstab\fP is only read by programs, and not written; it is the duty of the system administrator to properly create and maintain this file. The order of records in \fBfstab\fP is important because \fBfsck\fP(8), \fBmount\fP(8), and \fBumount\fP(8) sequentially iterate through \fBfstab\fP doing their thing.
+.sp
+The file is not read by \fBmount\fP(8) only but often is used by many other tools and daemons, and proper functionality may require additional steps. For example, on systemd\-based systems, it\(cqs recommended to use \fBsystemctl daemon\-reload\fP after \fBfstab\fP modification.
 .sp
 Each filesystem is described on a separate line. Fields on each line are separated by tabs or spaces. Lines starting with \*(Aq#\*(Aq are comments. Blank lines are ignored.
 .sp
@@ -126,6 +128,8 @@ This field is used by \fBfsck\fP(8) to determine the order in which filesystem c
 The proper way to read records from \fBfstab\fP is to use the routines \fBgetmntent\fP(3) or \fBlibmount\fP.
 .sp
 The keyword \fBignore\fP as a filesystem type (3rd field) is no longer supported by the pure libmount based mount utility (since util\-linux v2.22).
+.sp
+This document describes handling of \fBfstab\fP by \fButil\-linux\fP and \fBlibmount\fP. For \fBsystemd\fP, read \fBsystemd\fP documentation. There are slight differences.
 .SH "HISTORY"
 .sp
 The ancestor of this \fBfstab\fP file format appeared in 4.0BSD.

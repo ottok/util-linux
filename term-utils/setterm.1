@@ -2,12 +2,12 @@
 .\"     Title: setterm
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-11-21
+.\"      Date: 2024-02-29
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "SETTERM" "1" "2023-11-21" "util\-linux 2.39.3" "User Commands"
+.TH "SETTERM" "1" "2024-02-29" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -252,6 +252,9 @@ Display help text and exit.
 .RS 4
 Print version and exit.
 .RE
+.SH "WARNING"
+.sp
+Use of \fBsetterm\fP in combination with stdout redirection can have unexpected results, as some options operate on stdin. To prevent problems, always redirect both stdin and stdout to the same device.
 .SH "COMPATIBILITY"
 .sp
 Since version 2.25 \fBsetterm\fP has support for long options with two hyphens, for example \fB\-\-help\fP, beside the historical long options with a single hyphen, for example \fB\-help\fP. In scripts it is better to use the backward\-compatible single hyphen rather than the double hyphen. Currently there are no plans nor good reasons to discontinue single\-hyphen compatibility.

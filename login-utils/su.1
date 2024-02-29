@@ -2,12 +2,12 @@
 .\"     Title: su
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-10-23
+.\"      Date: 2024-02-14
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "SU" "1" "2023-10-23" "util\-linux 2.39.3" "User Commands"
+.TH "SU" "1" "2024-02-14" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -71,7 +71,14 @@ Specify a supplementary group. This option is available to the root user only. T
 .sp
 \fB\-\fP, \fB\-l\fP, \fB\-\-login\fP
 .RS 4
-Start the shell as a login shell with an environment similar to a real login:
+Start the shell as a login shell with an environment similar to a real login.
+.sp
+Note that on systemd\-based systems, a new session may be defined as a real
+entry point to the system. However, \fBsu\fP does not create a real session (by
+PAM) from this point of view. You need to use tools like \fBsystemd\-run\fP or
+\fBmachinectl\fP to initiate a complete, real session.
+.sp
+\fBsu\fP does:
 .sp
 .RS 4
 .ie n \{\
@@ -132,7 +139,9 @@ This feature is mostly designed for interactive sessions. If the standard input 
 .sp
 \fB\-s\fP, \fB\-\-shell\fP=\fIshell\fP
 .RS 4
-Run the specified \fIshell\fP instead of the default. The shell to run is selected according to the following rules, in order:
+Run the specified \fIshell\fP instead of the default. If the target user has a restricted shell (i.e., not listed in \fI/etc/shells\fP), the \fB\-\-shell\fP option and the \fBSHELL\fP environment variables are ignored unless the calling user is root.
+.sp
+The shell to run is selected according to the following rules, in order:
 .sp
 .RS 4
 .ie n \{\
@@ -179,11 +188,15 @@ the shell listed in the passwd entry of the target user
 .RE
 .RE
 .sp
-If the target user has a restricted shell (i.e., not listed in \fI/etc/shells\fP), the \fB\-\-shell\fP option and the \fBSHELL\fP environment variables are ignored unless the calling user is root.
-.sp
 \fB\-\-session\-command=\fP\fIcommand\fP
 .RS 4
 Same as \fB\-c\fP, but do not create a new session. (Discouraged.)
+.RE
+.sp
+\fB\-T\fP, \fB\-\-no\-pty\fP*
+.RS 4
+Do not create a pseudo\-terminal, opposite of \fB\-\-pty\fP and \fB\-P\fP.
+Note that running without a pseudo\-terminal opens the security risk of privilege escalation through TIOCSTI/TIOCLINUX ioctl command injection.
 .RE
 .sp
 \fB\-w\fP, \fB\-\-whitelist\-environment\fP=\fIlist\fP

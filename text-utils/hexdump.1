@@ -2,12 +2,12 @@
 .\"     Title: hexdump
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "HEXDUMP" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "HEXDUMP" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -29,6 +29,7 @@
 .\}
 .SH "NAME"
 hexdump \- display file contents in hexadecimal, decimal, octal, or ascii
+.SH "SYNOPSIS"
 .sp
 \fBhexdump\fP \fIoptions file\fP ...
 .sp
@@ -43,6 +44,11 @@ Below, the \fIlength\fP and \fIoffset\fP arguments may be followed by the multip
 \fB\-b\fP, \fB\-\-one\-byte\-octal\fP
 .RS 4
 \fIOne\-byte octal display\fP. Display the input offset in hexadecimal, followed by sixteen space\-separated, three\-column, zero\-filled bytes of input data, in octal, per line.
+.RE
+.sp
+\fB\-X\fP, \fB\-\-one\-byte\-hex\fP
+.RS 4
+\fIOne\-byte hexadecimal display\fP. Display the input offset in hexadecimal, followed by sixteen space\-separated, two\-column, zero\-filled bytes of input data, in hexadecimal, per line.
 .RE
 .sp
 \fB\-c\fP, \fB\-\-one\-byte\-char\fP

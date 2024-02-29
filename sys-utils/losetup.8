@@ -2,12 +2,12 @@
 .\"     Title: losetup
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "LOSETUP" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "LOSETUP" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -49,7 +49,7 @@ Detach all associated loop devices:
 .sp
 Set up a loop device:
 .sp
-\fBlosetup\fP [\fB\-o\fP \fIoffset\fP] [\fB\-\-sizelimit\fP \fIsize\fP] [\fB\-\-sector\-size\fP \fIsize\fP] [\fB\-Pr\fP] [\fB\-\-show\fP] \fB\-f\fP|\fIloopdev file\fP
+\fBlosetup\fP [\fB\-o\fP \fIoffset\fP] [\fB\-\-sizelimit\fP \fIsize\fP] [\fB\-\-sector\-size\fP \fIsize\fP] [\fB\-\-loop\-ref\fP \fIname\fP] [\fB\-Pr\fP] [\fB\-\-show\fP] \fB\-f\fP|\fIloopdev file\fP
 .sp
 Resize a loop device:
 .sp
@@ -105,6 +105,11 @@ Show the status of all loop devices associated with the given \fIfile\fP.
 \fB\-o\fP, \fB\-\-offset\fP \fIoffset\fP
 .RS 4
 The data start is moved \fIoffset\fP bytes into the specified file or device. The \fIoffset\fP may be followed by the multiplicative suffixes; see above.
+.RE
+.sp
+\fB\-\-loop\-ref\fP \fIstring\fP
+.RS 4
+Set reference string. The backwardly compatible default is to use the backing filename as a reference in loop setup ioctl (aka lo_file_name). This option can overwrite this default behavior and set the reference to the \fIstring\fP. The reference may be used by udevd in /dev/loop/by\-ref. Linux kernel does not use the reference at all, but it could be used by some old utils that cannot read the backing file from sysfs. The reference is readable only for the root user (see \fB\-\-output\fP +REF) and it is restricted to 64 bytes.
 .RE
 .sp
 \fB\-\-sizelimit\fP \fIsize\fP
