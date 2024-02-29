@@ -82,6 +82,9 @@ override_dh_auto_install:
 	# Avoid shipping static libraries.
 	# - libblkid.a is used by e2fsprogs.
 	find debian/tmp/usr/lib -name 'lib*.a' \! -name 'libuuid.a' \! -name 'libblkid.a' -delete
+	#
+	# show installed man pages
+	find debian/tmp/usr/share/man
 
 override_dh_auto_clean:
 	dh_auto_clean

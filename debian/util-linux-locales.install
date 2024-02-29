@@ -65,7 +65,6 @@ debian/tmp/usr/share/man/*/man1/more.1 <!nodoc>                            [linu
 debian/tmp/usr/share/man/*/man1/mountpoint.1 <!nodoc>
 debian/tmp/usr/share/man/*/man1/namei.1 <!nodoc>
 debian/tmp/usr/share/man/*/man1/nsenter.1 <!nodoc>                         [linux-any]
-debian/tmp/usr/share/man/*/man1/prlimit.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/de/man1/rename.1 => /usr/share/man/de/man1/rename.ul.1 <!nodoc>
 debian/tmp/usr/share/man/fr/man1/rename.1 => /usr/share/man/fr/man1/rename.ul.1 <!nodoc>
 debian/tmp/usr/share/man/sr/man1/rename.1 => /usr/share/man/sr/man1/rename.ul.1 <!nodoc>
@@ -127,7 +126,6 @@ debian/tmp/usr/share/man/*/man8/zramctl.8 <!nodoc>                         [linu
 
 # util-linux-extra
 debian/tmp/usr/share/man/*/man1/fincore.1 <!nodoc>                         [linux-any]
-debian/tmp/usr/share/man/*/man1/lsfd.1 <!nodoc>                            [linux-any]
 debian/tmp/usr/share/man/*/man1/lsirq.1 <!nodoc>                           [linux-any]
 debian/tmp/usr/share/man/*/man1/waitpid.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man8/blkpr.8 <!nodoc>                           [linux-any]
