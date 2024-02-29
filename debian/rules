@@ -47,6 +47,9 @@ CONFOPTS += --disable-cal
 # Keep hwclock as GPLv2 (and others)
 CONFOPTS += --disable-hwclock-gplv3
 
+CONFOPTS += --disable-liblastlog2
+CONFOPTS += --disable-pam-liblastlog2
+
 # Get the list of binary package, except lib* and *-udeb, from
 # debian/control instead of hardcoding the list when installing
 # bash-completions below.
