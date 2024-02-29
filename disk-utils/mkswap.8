@@ -2,12 +2,12 @@
 .\"     Title: mkswap
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "MKSWAP" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "MKSWAP" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,14 +31,16 @@
 mkswap \- set up a Linux swap area
 .SH "SYNOPSIS"
 .sp
-\fBmkswap\fP [options] \fIdevice\fP [\fIsize\fP]
+\fBmkswap\fP [options] \fIdevice\fP [\fIblocks\fP]
+.sp
+\fBmkswap\fP [options] \-\-size \fIsize\fP \-\-file \fIfile\fP
 .SH "DESCRIPTION"
 .sp
 \fBmkswap\fP sets up a Linux swap area on a device or in a file.
 .sp
 The \fIdevice\fP argument will usually be a disk partition (something like \fI/dev/sdb7\fP) but can also be a file. The Linux kernel does not look at partition IDs, but many installation scripts will assume that partitions of hex type 82 (LINUX_SWAP) are meant to be swap partitions. (\fBWarning: Solaris also uses this type. Be careful not to kill your Solaris partitions.\fP)
 .sp
-The \fIsize\fP parameter is superfluous but retained for backwards compatibility. (It specifies the desired size of the swap area in 1024\-byte blocks. \fBmkswap\fP will use the entire partition or file if it is omitted. Specifying it is unwise \- a typo may destroy your disk.)
+The \fIblocks\fP parameter is superfluous but retained for backwards compatibility. (It specifies the desired size of the swap area in 1024\-byte blocks. \fBmkswap\fP will use the entire partition or file if it is omitted. Specifying it is unwise \- a typo may destroy your disk.)
 .sp
 After creating the swap area, you need the \fBswapon\fP(8) command to start using it. Usually swap areas are listed in \fI/etc/fstab\fP so that they can be taken into use at boot time by a \fBswapon \-a\fP command in some boot script.
 .SH "WARNING"
@@ -53,6 +55,11 @@ However, \fBmkswap\fP refuses to erase the first block on a device with a disk l
 \fB\-c\fP, \fB\-\-check\fP
 .RS 4
 Check the device (if it is a block device) for bad blocks before creating the swap area. If any bad blocks are found, the count is printed.
+.RE
+.sp
+\fB\-F\fP, \fB\-\-file\fP
+.RS 4
+Create a swap file with the appropriate file permissions and populated blocks on disk.
 .RE
 .sp
 \fB\-f\fP, \fB\-\-force\fP
@@ -107,6 +114,16 @@ generate a new time\-based UUID
 \fB\-e\fP, \fB\-\-endianness\fP \fIENDIANNESS\fP
 .RS 4
 Specify the \fIENDIANNESS\fP to use, valid arguments are \fBnative\fP, \fBlittle\fP or \fBbig\fP. The default is \fBnative\fP.
+.RE
+.sp
+\fB\-o\fP, \fB\-\-offset\fP \fIoffset\fP
+.RS 4
+Specify the \fIoffset\fP to write the swap area to.
+.RE
+.sp
+\fB\-s\fP, \fB\-\-size\fP \fIsize\fP
+.RS 4
+Specify the size of the created swap file in bytes and may be followed by a multiplicative suffix: KiB (=1024), MiB (=1024*1024), and so on for GiB, TiB, PiB, EiB, ZiB and YiB (the "iB" is optional, e.g., "K" has the same meaning as "KiB"). If the file exists and is larger than \fIsize\fP, it will be truncated to this size. This option only makes sense when used with \fB\-\-file\fP.
 .RE
 .sp
 \fB\-v\fP, \fB\-\-swapversion 1\fP

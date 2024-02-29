@@ -2,12 +2,12 @@
 .\"     Title: uuidgen
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "UUIDGEN" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "UUIDGEN" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -79,6 +79,11 @@ Generate the hash with the \fInamespace\fP prefix. The \fInamespace\fP is UUID, 
 \fB\-N\fP, \fB\-\-name\fP \fIname\fP
 .RS 4
 Generate the hash of the \fIname\fP.
+.RE
+.sp
+\fB\-C\fP, \fB\-\-count\fP \fInum\fP
+.RS 4
+Generate multiple UUIDs using the enhanced capability of the libuuid to cache time\-based UUIDs, thus resulting in improved performance. However, this holds no significance for other UUID types.
 .RE
 .sp
 \fB\-x\fP, \fB\-\-hex\fP

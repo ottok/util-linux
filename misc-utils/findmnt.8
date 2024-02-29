@@ -2,12 +2,12 @@
 .\"     Title: findmnt
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "FINDMNT" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "FINDMNT" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -87,7 +87,7 @@ Print filesystems where target (mountpoint) is marked as deleted by kernel.
 .sp
 \fB\-D\fP, \fB\-\-df\fP
 .RS 4
-Imitate the output of \fBdf\fP(1). This option is equivalent to \fB\-o SOURCE,FSTYPE,SIZE,USED,AVAIL,USE%,TARGET\fP but excludes all pseudo filesystems. Use \fB\-\-all\fP to print all filesystems.
+Imitate the output of \fBdf\fP(1). This option is equivalent to \fB\-o SOURCE,FSTYPE,SIZE,USED,AVAIL,USE%,TARGET\fP but excludes all pseudo filesystems. Use \fB\-\-all\fP to print all filesystems. See also \fB\-I\fP, \fB\-\-dfi\fP options.
 .RE
 .sp
 \fB\-d\fP, \fB\-\-direction\fP \fIword\fP
@@ -108,6 +108,16 @@ Search in an alternative file. If used with \fB\-\-fstab\fP, \fB\-\-mtab\fP or \
 \fB\-f\fP, \fB\-\-first\-only\fP
 .RS 4
 Print the first matching filesystem only.
+.RE
+.sp
+\fB\-H\fP, \fB\-\-list\-columns\fP
+.RS 4
+List the available columns, use with \fB\-\-json\fP or \fB\-\-raw\fP to get output in machine\-readable format.
+.RE
+.sp
+\fB\-I\fP, \fB\-\-dfi\fP
+.RS 4
+Imitate the output of \fBdf\fP(1) with its \fB\-i\fP option. This option is equivalent to \fB\-o SOURCE,FSTYPE,INO.TOTAL,INO.USED,INO.AVAIL,INO.USE%,TARGET\fP but excludes all pseudo filesystems. Use \fB\-\-all\fP to print all filesystems.
 .RE
 .sp
 \fB\-i\fP, \fB\-\-invert\fP
@@ -170,6 +180,8 @@ Output almost all available columns. The columns that require \fB\-\-poll\fP are
 \fB\-P\fP, \fB\-\-pairs\fP
 .RS 4
 Produce output in the form of key="value" pairs. All potentially unsafe value characters are hex\-escaped (\(rsx<code>). See also option \fB\-\-shell\fP.
+.sp
+Note that SOURCES column, use multi\-line cells. In these cases, the column use an array\-like formatting in the output, for example \fBname=("aaa" "bbb" "ccc")\fP.
 .RE
 .sp
 \fB\-p\fP, \fB\-\-poll\fP[\fI=list\fP]
@@ -214,6 +226,8 @@ Print recursively all submounts for the selected filesystems. The restrictions d
 \fB\-r\fP, \fB\-\-raw\fP
 .RS 4
 Use raw output format. All potentially unsafe characters are hex\-escaped (\(rsx<code>).
+.sp
+Note that column SOURCES, use multi\-line cells. In these cases, the column may produce more strings on the same line.
 .RE
 .sp
 \fB\-\-real\fP

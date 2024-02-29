@@ -2,12 +2,12 @@
 .\"     Title: swapon
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "SWAPON" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "SWAPON" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -98,7 +98,7 @@ The \fIopts\fP string is evaluated last and overrides all other command line opt
 .sp
 \fB\-p\fP, \fB\-\-priority\fP \fIpriority\fP
 .RS 4
-Specify the priority of the swap device. \fIpriority\fP is a value between \-1 and 32767. Higher numbers indicate higher priority. See \fBswapon\fP(2) for a full description of swap priorities. Add \fBpri=\fP\fIvalue\fP to the option field of \fI/etc/fstab\fP for use with \fBswapon \-a\fP. When no priority is defined, it defaults to \-1.
+Specify the priority of the swap device. \fIpriority\fP is a value between 0 and 32767. Higher numbers indicate higher priority. See \fBswapon\fP(2) for a full description of swap priorities. Add \fBpri=\fP\fIvalue\fP to the option field of \fI/etc/fstab\fP for use with \fBswapon \-a\fP. When no priority is defined, Linux kernel defaults to negative numbers.
 .RE
 .sp
 \fB\-s\fP, \fB\-\-summary\fP

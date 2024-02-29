@@ -2,12 +2,12 @@
 .\"     Title: login
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "LOGIN" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "LOGIN" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -46,7 +46,7 @@ The environment variable \fB$TERM\fP will be preserved, if it exists, else it wi
 .sp
 The environment variables defined by PAM are always preserved.
 .sp
-Then the user\(cqs shell is started. If no shell is specified for the user in \fI/etc/passwd\fP, then \fI/bin/sh\fP is used. If there is no home directory specified in \fI/etc/passwd\fP, then \fI/\fP is used, followed by \fI.hushlogin\fP check as described below.
+Then the user\(cqs shell is started. If no shell is specified for the user in \fI/etc/passwd\fP, then \fI/bin/sh\fP is used. If the specified shell contains a space, it is treated as a shell script. If there is no home directory specified in \fI/etc/passwd\fP, then \fI/\fP is used, followed by \fI.hushlogin\fP check as described below.
 .sp
 If the file \fI.hushlogin\fP exists, then a "quiet" login is performed. This disables the checking of mail and the printing of the last login time and message of the day. Otherwise, if \fI/var/log/lastlog\fP exists, the last login time is printed, and the current login is recorded.
 .SH "OPTIONS"
@@ -189,6 +189,16 @@ If set, it will be used to define the PATH environment variable when the superus
 \fI/etc/pam.d/remote\fP,
 \fI/etc/hushlogins\fP,
 \fI$HOME/.hushlogin\fP
+.SH "CREDENTIALS"
+.sp
+\fBlogin\fP supports configuration via systemd credentials (see \c
+.URL "https://systemd.io/CREDENTIALS/" "" ")."
+\fBlogin\fP reads the following systemd credentials:
+.sp
+\fBlogin.noauth\fP (boolean)
+.RS 4
+If set, configures \fBlogin\fP to skip login authentication, similarly to the \fB\-f\fP option.
+.RE
 .SH "BUGS"
 .sp
 The undocumented BSD \fB\-r\fP option is not supported. This may be required by some \fBrlogind\fP(8) programs.

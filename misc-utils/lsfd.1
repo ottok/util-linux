@@ -2,12 +2,12 @@
 .\"     Title: lsfd
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-02-29
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "LSFD" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "LSFD" "1" "2024-02-29" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -45,7 +45,7 @@ default outputs in your scripts. Always explicitly define expected columns by us
 \fB\-\-output\fP \fIcolumns\-list\fP in environments where a stable output is required.
 .sp
 \fBlsfd\fP uses Libsmartcols for output formatting and filtering. See the description of \fB\-\-output\fP
-option for customizing the output format, and \fB\-\-filter\fP option for filtering. Use \fBlsfd \-\-help\fP
+option for customizing the output format, and \fB\-\-filter\fP option for filtering. Use \fBlsfd \-\-list\-columns\fP
 to get a list of all available columns.
 .SH "OPTIONS"
 .sp
@@ -103,7 +103,7 @@ List only IPv4 sockets and/or IPv6 sockets.
 \fB\-Q\fP, \fB\-\-filter\fP \fIexpr\fP
 .RS 4
 Print only the files matching the condition represented by the \fIexpr\fP.
-See also \fBFILTER EXAMPLES\fP.
+See also \fBscols\-filter\fP(5) and \fBFILTER EXAMPLES\fP.
 .RE
 .sp
 \fB\-C\fP, \fB\-\-counter\fP \fIlabel\fP:\fIfilter_expr\fP
@@ -114,7 +114,7 @@ matching \fIfilter_expr\fP, and stores the counted number to the
 counter named \fIlabel\fP. \fBlsfd\fP applies filters defined with \fB\-\-filter\fP
 options before counting; files excluded by the filters are not counted.
 .sp
-See \fBFILTER EXPRESSION\fP about \fIfilter_expr\fP.
+See \fBscols\-filter\fP(5) about \fIfilter_expr\fP.
 \fIlabel\fP should not include \f(CR{\fP nor \f(CR:\fP. You can define multiple
 counters by specifying this option multiple times.
 .sp
@@ -144,6 +144,11 @@ only for \fBlsfd\fP developers.
 \fB\-\-dump\-counters\fP
 .RS 4
 Dump the definition of counters used in \fB\-\-summary\fP output.
+.RE
+.sp
+\fB\-H\fP, \fB\-\-list\-columns\fP
+.RS 4
+List available columns that you can specify at \fB\-\-output\fP option.
 .RE
 .sp
 \fB\-h\fP, \fB\-\-help\fP
@@ -177,6 +182,41 @@ BLKDRV <\f(CRstring\fP>
 Block device driver name resolved by \f(CR/proc/devices\fP.
 .RE
 .sp
+BPF\-MAP.ID <\f(CRnumber\fP>
+.RS 4
+Bpf map ID.
+.RE
+.sp
+BPF\-MAP.TYPE <\f(CRstring\fP>
+.RS 4
+Decoded name of bpf map type.
+.RE
+.sp
+BPF\-MAP.TYPE.RAW <\f(CRnumber\fP>
+.RS 4
+Bpf map type (raw).
+.RE
+.sp
+BPF.NAME <\f(CRstring\fP>
+.RS 4
+Bpf object name.
+.RE
+.sp
+BPF\-PROG.ID <\f(CRnumber\fP>
+.RS 4
+Bpf program ID.
+.RE
+.sp
+BPF\-PROG.TYPE <\f(CRstring\fP>
+.RS 4
+Decoded name of bpf program type.
+.RE
+.sp
+BPF\-PROG.TYPE.RAW <\f(CRnumber\fP>
+.RS 4
+Bpf program type (raw).
+.RE
+.sp
 CHRDRV <\f(CRstring\fP>
 .RS 4
 Character device driver name resolved by \f(CR/proc/devices\fP.
@@ -205,10 +245,15 @@ Device type (\f(CRblk\fP, \f(CRchar\fP, or \f(CRnodev\fP).
 ENDPOINT <\f(CRstring\fP>
 .RS 4
 IPC endpoints information communicated with the fd.
+.sp
+\fBlsfd\fP collects endpoints within the processes that
+\fBlsfd\fP scans; \fBlsfd\fP may miss some endpoints
+if you limits the processes with \fB\-p\fP option.
+.sp
 The format of the column depends on the object associated
 with the fd:
 .sp
-FIFO type
+FIFO type, mqueue type, ptmx and pts sources
 .RS 4
 \fIPID\fP,\fICOMMAND\fP,\fIASSOC\fP[\-r][\-w]
 .sp
@@ -216,9 +261,28 @@ The last characters ([\-r][\-w]) represents the read and/or
 write mode of the endpoint.
 .RE
 .sp
-\fBlsfd\fP collects endpoints within the processes that
-\fBlsfd\fP scans; \fBlsfd\fP may miss some endpoints
-if you limits the processes with \fB\-p\fP option.
+eventfd type
+.RS 4
+\fIPID\fP,\fICOMMAND\fP,\fIASSOC\fP
+.RE
+.sp
+UNIX\-STREAM
+.RS 4
+\fIPID\fP,\fICOMMAND\fP,\fIASSOC\fP[\-r?][\-w?]
+.sp
+About the last characters ([\-r?][\-w?]), see the description
+of \fISOCK.SHUTDOWN\fP.
+.RE
+.RE
+.sp
+EVENTFD.ID <\f(CRnumber\fP>
+.RS 4
+Eventfd ID.
+.RE
+.sp
+EVENTPOLL.TFDS <\f(CRstring\fP>
+.RS 4
+File descriptors targeted by the eventpoll file.
 .RE
 .sp
 FD <\f(CRnumber\fP>
@@ -259,6 +323,19 @@ Remote IP6 address.
 INODE <\f(CRnumber\fP>
 .RS 4
 Inode number.
+.RE
+.sp
+INOTIFY.INODES <\f(CRstring\fP>
+.RS 4
+Cooked version of INOTIFY.INODES.RAW.
+The format of the element is
+\fIinode\-number\fP,\fIsource\-of\-inode\fP.
+.RE
+.sp
+INOTIFY.INODES.RAW <\f(CRstring\fP>
+.RS 4
+List of monitoring inodes. The format of the element
+is \fIinode\-number\fP\f(CR,\fP\fIdevice\-major\fP\f(CR:\fP\fIdevice\-minor\fP.
 .RE
 .sp
 KNAME <\f(CRstring\fP>
@@ -303,6 +380,36 @@ Cooked version of KNAME. It is mostly same as KNAME.
 .sp
 Some files have special formats and information sources:
 .sp
+bpf\-map
+.RS 4
+id=\fIBPF\-MAP.ID\fP type=\fIBPF\-MAP.TYPE\fP[ name=\fIBPF.NAME\fP]
+.RE
+.sp
+bpf\-prog
+.RS 4
+id=\fIBPF\-PROG.ID\fP type=\fIBPF\-PROG.TYPE\fP[ name=\fIBPF.NAME\fP]
+.RE
+.sp
+eventpoll
+.RS 4
+tfds=\fIEVENTPOLL.TFDS\fP
+.RE
+.sp
+eventfd
+.RS 4
+id=\fIEVENTFD.ID\fP
+.RE
+.sp
+inotify
+.RS 4
+inodes=\fIINOTIFY.INODES\fP
+.RE
+.sp
+misc:tun
+.RS 4
+iface=\fITUN.IFACE\fP
+.RE
+.sp
 NETLINK
 .RS 4
 protocol=\fINETLINK.PROTOCOL\fP[ lport=\fINETLINK.LPORT\fP[ group=\fINETLINK.GROUPS\fP]]
@@ -331,6 +438,14 @@ PINGv6
 state=\fISOCK.STATE\fP[ id=\fIPING.ID\fP][ laddr=\fIINET6.LADDR\fP [ raddr=\fIINET6.RADDR\fP]]
 .RE
 .sp
+ptmx
+.RS 4
+tty\-index=\fIPTMX.TTY\-INDEX\fP
+.sp
+\fBlsfd\fP extracts \fIPTMX.TTY\-INDEX\fP from
+\f(CR/proc/\fP\fIpid\fP\f(CR/fdinfo/\fP\fIfd\fP.
+.RE
+.sp
 RAW
 .RS 4
 state=\fISOCK.STATE\fP[ protocol=\fIRAW.PROTOCOL\fP [ laddr=\fIINET.LADDR\fP [ raddr=\fIINET.RADDR\fP]]]
@@ -341,9 +456,19 @@ RAWv6
 state=\fISOCK.STATE\fP[ protocol=\fIRAW.PROTOCOL\fP [ laddr=\fIINET6.LADDR\fP [ raddr=\fIINET6.RADDR\fP]]]
 .RE
 .sp
+signalfd
+.RS 4
+mask=\fISIGNALFD.MASK\fP
+.RE
+.sp
 TCP, TCPv6
 .RS 4
 state=\fISOCK.STATE\fP[ laddr=\fITCP.LADDR\fP [ raddr=\fITCP.RADDR\fP]]
+.RE
+.sp
+timerfd
+.RS 4
+clockid=\fITIMERFD.CLOCKID\fP[ remaining=\fITIMERFD.REMAINING\fP [ interval=\fITIMERFD.INTERVAL\fP]]
 .RE
 .sp
 UDP, UDPv6
@@ -368,18 +493,27 @@ UNIX
 state=\fISOCK.STATE\fP[ path=\fIUNIX.PATH\fP] type=\fISOCK.TYPE\fP
 .RE
 .RE
+.RS 3
+.ll -.6i
 .sp
-NETLINK.GROUPS <\f(CRnumber\fP>>
+Note that \f(CR(deleted)\fP markers are removed from this column.
+Refer to \fIKNAME\fP, \fIDELETED\fP, or \fIXMODE\fP to know the
+readability of the file from the file system.
+.br
+.RE
+.ll
+.sp
+NETLINK.GROUPS <\f(CRnumber\fP>
 .RS 4
 Netlink multicast groups.
 .RE
 .sp
-NETLINK.LPORT <\f(CRnumber\fP>>
+NETLINK.LPORT <\f(CRnumber\fP>
 .RS 4
 Netlink local port id.
 .RE
 .sp
-NETLINK.PROTOCOL <\f(CRstring\fP>>
+NETLINK.PROTOCOL <\f(CRstring\fP>
 .RS 4
 Netlink protocol.
 .RE
@@ -477,6 +611,11 @@ RDEV <\f(CRstring\fP>
 Device ID (if special file).
 .RE
 .sp
+SIGNALFD.MASK <\f(CRstring\fP>
+.RS 4
+Masked signals.
+.RE
+.sp
 SIZE <\f(CRnumber\fP>
 .RS 4
 File size.
@@ -495,6 +634,25 @@ Inode identifying network namespace where the socket belongs to.
 SOCK.PROTONAME <\f(CRstring\fP>
 .RS 4
 Protocol name.
+.RE
+.sp
+SOCK.SHUTDOWN <\f(CRstring\fP>
+.RS 4
+Shutdown state of socket.
+.sp
+[\-r?]
+.RS 4
+If the first character is \fIr\fP, the receptions are allowed.
+If it is \fI\-\fP, the receptions are disallowed.
+If it is \fI?\fP, the state is unknown.
+.RE
+.sp
+[\-w?]
+.RS 4
+If the second character is \fIw\fP, the transmissions are allowed.
+If it is \fI\-\fP, the transmissions are disallowed.
+If it is \fI?\fP, the state is unknown.
+.RE
 .RE
 .sp
 SOCK.STATE <\f(CRstring\fP>
@@ -597,20 +755,20 @@ Raw file types returned from \fBstat\fP(2): BLK, CHR, DIR, FIFO, LINK, REG, SOCK
 .sp
 TCP.LADDR <\f(CRstring\fP>
 .RS 4
-Local L3 (INET.LADDR or INET6.LADDR) address and local TCP port.
+Local L3 (\fIINET.LADDR\fP or \fIINET6.LADDR\fP) address and local TCP port.
 .RE
 .sp
-TCP.LPORT <\f(CRinteger\fP>
+TCP.LPORT <\f(CRnumber\fP>
 .RS 4
 Local TCP port.
 .RE
 .sp
 TCP.RADDR <\f(CRstring\fP>
 .RS 4
-Remote L3 (INET.RADDR or INET6.RADDR) address and remote TCP port.
+Remote L3 (\fIINET.RADDR\fP or \fIINET6.RADDR\fP) address and remote TCP port.
 .RE
 .sp
-TCP.RPORT <\f(CRinteger\fP>
+TCP.RPORT <\f(CRnumber\fP>
 .RS 4
 Remote TCP port.
 .RE
@@ -620,11 +778,36 @@ TID <\f(CRnumber\fP>
 Thread ID of the process opening the file.
 .RE
 .sp
+TIMERFD.CLOCKID <\f(CRstring\fP>
+.RS 4
+Clockid.
+.RE
+.sp
+TIMERFD.INTERVAL <\f(CRnumber\fP>
+.RS 4
+Interval.
+.RE
+.sp
+TIMERFD.REMAINING <\f(CRnumber\fP>
+.RS 4
+Remaining time.
+.RE
+.sp
+PTMX.TTY\-INDEX <\f(CRnumber\fP>
+.RS 4
+TTY index of the counterpart.
+.RE
+.sp
+TUN.IFACE <\f(CRstring\fP>
+.RS 4
+Network interface behind the tun device.
+.RE
+.sp
 TYPE <\f(CRstring\fP>
 .RS 4
-Cooked version of STTYPE. It is same as STTYPE with exceptions.
-For SOCK, print the value for SOCK.PROTONAME.
-For UNKN, print the value for AINODECLASS if SOURCE is anon_inodefs.
+Cooked version of \fISTTYPE\fP. It is same as \fISTTYPE\fP with exceptions.
+For \fISOCK\fP, print the value for \fISOCK.PROTONAME\fP.
+For \fIUNKN\fP, print the value for \fIAINODECLASS\fP if \fISOURCE\fP is \f(CRanon_inodefs\fP.
 .RE
 .sp
 UDP.LADDR <\f(CRstring\fP>
@@ -632,7 +815,7 @@ UDP.LADDR <\f(CRstring\fP>
 Local IP address and local UDP port.
 .RE
 .sp
-UDP.LPORT <\f(CRinteger\fP>
+UDP.LPORT <\f(CRnumber\fP>
 .RS 4
 Local UDP port.
 .RE
@@ -642,7 +825,7 @@ UDP.RADDR <\f(CRstring\fP>
 Remote IP address and remote UDP port.
 .RE
 .sp
-UDP.RPORT <\f(CRinteger\fP>
+UDP.RPORT <\f(CRnumber\fP>
 .RS 4
 Remote UDP port.
 .RE
@@ -652,7 +835,7 @@ UDPLITE.LADDR <\f(CRstring\fP>
 Local IP address and local UDPLite port.
 .RE
 .sp
-UDPLITE.LPORT <\f(CRinteger\fP>
+UDPLITE.LPORT <\f(CRnumber\fP>
 .RS 4
 Local UDP port.
 .RE
@@ -662,7 +845,7 @@ UDPLITE.RADDR <\f(CRstring\fP>
 Remote IP address and remote UDPLite port.
 .RE
 .sp
-UDPLITE.RPORT <\f(CRinteger\fP>
+UDPLITE.RPORT <\f(CRnumber\fP>
 .RS 4
 Remote UDP port.
 .RE
@@ -681,158 +864,50 @@ USER <\f(CRstring\fP>
 .RS 4
 User of the process.
 .RE
-.SH "FILTER EXPRESSION"
 .sp
-\fBlsfd\fP evaluates the expression passed to \fB\-\-filter\fP option every time
-before printing a file line. \fBlsfd\fP prints the line only if the result
-of evaluation is \f(CRtrue\fP.
-.sp
-An expression consists of column names, literals and, operators like:
-\f(CRDELETED\fP, \f(CR(PID == 1)\fP, \f(CR(NAME == "/etc/passwd")\fP, \f(CR(PID == 1) && DELETED\fP.
-\f(CRDELETED\fP, \f(CRPID\fP, and \f(CRNAME\fP are column names in the example.
-\f(CR1\fP and "/etc/passwd" are literals.
-\f(CR==\fP and \f(CR&&\fP are operators.
-.sp
-Before evaluation, \fBlsfd\fP substitutes column names in the given
-expression with actual column values in the line. There are three
-different data types: \f(CRboolean\fP, \f(CRstring\fP, and \f(CRnumber\fP.  For columns
-with a \f(CRboolean\fP type, the value can be stand\-alone.  For \f(CRstring\fP and
-\f(CRnumber\fP values, the value must be an operand of an operator, for
-example, \f(CR(PID == 1)\fP. See \fBOUTPUT COLUMNS\fP about the types of
-columns.
-.sp
-Literal is for representing a value directly. See BOOLLIT, STRLIT, and
-NUMLIT. Different data types have different literal syntax.
-.sp
-An operator works with one or two operand(s). An operator has an
-expectation about the data type(s) of its operands. Giving an
-unexpected data type to an operator causes a syntax error.
-.sp
-Operators taking two operands are \f(CRand\fP, \f(CRor\fP, \f(CReq\fP, \f(CRne\fP, \f(CRle\fP, \f(CRlt\fP, \f(CRge\fP, \f(CRgt\fP, \f(CR=~\fP, \f(CR!~\fP.
-Alphabetically named operators have C\-language
-flavored aliases: \f(CR&&\fP, \f(CR||\fP, \f(CR==\fP, \f(CR!=\fP, \f(CR<\fP, \f(CR\(lA\fP, \f(CR>=\fP, and \f(CR>\fP.
-.sp
-\f(CR!\fP is the only operator that takes one operand.
-.sp
-\f(CReq\fP, \f(CRne\fP, and their aliases expect operands have the same data type.
-Applying these operators return a \f(CRboolean\fP.
-.sp
-\f(CRand\fP, \f(CRor\fP, \f(CRnot\fP and their aliases expect operands have \f(CRboolean\fP data
-type. Applying these operators return a \f(CRboolean\fP.
-.sp
-\f(CRlt\fP, \f(CRle\fP, \f(CRgt\fP, \f(CRge\fP, and their aliases expect operands have
-\f(CRnumber\fP data types. Applying these operators return a \f(CRboolean\fP.
-.sp
-\f(CR=~\fP is for regular expression matching; if a string at the right side
-matches a regular expression at the left side, the result is true.
-The right side operand must be a string literal. See STRLIT about the
-syntax.
-.sp
-\f(CR!~\fP is a short\-hand version of \f(CRnot (STR =~ PAT)\fP; it inverts the
-result of \f(CR=~\fP.
-.SS "Limitations"
-.sp
-The current implementation does not define precedences within
-operators.  Use \f(CR(\fP and \f(CR)\fP explicitly for grouping the
-sub\-expressions if your expression uses more than two operators.
-.sp
-About \f(CRnumber\fP typed values, the filter engine supports only
-non\-negative integers.
-.SS "Semi\-formal syntax"
-.sp
-EXPR
+XMODE <\f(CRstring\fP>
 .RS 4
-BOOLEXP
+Extended version of \fIMODE\fP. This column may grow; new letters may be
+appended to \fIXMODE\fP when \fBlsfd\fP supports a new state of file descriptors
+and/or memory mappings.
+.sp
+[\-r]
+.RS 4
+opened of mapped for reading. This is also in \fIMODE\fP.
 .RE
 .sp
-BOOLEXP0
+[\-w]
 .RS 4
-COLUMN <\f(CRboolean\fP> | BOOLLIT | \fI(\fP BOOLEXP \fI)\fP
+opened of mapped for writing. This is also in \fIMODE\fP.
 .RE
 .sp
-BOOLEXP
+[\-x]
 .RS 4
-BOOLEXP0 | BOOLOP1 | BOOLOP2 | BOOLOP2BL | BOOLOP2CMP | BOOLOP2REG
+mapped for executing the code. This is also in \fIMODE\fP.
 .RE
 .sp
-COLUMN
+[\-D]
 .RS 4
-[_A\-Za\-z][\-_:A\-Za\-z0\-9]*
+deleted from  the file system. See also \fIDELETED\fP.
 .RE
 .sp
-BOOLOP1
+[\-Ll]
 .RS 4
-\fI!\fP BOOLEXP0 | \fInot\fP BOOLEXP0
+locked or leased. \fIl\fP represents a read, a shared lock or a read lease.
+\fIL\fP represents a write or an exclusive lock or a write lease. If both
+read/shared and write/exclusive locks or leases are taken by a file
+descriptor, \fIL\fP is used as the flag.
 .RE
 .sp
-STREXP
+[\-m]
 .RS 4
-COLUMN <\f(CRstring\fP> | STRLIT
+Multiplexed. If the file descriptor is targeted by a eventpoll file
+or classical system calls for multiplexing (select, pselect, poll, and
+ppoll), this bit flag is set. Note that if an invocation of the
+classical system calls is interrupted, \fBlsfd\fP may fail to mark \fIm\fP
+on the file descriptors monitored by the invocation.
+See \fBrestart_syscall\fP(2).
 .RE
-.sp
-NUMEXP
-.RS 4
-COLUMN <\f(CRnumber\fP> | NUMLIT
-.RE
-.sp
-BOOLLIT
-.RS 4
-\fItrue\fP | \fIfalse\fP
-.RE
-.sp
-CHARS
-.RS 4
-( [^\(rs] | \fI\(rs\(rs\fP | \fI\(rs\*(Aq\fP | \fI\(rs"\fP )*
-.RE
-.sp
-STRLIT
-.RS 4
-\fI\*(Aq\fP CHARS \fI\*(Aq\fP | \fI"\fP CHARS \fI"\fP
-.RE
-.sp
-NUMLIT
-.RS 4
-[1\-9][0\-9]* | \fI0\fP
-.RE
-.sp
-BOOLOP2
-.RS 4
-STREXP OP2 STREXP | NUMEXP OP2 NUMEXP | BOOLEXP0 OP2 BOOLEXP0
-.RE
-.sp
-OP2
-.RS 4
-\fI==\fP | \fIeq\fP | \fI!=\fP | \fIne\fP
-.RE
-.sp
-BOOLOP2BL
-.RS 4
-BOOLEXP0 OP2BL BOOLEXP0
-.RE
-.sp
-OP2BL
-.RS 4
-\fI&&\fP | \fIand\fP |  \fI||\fP | \fIor\fP
-.RE
-.sp
-BOOLOP2CMP
-.RS 4
-NUMEXP OP2CMP NUMEXP
-.RE
-.sp
-OP2CMP
-.RS 4
-\fI<\fP | \fIlt\fP | \fI<=\fP | \fIle\fP | \fI>\fP | \fIgt\fP | \fI>=\fP | \fIge\fP
-.RE
-.sp
-BOOLOP2REG
-.RS 4
-STREXP OP2REG STRLIT
-.RE
-.sp
-OP2REG
-.RS 4
-\fI=~\fP | \fI!~\fP
 .RE
 .SH "FILTER EXAMPLES"
 .sp
@@ -1032,14 +1107,14 @@ List files opened in a QEMU virtual machine:
 .fi
 .if n .RE
 .sp
-Hide files associated to kernel threads:
+List timerfd files expired within 0.5 seconds:
 .RS 4
 .RE
 .sp
 .if n .RS 4
 .nf
 .fam C
-# lsfd \-Q \*(Aq!KTHREAD\*(Aq
+# lsfd \-Q \*(Aq(TIMERFD.remaining < 0.5) and (TIMERFD.remaining > 0.0)\*(Aq
 .fam
 .fi
 .if n .RE
@@ -1095,10 +1170,15 @@ The \fBlsfd\fP command is part of the util\-linux package since v2.38.
 .MTO "kzak\(atredhat.com" "Karel Zak" ""
 .SH "SEE ALSO"
 .sp
+\fBbpftool\fP(8)
+\fBbps\fP(8)
+\fBlslocks\fP(8)
 \fBlsof\fP(8)
 \fBpidof\fP(1)
 \fBproc\fP(5)
+\fBscols\-filter\fP(5)
 \fBsocket\fP(2)
+\fBss\fP(8)
 \fBstat\fP(2)
 .SH "REPORTING BUGS"
 .sp

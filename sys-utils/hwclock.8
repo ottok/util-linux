@@ -2,12 +2,12 @@
 .\"     Title: hwclock
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "HWCLOCK" "8" "2023-12-01" "util\-linux 2.39.3" "System Administration"
+.TH "HWCLOCK" "8" "2024-01-31" "util\-linux 2.40\-rc2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -155,6 +155,13 @@ The first two are only available on the first call of \fBsettimeofday\fP(2) afte
 \fB\-w\fP, \fB\-\-systohc\fP
 .RS 4
 Set the Hardware Clock from the System Clock, and update the timestamps in \fI/etc/adjtime\fP. With the \fB\-\-update\-drift\fP option also (re)calculate the drift factor. Try it without the option if \fB\-\-systohc\fP fails. See \fB\-\-update\-drift\fP below.
+.RE
+.sp
+\fB\-\-vl\-read\fP, \fB\-\-vl\-clear\fP
+.RS 4
+Some RTC devices are able to monitor the voltage of the backup battery and thus provide a way for the user to know that the battery should be replaced. The \fB\-\-vl\-read\fP function retrieves the Voltage Low information and decodes the result into human\-readable form. The \fB\-\-vl\-clear\fP function resets the Voltage Low information, which is necessary for some RTC devices after a battery replacement.
+.sp
+See the Kernel\(cqs \fIinclude/uapi/linux/rtc.h\fP for details on which pieces of information may be returned. Note that not all RTC devices have this monitoring capability, nor do all drivers necessarily support reading the information.
 .RE
 .sp
 \fB\-h\fP, \fB\-\-help\fP

@@ -2,12 +2,12 @@
 .\"     Title: last
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-12-01
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "LAST" "1" "2023-12-01" "util\-linux 2.39.3" "User Commands"
+.TH "LAST" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -93,6 +93,11 @@ Display the state of logins since the specified \fItime\fP. This is useful, e.g.
 \fB\-t\fP, \fB\-\-until\fP \fItime\fP
 .RS 4
 Display the state of logins until the specified \fItime\fP.
+.RE
+.sp
+\fB\-T\fP, \fB\-\-tab\-separated\fP
+.RS 4
+Use ASCII \fBtab\fP characters to separate the columns in the output instead of spaces.
 .RE
 .sp
 \fB\-\-time\-format\fP \fIformat\fP

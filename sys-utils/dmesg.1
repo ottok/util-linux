@@ -2,12 +2,12 @@
 .\"     Title: dmesg
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-11-23
+.\"      Date: 2024-01-31
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "DMESG" "1" "2023-11-23" "util\-linux 2.39.3" "User Commands"
+.TH "DMESG" "1" "2024-01-31" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -83,7 +83,7 @@ Display the local time and the delta in human\-readable format. Be aware that co
 .sp
 \fB\-F\fP, \fB\-\-file\fP \fIfile\fP
 .RS 4
-Read the syslog messages from the given \fIfile\fP. Note that \fB\-F\fP does not support messages in kmsg format. The old syslog format is supported only.
+Read the syslog messages from the given \fIfile\fP. Note that \fB\-F\fP does not support messages in kmsg format. See \fB\-K\fP instead.
 .RE
 .sp
 \fB\-f\fP, \fB\-\-facility\fP \fIlist\fP
@@ -103,6 +103,11 @@ Enable human\-readable output. See also \fB\-\-color\fP, \fB\-\-reltime\fP and \
 \fB\-J\fP, \fB\-\-json\fP
 .RS 4
 Use JSON output format. The time output format is in "sec.usec" format only, log priority level is not decoded by default (use \fB\-\-decode\fP to split into facility and priority), the other options to control the output format or time format are silently ignored.
+.RE
+.sp
+\fB\-K\fP, \fB\-\-kmsg\-file\fP \fIfile\fP
+.RS 4
+Read the /dev/kmsg messages from the given \fIfile\fP. Different record as expected to be separated by a NULL byte.
 .RE
 .sp
 \fB\-k\fP, \fB\-\-kernel\fP
@@ -195,9 +200,13 @@ Do not print kernel\(cqs timestamps.
 .sp
 \fB\-\-time\-format\fP \fIformat\fP
 .RS 4
-Print timestamps using the given \fIformat\fP, which can be \fBctime\fP, \fBreltime\fP, \fBdelta\fP or \fBiso\fP. The first three formats are aliases of the time\-format\-specific options. The \fBiso\fP format is a \fBdmesg\fP implementation of the ISO\-8601 timestamp format. The purpose of this format is to make the comparing of timestamps between two systems, and any other parsing, easy. The definition of the \fBiso\fP timestamp is: YYYY\-MM\-DD<T>HH:MM:SS,<microseconds>\(<-+><timezone offset from UTC>.
+Print timestamps using the given \fIformat\fP, which can be \fBctime\fP, \fBreltime\fP, \fBdelta\fP, \fBiso\fP or \fBraw\fP. The first three formats are aliases of the time\-format\-specific options. The \fBraw\fP format uses the default timestamp format showing seconds since boot. The \fBiso\fP format is a \fBdmesg\fP implementation of the ISO\-8601 timestamp format. The purpose of this format is to make the comparing of timestamps between two systems, and any other parsing, easy. The definition of the \fBiso\fP timestamp is: YYYY\-MM\-DD<T>HH:MM:SS,<microseconds>\(<-+><timezone offset from UTC>.
 .sp
 The \fBiso\fP format has the same issue as \fBctime\fP: the time may be inaccurate when a system is suspended and resumed.
+.sp
+\fB\-\-time\-format\fP may be used multiple times with different values for \fIformat\fP to output each specified format.
+.sp
+The \fBdelta\fP always follows \fBctime\fP or \fBraw\fP if specified together.
 .RE
 .sp
 \fB\-u\fP, \fB\-\-userspace\fP

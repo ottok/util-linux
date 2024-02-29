@@ -2,12 +2,12 @@
 .\"     Title: setpriv
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2023-10-23
+.\"      Date: 2024-02-29
 .\"    Manual: User Commands
-.\"    Source: util-linux 2.39.3
+.\"    Source: util-linux 2.40-rc2
 .\"  Language: English
 .\"
-.TH "SETPRIV" "1" "2023-10-23" "util\-linux 2.39.3" "User Commands"
+.TH "SETPRIV" "1" "2024-02-29" "util\-linux 2.40\-rc2" "User Commands"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -156,6 +156,35 @@ Request a particular SELinux transition (using a transition on exec, not dyntran
 Request a particular AppArmor profile (using a transition on exec). This will fail and cause \fBsetpriv\fP to abort if AppArmor is not in use, and the transition may be ignored or cause \fBexecve\fP(2) to fail at AppArmor\(cqs whim.
 .RE
 .sp
+\fB\-\-landlock\-access\fP \fIaccess\fP
+.RS 4
+Enable landlock restrictions for a specific set of system accesses.
+To allow specific subgroups of accesses use \fB\-\-landlock\-rule\fP.
+.sp
+Block all filesystem access:
+.sp
+\fBsetpriv \-\-landlock\-access fs\fP
+.sp
+Block all file deletions and directory creations:
+.sp
+\fBsetpriv \-\-landlock\-access fs:remove\-file,make\-dir\fP
+.sp
+For a complete set of supported access categories use \fBsetpriv \-\-help\fP.
+.RE
+.sp
+\fB\-\-landlock\-rule\fP \fIrule\fP
+.RS 4
+Allow one specific access from the categories blocked by \fB\-\-landlock\-access\fP.
+.sp
+The syntax is as follows:
+.sp
+\fB\-\-landlock\-rule $ruletype:$access:$rulearg\fP
+.sp
+For example grant file read access to everything under \fB/boot\fP:
+.sp
+\fB\-\-landlock\-rule path\-beneath:read\-file:/boot\fP
+.RE
+.sp
 \fB\-\-reset\-env\fP
 .RS 4
 Clears all the environment variables except \fBTERM\fP; initializes the environment variables \fBHOME\fP, \fBSHELL\fP, \fBUSER\fP, \fBLOGNAME\fP according to the user\(cqs passwd entry; sets \fBPATH\fP to \fI/usr/local/bin:/bin:/usr/bin\fP for a regular user and to \fI/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\fP for root.
@@ -195,6 +224,7 @@ If you want to mimic daemontools\*(Aq \fBsetuid\fP(8), try:
 \fBsu\fP(1),
 \fBprctl\fP(2),
 \fBcapabilities\fP(7)
+\fBlandlock\fP(7)
 .SH "REPORTING BUGS"
 .sp
 For bug reports, use the issue tracker at \c
