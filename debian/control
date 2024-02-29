@@ -1,10 +1,11 @@
 Source: util-linux
-Build-Depends: dpkg-dev (>= 1.22.5),
+Build-Depends:
  asciidoctor <!stage1 !nodoc>,
  bc <!stage1 !nocheck>,
  bison,
  debhelper-compat (= 13),
  dh-exec,
+ dpkg-dev (>= 1.22.5),
  gettext,
  libaudit-dev [linux-any] <!stage1>,
  libcap-ng-dev [linux-any] <!stage1>,
@@ -407,9 +408,12 @@ Description: smart column output alignment library - headers
  This package contains the development environment for the mount library.
 
 Package: libuuid1t64
-Provides: ${t64:Provides}
-Replaces: libuuid1
-Breaks: libuuid1 (<< ${source:Version})
+Provides:
+ ${t64:Provides}
+Replaces:
+ libuuid1
+Breaks:
+ libuuid1 (<< ${source:Version})
 Architecture: any
 Section: libs
 Priority: optional
