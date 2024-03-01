@@ -5,7 +5,6 @@ Build-Depends:
  bison,
  debhelper-compat (= 13),
  dh-exec,
- dpkg-dev (>= 1.22.5),
  gettext,
  libaudit-dev [linux-any] <!stage1>,
  libcap-ng-dev [linux-any] <!stage1>,
@@ -407,13 +406,7 @@ Description: smart column output alignment library - headers
  .
  This package contains the development environment for the mount library.
 
-Package: libuuid1t64
-Provides:
- ${t64:Provides}
-Replaces:
- libuuid1
-Breaks:
- libuuid1 (<< ${source:Version})
+Package: libuuid1
 Architecture: any
 Section: libs
 Priority: optional
@@ -440,7 +433,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends:
- libuuid1t64,
+ libuuid1,
  ${misc:Pre-Depends}
 Depends:
  adduser,
@@ -484,7 +477,7 @@ Section: libdevel
 Priority: optional
 Depends:
  libc6-dev | libc-dev,
- libuuid1t64 (= ${binary:Version}),
+ libuuid1 (= ${binary:Version}),
  ${misc:Depends}
 Multi-Arch: same
 Description: Universally Unique ID library - headers and static libraries
