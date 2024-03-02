@@ -5,7 +5,6 @@ Build-Depends:
  bison,
  debhelper-compat (= 13),
  dh-exec,
- dpkg-dev (>= 1.22.5),
  flex,
  gettext,
  libaudit-dev [linux-any] <!stage1>,
@@ -408,13 +407,7 @@ Description: smart column output alignment library - headers
  .
  This package contains the development environment for the mount library.
 
-Package: libuuid1t64
-Provides:
- ${t64:Provides}
-Replaces:
- libuuid1
-Breaks:
- libuuid1 (<< ${source:Version})
+Package: libuuid1
 Architecture: any
 Section: libs
 Priority: optional
@@ -423,6 +416,12 @@ Pre-Depends:
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Breaks:
+ libuuid1t64 (<< ${source:Version})
+Replaces:
+ libuuid1t64
+Provides:
+ libuuid1t64 (= ${binary:Version}) [!arm !armeb !armel !armhf !hppa !i386 !hurd-i386 !kfreebsd-i386 !m68k !mips !mipsel !mipsn32 !mipsn32el !mipsn32r6 !mipsn32r6el !mipsr6 !mipsr6el !nios2 !powerpc !powerpcel !powerpcspe !s390 !sh3 !sh3eb !sh4 !sh4eb !sparc]
 Recommends:
  uuid-runtime
 Multi-Arch: same
@@ -441,7 +440,7 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends:
- libuuid1t64,
+ libuuid1,
  ${misc:Pre-Depends}
 Depends:
  adduser,
@@ -485,7 +484,7 @@ Section: libdevel
 Priority: optional
 Depends:
  libc6-dev | libc-dev,
- libuuid1t64 (= ${binary:Version}),
+ libuuid1 (= ${binary:Version}),
  ${misc:Depends}
 Multi-Arch: same
 Description: Universally Unique ID library - headers and static libraries
