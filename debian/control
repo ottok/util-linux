@@ -415,8 +415,12 @@ Pre-Depends:
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
+Breaks:
+ libuuid1t64 (<< ${source:Version})
+Replaces:
+ libuuid1t64
 Provides:
- libuuid1t64 [!armel !armhf !hppa !m68k !mips !mipsel !powerpc !sh4]
+ libuuid1t64 (= ${binary:Version}) [!armel !armhf !hppa !m68k !mips !mipsel !powerpc !sh4]
 Recommends:
  uuid-runtime
 Multi-Arch: same
