@@ -1,3 +1,10 @@
+util-linux (2.40~rc2-2) experimental; urgency=medium
+
+  * Disable another lsfd test which is broken on the buildds.
+  * Merge with unstable.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 02 Mar 2024 15:20:41 +0100
+
 util-linux (2.39.3-8) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
