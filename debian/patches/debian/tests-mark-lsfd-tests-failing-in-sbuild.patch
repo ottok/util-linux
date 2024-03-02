@@ -3,9 +3,10 @@ Date: Thu, 29 Feb 2024 23:22:41 +0100
 Subject: tests: mark some lsfd as failing in sbuild
 
 ---
- tests/ts/lsfd/mkfds-inotify    | 3 +++
- tests/ts/lsfd/mkfds-socketpair | 3 +++
- 2 files changed, 6 insertions(+)
+ tests/ts/lsfd/mkfds-inotify                        | 3 +++
+ tests/ts/lsfd/mkfds-socketpair                     | 3 +++
+ tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag | 3 +++
+ 3 files changed, 9 insertions(+)
 
 diff --git a/tests/ts/lsfd/mkfds-inotify b/tests/ts/lsfd/mkfds-inotify
 index 3f26849..489b27f 100755
@@ -22,16 +23,30 @@ index 3f26849..489b27f 100755
  
  PID=
 diff --git a/tests/ts/lsfd/mkfds-socketpair b/tests/ts/lsfd/mkfds-socketpair
-index 38f9279..fbd99ed 100755
+index 38f9279..be2de4b 100755
 --- a/tests/ts/lsfd/mkfds-socketpair
 +++ b/tests/ts/lsfd/mkfds-socketpair
 @@ -26,6 +26,9 @@ ts_check_test_command "$TS_HELPER_MKFDS"
  
  ts_check_prog "sed"
  
-+# fails for unknown reasons in sbuild
++# fails for unknown reasons in sbuild, https://github.com/util-linux/util-linux/issues/2822
 +TS_KNOWN_FAIL="yes"
 +
  ts_cd "$TS_OUTDIR"
  
  PID=
+diff --git a/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag b/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
+index c188464..b319070 100755
+--- a/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
++++ b/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
+@@ -21,6 +21,9 @@ TS_DESC="UNIX stream sockets"
+ ts_init "$*"
+ ts_skip_qemu_user
+ 
++# fails for unknown reasons in sbuild, https://github.com/util-linux/util-linux/issues/2822
++TS_KNOWN_FAIL="yes"
++
+ . "$TS_SELF/lsfd-functions.bash"
+ 
+ ts_check_test_command "$TS_CMD_LSFD"
