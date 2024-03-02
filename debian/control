@@ -420,7 +420,7 @@ Breaks:
 Replaces:
  libuuid1t64
 Provides:
- libuuid1t64 (= ${binary:Version}) [!arm !armeb !armel !armhf !hppa !i386 !hurd-i386 !kfreebsd-i386 !m68k !mips !mipsel !mipsn32 !mipsn32el !mipsn32r6 !mipsn32r6el !mipsr6 !mipsr6el !nios2 !powerpc !powerpcel !powerpcspe !s390 !sh3 !sh3eb !sh4 !sh4eb !sparc]
+ libuuid1t64 (= ${binary:Version}) [!arm !armeb !armel !armhf !hppa !hurd-i386 !kfreebsd-i386 !m68k !mips !mipsel !mipsn32 !mipsn32el !mipsn32r6 !mipsn32r6el !mipsr6 !mipsr6el !nios2 !powerpc !powerpcel !powerpcspe !s390 !sh3 !sh3eb !sh4 !sh4eb !sparc]
 Recommends:
  uuid-runtime
 Multi-Arch: same
