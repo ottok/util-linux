@@ -4,3 +4,4 @@ debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 debian/tests-mark-lsfd-tests-failing-in-sbuild.patch
+upstream/tests-lsfd-mkfds-inotify-consider-environments-not-having.patch
