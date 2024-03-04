@@ -1,3 +1,9 @@
+util-linux (2.39.3-10) unstable; urgency=medium
+
+  * Tighten dependencies between programs and our own shlibs
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 04 Mar 2024 22:11:55 +0100
+
 util-linux (2.39.3-9) unstable; urgency=medium
 
   * Provide libuuid1t64 on i386
