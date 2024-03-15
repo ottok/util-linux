@@ -21,17 +21,3 @@ index 38f9279..be2de4b 100755
  ts_cd "$TS_OUTDIR"
  
  PID=
-diff --git a/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag b/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
-index c188464..b319070 100755
---- a/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
-+++ b/tests/ts/lsfd/mkfds-unix-stream-requiring-sockdiag
-@@ -21,6 +21,9 @@ TS_DESC="UNIX stream sockets"
- ts_init "$*"
- ts_skip_qemu_user
- 
-+# fails for unknown reasons in sbuild, https://github.com/util-linux/util-linux/issues/2822
-+TS_KNOWN_FAIL="yes"
-+
- . "$TS_SELF/lsfd-functions.bash"
- 
- ts_check_test_command "$TS_CMD_LSFD"
