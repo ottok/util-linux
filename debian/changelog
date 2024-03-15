@@ -1,3 +1,10 @@
+util-linux (2.40~rc2-4) experimental; urgency=medium
+
+  * Reduce uuid-runtime Recommends to Suggests (Closes: #1065569)
+  * Revert marking sockdiag test, add ss/sysctl debug
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 16 Mar 2024 00:19:22 +0100
+
 util-linux (2.40~rc2-3) experimental; urgency=medium
 
   * Mark lsfd/mkfds-unix-stream-requiring-sockdiag as failing too
