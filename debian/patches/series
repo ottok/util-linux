@@ -4,4 +4,7 @@ debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 upstream/tests-lsfd-mkfds-inotify-consider-environments-not-having.patch
+upstream/tests-lsfd-fix-typoes-in-an-error-name.patch
+upstream/tests-lsfd-functions.bash-cosmetic-unify-the-style-to-def.patch
+upstream/tests-test_mkfds-sockdiag-new-factory.patch
 upstream/tests-lsfd-skip-some-cases-if-NETLINK_SOCK_DIAG-for-AF_UN.patch

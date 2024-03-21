@@ -1,0 +1,67 @@
+From: Masatake YAMATO <yamato@redhat.com>
+Date: Sun, 17 Mar 2024 00:38:17 +0900
+Subject: tests: (lsfd) fix typoes in an error name
+
+---
+ tests/helpers/test_mkfds.c        | 6 +++---
+ tests/ts/lsfd/lsfd-functions.bash | 2 +-
+ tests/ts/lsfd/mkfds-ping          | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/tests/helpers/test_mkfds.c b/tests/helpers/test_mkfds.c
+index 642f8ec..12b6643 100644
+--- a/tests/helpers/test_mkfds.c
++++ b/tests/helpers/test_mkfds.c
+@@ -68,7 +68,7 @@
+ #define EXIT_EPERM  18
+ #define EXIT_ENOPROTOOPT 19
+ #define EXIT_EPROTONOSUPPORT 20
+-#define EXIT_EACCESS 21
++#define EXIT_EACCES 21
+ 
+ #define _U_ __attribute__((__unused__))
+ 
+@@ -2096,7 +2096,7 @@ static void *make_ping_common(const struct factory *factory, struct fdesc fdescs
+ 
+ 	sd = socket(family, SOCK_DGRAM, protocol);
+ 	if (sd < 0)
+-		err((errno == EACCES? EXIT_EACCESS: EXIT_FAILURE),
++		err((errno == EACCES? EXIT_EACCES: EXIT_FAILURE),
+ 		    "failed to make an icmp socket");
+ 
+ 	if (sd != fdescs[0].fd) {
+@@ -2116,7 +2116,7 @@ static void *make_ping_common(const struct factory *factory, struct fdesc fdescs
+ 			int e = errno;
+ 			close(sd);
+ 			errno = e;
+-			err((errno == EACCES? EXIT_EACCESS: EXIT_FAILURE),
++			err((errno == EACCES? EXIT_EACCES: EXIT_FAILURE),
+ 			    "failed in bind(2)");
+ 		}
+ 	}
+diff --git a/tests/ts/lsfd/lsfd-functions.bash b/tests/ts/lsfd/lsfd-functions.bash
+index 43c02ad..36c0583 100644
+--- a/tests/ts/lsfd/lsfd-functions.bash
++++ b/tests/ts/lsfd/lsfd-functions.bash
+@@ -19,7 +19,7 @@
+ readonly EPERM=18
+ readonly ENOPROTOOPT=19
+ readonly EPROTONOSUPPORT=20
+-readonly EACCESS=21
++readonly EACCES=21
+ 
+ function lsfd_wait_for_pausing {
+ 	ts_check_prog "sleep"
+diff --git a/tests/ts/lsfd/mkfds-ping b/tests/ts/lsfd/mkfds-ping
+index 2177742..2baafde 100755
+--- a/tests/ts/lsfd/mkfds-ping
++++ b/tests/ts/lsfd/mkfds-ping
+@@ -90,7 +90,7 @@ ERRMSG=
+ for i in 0 1; do
+     ERRMSG=$("$TS_HELPER_MKFDS"  -c -q "${FACTORY[$i]}" 3 id=$ID 2>&1)
+     ERR="$?"
+-    if [[ "$ERR" == "$EACCESS" ]]; then
++    if [[ "$ERR" == "$EACCES" ]]; then
+ 	case "$ERRMSG" in
+ 	    *bind*)
+ 		MSG="making ${TYPE[$i]} socket with specifying id is not allowed (blocked by SELinux?)"
