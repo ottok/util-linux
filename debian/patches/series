@@ -3,5 +3,5 @@ debian/verbose-tests.patch
 debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
-debian/tests-mark-lsfd-tests-failing-in-sbuild.patch
 upstream/tests-lsfd-mkfds-inotify-consider-environments-not-having.patch
+upstream/tests-lsfd-skip-some-cases-if-NETLINK_SOCK_DIAG-for-AF_UN.patch
