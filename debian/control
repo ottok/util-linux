@@ -48,11 +48,6 @@ Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
 Essential: yes
-Pre-Depends:
- ${misc:Pre-Depends},
- ${shlibs:Depends}
-Depends:
- ${misc:Depends}
 Recommends:
  sensible-utils
 Suggests:
@@ -80,8 +75,7 @@ Build-Profiles: <!stage1>
 Section: localization
 Priority: optional
 Depends:
- util-linux (>= ${source:Upstream-Version}),
- ${misc:Depends}
+ util-linux (>= ${source:Upstream-Version})
 Breaks:
  manpages-cs (<< 4.19.0-7~),
  manpages-da (<< 4.19.0-7~),
@@ -134,10 +128,7 @@ Architecture: linux-any
 Build-Profiles: <!stage1>
 Section: admin
 Pre-Depends:
- ${misc:Pre-Depends},
  ${shlibs:Depends}
-Depends:
- ${misc:Depends}
 Suggests:
  nfs-common
 Multi-Arch: foreign
@@ -150,11 +141,6 @@ Architecture: any
 Build-Profiles: <!stage1>
 Essential: yes
 Section: utils
-Pre-Depends:
- ${misc:Pre-Depends},
- ${shlibs:Depends}
-Depends:
- ${misc:Depends}
 Recommends:
  bsdextrautils
 Multi-Arch: foreign
@@ -168,11 +154,6 @@ Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Replaces:
  bsdmainutils (<< 12.1.3),
  nwrite
@@ -192,11 +173,6 @@ Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
 Priority: important
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Recommends:
  sensible-utils
 Multi-Arch: foreign
@@ -217,9 +193,6 @@ Architecture: hurd-any linux-any
 Build-Profiles: <!stage1 !noudeb>
 Priority: optional
 Section: debian-installer
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 XB-Installer-Menu-Item: 99999
 Description: Manually partition a hard drive (fdisk)
@@ -228,11 +201,6 @@ Package: libblkid1
 Architecture: any
 Section: libs
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Multi-Arch: same
 Description: block device ID library
  The blkid library allows system programs such as fsck and mount to
@@ -244,9 +212,6 @@ Package: libblkid1-udeb
 Architecture: any
 Section: debian-installer
 Priority: optional
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 Build-Profiles: <!noudeb>
 Description: stripped down block device ID library, for debian-installer
@@ -261,13 +226,10 @@ Package: libblkid-dev
 Architecture: any
 Section: libdevel
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
 Depends:
  libblkid1 (= ${binary:Version}),
  libc6-dev | libc-dev,
- uuid-dev,
- ${misc:Depends}
+ uuid-dev
 Multi-Arch: same
 Description: block device ID library - headers
  The blkid library allows system programs such as fsck and mount to
@@ -281,11 +243,6 @@ Package: libfdisk1
 Architecture: any
 Section: libs
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Multi-Arch: same
 Description: fdisk partitioning library
  The libfdisk library is used for manipulating partition tables. It is
@@ -295,9 +252,6 @@ Package: libfdisk1-udeb
 Architecture: any
 Section: debian-installer
 Priority: optional
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 Build-Profiles: <!noudeb>
 Description: stripped down fdisk partitioning library, for debian-installer
@@ -310,14 +264,11 @@ Package: libfdisk-dev
 Architecture: any
 Section: libdevel
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
 Depends:
  libblkid-dev,
  libc6-dev | libc-dev,
  libfdisk1 (= ${binary:Version}),
- uuid-dev,
- ${misc:Depends}
+ uuid-dev
 Multi-Arch: same
 Description: fdisk partitioning library - headers
  The libfdisk library is used for manipulating partition tables. It is
@@ -329,11 +280,6 @@ Package: libmount1
 Architecture: any
 Section: libs
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Suggests:
  cryptsetup-bin [linux-any]
 Multi-Arch: same
@@ -345,9 +291,6 @@ Package-Type: udeb
 Build-Profiles: <!noudeb>
 Section: debian-installer
 Priority: optional
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Architecture: linux-any
 Description: stripped down device mounting library, for debian-installer
  The device mounting library, used by mount and umount helpers.
@@ -362,8 +305,7 @@ Depends:
  libblkid-dev,
  libc6-dev | libc-dev,
  libmount1 (= ${binary:Version}),
- libselinux1-dev,
- ${misc:Depends}
+ libselinux1-dev
 Multi-Arch: same
 Description: device mounting library - headers
  This device mounting library is used by mount and umount helpers.
@@ -374,11 +316,6 @@ Package: libsmartcols1
 Architecture: any
 Section: libs
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Multi-Arch: same
 Description: smart column output alignment library
  This smart column output alignment library is used by fdisk utilities.
@@ -387,9 +324,6 @@ Package: libsmartcols1-udeb
 Architecture: any
 Section: debian-installer
 Priority: optional
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 Build-Profiles: <!noudeb>
 Description: stripped down smart column output aligment library, for debian-installer
@@ -403,8 +337,7 @@ Section: libdevel
 Priority: optional
 Depends:
  libc6-dev | libc-dev,
- libsmartcols1 (= ${binary:Version}),
- ${misc:Depends}
+ libsmartcols1 (= ${binary:Version})
 Multi-Arch: same
 Description: smart column output alignment library - headers
  This smart column output alignment library is used by fdisk utilities.
@@ -415,11 +348,6 @@ Package: libuuid1
 Architecture: any
 Section: libs
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Breaks:
  libuuid1t64 (<< ${source:Version})
 Replaces:
@@ -444,12 +372,9 @@ Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
 Pre-Depends:
- libuuid1,
- ${misc:Pre-Depends}
+ libuuid1
 Depends:
- adduser,
- ${misc:Depends},
- ${shlibs:Depends}
+ adduser
 Multi-Arch: foreign
 Description: runtime components for the Universally Unique ID library
  The libuuid library generates and parses 128-bit Universally Unique
@@ -471,9 +396,6 @@ Package: libuuid1-udeb
 Architecture: any
 Section: debian-installer
 Priority: optional
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 Build-Profiles: <!noudeb>
 Description: stripped down Universally Unique ID library, for debian-installer
@@ -488,8 +410,7 @@ Section: libdevel
 Priority: optional
 Depends:
  libc6-dev | libc-dev,
- libuuid1 (= ${binary:Version}),
- ${misc:Depends}
+ libuuid1 (= ${binary:Version})
 Multi-Arch: same
 Description: Universally Unique ID library - headers and static libraries
  The libuuid library generates and parses 128-bit Universally Unique IDs
@@ -502,9 +423,6 @@ Architecture: any
 Build-Profiles: <!stage1 !noudeb>
 Priority: optional
 Section: debian-installer
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Package-Type: udeb
 Description: stripped down miscellaneous system utilities, for debian-installer
  This is a minimal version of util-linux for debian-installer. It only
@@ -515,11 +433,6 @@ Architecture: linux-any
 Build-Profiles: <!stage1>
 Section: utils
 Priority: optional
-Pre-Depends:
- ${misc:Pre-Depends}
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Multi-Arch: foreign
 Description: tool for enabling and disabling wireless devices
  rfkill is a simple tool for accessing the Linux rfkill device interface,
@@ -530,9 +443,6 @@ Package: eject
 Architecture: linux-any
 Build-Profiles: <!stage1>
 Section: utils
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Priority: optional
 Multi-Arch: foreign
 Description: ejects CDs and operates CD-Changers under Linux
@@ -549,9 +459,6 @@ Package: eject-udeb
 Architecture: linux-any
 Build-Profiles: <!stage1 !noudeb>
 Section: debian-installer
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Priority: optional
 Package-Type: udeb
 XB-Installer-Menu-Item: 96000
@@ -561,9 +468,6 @@ Package: util-linux-extra
 Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
-Depends:
- ${misc:Depends},
- ${shlibs:Depends}
 Replaces:
  util-linux (<< 2.38~)
 Breaks:
