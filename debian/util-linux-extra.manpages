@@ -7,4 +7,9 @@ debian/tmp/usr/share/man/man1/pipesz.1                          [linux-any]
 debian/tmp/usr/share/man/man1/waitpid.1                         [linux-any]
 debian/tmp/usr/share/man/man8/blkpr.8                           [linux-any]
 debian/tmp/usr/share/man/man8/ctrlaltdel.8                      [linux-any]
+debian/tmp/usr/share/man/man8/fsck.cramfs.8
+debian/tmp/usr/share/man/man8/fsck.minix.8
 debian/tmp/usr/share/man/man8/hwclock.8
+debian/tmp/usr/share/man/man8/mkfs.bfs.8
+debian/tmp/usr/share/man/man8/mkfs.cramfs.8
+debian/tmp/usr/share/man/man8/mkfs.minix.8

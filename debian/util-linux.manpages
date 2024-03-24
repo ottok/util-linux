@@ -49,8 +49,6 @@ debian/tmp/usr/share/man/man8/delpart.8                         [linux-any]
 debian/tmp/usr/share/man/man8/findfs.8
 debian/tmp/usr/share/man/man8/findmnt.8
 debian/tmp/usr/share/man/man8/fsck.8
-debian/tmp/usr/share/man/man8/fsck.cramfs.8
-debian/tmp/usr/share/man/man8/fsck.minix.8
 debian/tmp/usr/share/man/man8/fsfreeze.8                        [linux-any]
 debian/tmp/usr/share/man/man8/fstrim.8                          [linux-any]
 debian/tmp/usr/share/man/man8/i386.8                            [amd64 i386]
@@ -65,9 +63,6 @@ debian/tmp/usr/share/man/man8/mips.8                            [mips mipsel]
 debian/tmp/usr/share/man/man8/mips32.8                          [mips mipsel]
 debian/tmp/usr/share/man/man8/mips64.8                          [mips mipsel]
 debian/tmp/usr/share/man/man8/mkfs.8
-debian/tmp/usr/share/man/man8/mkfs.bfs.8
-debian/tmp/usr/share/man/man8/mkfs.cramfs.8
-debian/tmp/usr/share/man/man8/mkfs.minix.8
 # Rename mkswap to mkswap.linux on non-linux.
 debian/tmp/usr/share/man/man8/mkswap.8                          [linux-any]
 debian/tmp/usr/share/man/man8/mkswap.8 => /usr/share/man/man8/mkswap.linux.8 [!linux-any]

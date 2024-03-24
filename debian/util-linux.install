@@ -16,12 +16,7 @@ sbin/agetty usr/sbin/
 sbin/blkid usr/sbin/
 sbin/findfs usr/sbin/
 sbin/fsck usr/sbin/
-sbin/fsck.cramfs usr/sbin/
-sbin/fsck.minix usr/sbin/
 sbin/mkfs usr/sbin/
-sbin/mkfs.bfs usr/sbin/
-sbin/mkfs.cramfs usr/sbin/
-sbin/mkfs.minix usr/sbin/
 sbin/runuser usr/sbin/
 sbin/sulogin usr/sbin/
 sbin/swaplabel usr/sbin/
