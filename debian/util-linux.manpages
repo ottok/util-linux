@@ -45,7 +45,6 @@ debian/tmp/usr/share/man/man8/blkzone.8                         [linux-any]
 debian/tmp/usr/share/man/man8/blockdev.8                        [linux-any]
 debian/tmp/usr/share/man/man8/chcpu.8                           [linux-any]
 debian/tmp/usr/share/man/man8/chmem.8                           [linux-any]
-debian/tmp/usr/share/man/man8/ctrlaltdel.8                      [linux-any]
 debian/tmp/usr/share/man/man8/delpart.8                         [linux-any]
 debian/tmp/usr/share/man/man8/findfs.8
 debian/tmp/usr/share/man/man8/findmnt.8

@@ -2,6 +2,7 @@
 bin/pipesz => /usr/bin/pipesz                                   [linux-any]
 sbin/blkpr => /usr/sbin/blkpr                                   [linux-any]
 sbin/hwclock => /usr/sbin/hwclock
+sbin/ctrlaltdel usr/sbin/                                       [linux-any]
 usr/bin/fadvise                                                 [linux-any]
 usr/bin/fincore                                                 [linux-any]
 usr/bin/lsfd                                                    [linux-any]
