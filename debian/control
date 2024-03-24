@@ -20,7 +20,7 @@ Build-Depends:
  libtool,
  libudev-dev [linux-any] <!stage1>,
  netbase <!stage1 !nocheck>,
- pkg-config,
+ pkgconf,
  po-debconf,
  po4a,
  procps,
