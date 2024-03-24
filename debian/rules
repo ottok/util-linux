@@ -85,6 +85,10 @@ override_dh_auto_install:
 	# - libblkid.a is used by e2fsprogs.
 	find debian/tmp/usr/lib -name 'lib*.a' \! -name 'libuuid.a' \! -name 'libblkid.a' -delete
 	#
+	# Remove programs we do not install
+	find debian/tmp/ -name 'addpart*' -delete
+	find debian/tmp/ -name 'delpart*' -delete
+	#
 	# show installed man pages
 	find debian/tmp/usr/share/man
 
