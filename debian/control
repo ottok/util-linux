@@ -32,7 +32,6 @@ Build-Depends:
  zlib1g-dev
 Build-Conflicts:
  libedit-dev
-Section: base
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
 Uploaders:
