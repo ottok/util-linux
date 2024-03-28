@@ -5,19 +5,8 @@ packages:
     - path-metadata:
        path: usr/bin/su
        mode: "u=rwxs,go=rx"
-  bsdextrautils:
-    transformations:
-    - path-metadata:
-        path: usr/bin/write
-        group: tty
-        mode: "u=rwx,g=rxs,o=rx"
   bsdutils:
     binary-version: 1:{{DEB_VERSION_UPSTREAM_REVISION}}
-    transformations:
-    - path-metadata:
-        path: usr/bin/wall
-        group: tty
-        mode: "u=rwx,g=rxs,o=rx"
   mount:
     transformations:
     - path-metadata:
