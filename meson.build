@@ -13,7 +13,7 @@ pkgconfig = import('pkgconfig')
 # soname versions; This never change because we use symbols versioing. There is also
 # API version (LIB*_VERSION macros) and it follow package version.
 libblkid_version = '1.1.0'
-libblkid_date = '29-Feb-2024'
+libblkid_date = '27-Mar-2024'
 libuuid_version = '1.3.0'
 liblastlog2_version = '2.0.0'
 libmount_version = '1.1.0'
@@ -1556,26 +1556,30 @@ exes += exe
 manadocs += ['sys-utils/blkdiscard.8.adoc']
 bashcompletions += ['blkdiscard']
 
-exe = executable(
-  'blkzone',
-  blkzone_sources,
-  include_directories : includes,
-  link_with : [lib_common],
-  install_dir : sbindir,
-  install : true)
-exes += exe
-manadocs += ['sys-utils/blkzone.8.adoc']
-bashcompletions += ['blkzone']
+if cc.has_header('linux/blkzoned.h')
+  exe = executable(
+    'blkzone',
+    blkzone_sources,
+    include_directories : includes,
+    link_with : [lib_common],
+    install_dir : sbindir,
+    install : true)
+  exes += exe
+  manadocs += ['sys-utils/blkzone.8.adoc']
+  bashcompletions += ['blkzone']
+endif
 
-exe = executable(
-  'blkpr',
-  blkpr_sources,
-  include_directories : includes,
-  link_with : [lib_common],
-  install_dir : sbindir,
-  install : true)
-exes += exe
-manadocs += ['sys-utils/blkpr.8.adoc']
+if cc.has_header('linux/pr.h')
+  exe = executable(
+    'blkpr',
+    blkpr_sources,
+    include_directories : includes,
+    link_with : [lib_common],
+    install_dir : sbindir,
+    install : true)
+  exes += exe
+  manadocs += ['sys-utils/blkpr.8.adoc']
+endif
 
 exe = executable(
   'ldattach',
