@@ -75,7 +75,6 @@ debian/tmp/usr/share/man/*/man1/setpriv.1 <!nodoc>                         [linu
 debian/tmp/usr/share/man/*/man1/setsid.1 <!nodoc>
 debian/tmp/usr/share/man/*/man1/setterm.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man1/su.1 <!nodoc>
-debian/tmp/usr/share/man/*/man1/taskset.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man1/uclampset.1 <!nodoc>                       [linux-any]
 debian/tmp/usr/share/man/*/man1/unshare.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man1/utmpdump.1 <!nodoc>
@@ -117,7 +116,6 @@ debian/tmp/usr/share/man/*/man8/rtcwake.8 <!nodoc>                         [linu
 debian/tmp/usr/share/man/*/man8/setarch.8 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man8/sulogin.8 <!nodoc>
 debian/tmp/usr/share/man/*/man8/swaplabel.8 <!nodoc>
-debian/tmp/usr/share/man/*/man8/switch_root.8 <!nodoc>                     [linux-any]
 debian/tmp/usr/share/man/*/man8/wdctl.8 <!nodoc>                           [linux-any]
 debian/tmp/usr/share/man/*/man8/wipefs.8 <!nodoc>
 debian/tmp/usr/share/man/*/man8/zramctl.8 <!nodoc>                         [linux-any]
