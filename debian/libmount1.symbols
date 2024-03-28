@@ -82,6 +82,7 @@ libmount.so.1 libmount1 #MINVER#
  (arch=linux-any)mnt_context_is_nocanonicalize@MOUNT_2.22 2.24.2
  (arch=linux-any)mnt_context_is_nohelpers@MOUNT_2.22 2.24.2
  (arch=linux-any)mnt_context_is_nomtab@MOUNT_2.19 2.19.1
+ (arch=linux-any)mnt_context_is_onlyonce@MOUNT_2_39 2.40
  (arch=linux-any)mnt_context_is_parent@MOUNT_2.21 2.24.2
  (arch=linux-any)mnt_context_is_rdonly_umount@MOUNT_2.19 2.19.1
  (arch=linux-any)mnt_context_is_restricted@MOUNT_2.19 2.19.1
