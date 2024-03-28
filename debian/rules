@@ -190,13 +190,6 @@ endif
 
 override_dh_auto_test:
 ifeq ($(DEB_HOST_ARCH_OS), linux)
-	#
-	# Debug buildd environment.
-	echo 'XXX test_mkfds'
-	make test_mkfds
-	bash -c './test_mkfds sockdiag 3 < /dev/null ; echo $$?'
-	echo 'XXX test_mkfds done'
-	#
 	dh_auto_test --max-parallel=1
 else
 	@echo "WARNING: non-linux detected, making tests non-fatal."
