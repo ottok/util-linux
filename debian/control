@@ -184,7 +184,7 @@ Description: collection of partitioning utilities
  partition tables (eg. GPT, MBR, etc).
  .
  The fdisk utility is the classical text-mode utility.
- The cfdisk utilitity gives a more userfriendly curses based interface.
+ The cfdisk utility gives a more userfriendly curses based interface.
  The sfdisk utility is mostly for automation and scripting uses.
 
 Package: fdisk-udeb
@@ -325,7 +325,7 @@ Section: debian-installer
 Priority: optional
 Package-Type: udeb
 Build-Profiles: <!noudeb>
-Description: stripped down smart column output aligment library, for debian-installer
+Description: stripped down smart column output alignment library, for debian-installer
  This smart column output alignment library is used by fdisk utilities.
  .
  This is a minimal package for debian-installer.
