@@ -4,7 +4,7 @@ Build-Depends:
  bc <!stage1 !nocheck>,
  bison,
  debhelper-compat (= 13),
- dh-sequence-zz-debputy-rrr,
+ dh-sequence-zz-debputy-rrr (>= 0.1.23~),
  dh-exec,
  dh-package-notes,
  flex,
