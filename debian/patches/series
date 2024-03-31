@@ -4,3 +4,5 @@ debian/hardlink-tests-known-failed.patch
 debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 debian/tests-mark-lsfd-tests-failing-in-sbuild.patch
+upstream/lsfd-add-LSFD_DEBUG-env-var-for-debugging.patch
+upstream/tests-test_mkfds-sockdiag-verify-the-recived-message.patch
