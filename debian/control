@@ -169,7 +169,6 @@ Description: extra utilities from 4.4BSD-Lite
 
 Package: fdisk
 Architecture: any
-Build-Profiles: <!stage1>
 Section: utils
 Priority: important
 Recommends:
