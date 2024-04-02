@@ -1,3 +1,15 @@
+util-linux (2.40-3) experimental; urgency=medium
+
+  * tests: mark fadvise/drop as known failing on buildds.
+    Per discussion on #debian-buildd. The buildds have always used tmpfs as the
+    build location, and with schroot this is visible to the util-linux tests.
+    They in turn disable fadvise/drop, as it does not work on tmpfs.  With the
+    unshare backend, the actual backing filesystem is hidden, so the test gets
+    run and fails.
+  * Remove build-time lsfd debugging
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 02 Apr 2024 21:58:11 +0200
+
 util-linux (2.40-2) experimental; urgency=medium
 
   * Add upstream patch for lsfd sockdiag test
