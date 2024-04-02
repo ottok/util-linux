@@ -6,3 +6,4 @@ debian/sensible-pager.patch
 debian/tests-mark-lsfd-tests-failing-in-sbuild.patch
 upstream/lsfd-add-LSFD_DEBUG-env-var-for-debugging.patch
 upstream/tests-test_mkfds-sockdiag-verify-the-recived-message.patch
+debian/tests-mark-fadvise-drop-as-known-failing-on-buildds.patch
