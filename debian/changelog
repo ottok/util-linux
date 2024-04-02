@@ -13,7 +13,7 @@ util-linux (2.40-1) experimental; urgency=medium
   * d/control: Remove unused and seemingly invalid `Section: base`
   * d/control: Fix two typos in the description
   * d/control: Bump dh-sequence-zz-debputy-rrr dependency
-    The automatic relationship substvars feature did not work prior to to
+    The automatic relationship substvars feature did not work prior to
     0.1.23.
   * Remove unnecessary relationship substvars, handled by debputy
 
