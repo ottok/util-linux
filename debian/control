@@ -467,10 +467,10 @@ Architecture: any
 Build-Profiles: <!stage1>
 Section: utils
 Replaces:
- util-linux (<< 2.38~)
+ util-linux (<< 2.40-0~)
 Breaks:
  initscripts (<< 3.08-2~),
- util-linux (<< 2.38~)
+ util-linux (<< 2.40-0~)
 Priority: standard
 Multi-Arch: foreign
 Description: interactive login tools
