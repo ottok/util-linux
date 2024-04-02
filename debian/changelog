@@ -1,3 +1,14 @@
+util-linux (2.40-2) experimental; urgency=medium
+
+  * Add upstream patch for lsfd sockdiag test
+  * Build fdisk package even for stage1
+    fdisk is a build dependency of systemd. Therefore it is useful to have it in
+    the stage1 build, which is used to build systemd later on.
+  * Improve recent util-linux(-extra) moves.
+    Update Breaks/Replaces. Add protective diversions for usrmerged binaries.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 02 Apr 2024 14:03:51 +0200
+
 util-linux (2.40-1) experimental; urgency=medium
 
   * New upstream release 2.40.
