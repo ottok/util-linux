@@ -1,3 +1,9 @@
+util-linux (2.40-4) experimental; urgency=medium
+
+  * test: fix marking of fadvise/drop as known failed
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 03 Apr 2024 23:03:28 +0200
+
 util-linux (2.40-3) experimental; urgency=medium
 
   * tests: mark fadvise/drop as known failing on buildds.
