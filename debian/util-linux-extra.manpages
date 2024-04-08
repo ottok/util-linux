@@ -1,4 +1,5 @@
 #!/usr/bin/dh-exec
+debian/tmp/usr/share/man/man1/enosys.1                          [linux-any]
 debian/tmp/usr/share/man/man1/fadvise.1                         [linux-any]
 debian/tmp/usr/share/man/man1/fincore.1                         [linux-any]
 debian/tmp/usr/share/man/man1/lsfd.1                            [linux-any]

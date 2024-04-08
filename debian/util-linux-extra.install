@@ -8,6 +8,7 @@ sbin/hwclock => /usr/sbin/hwclock
 sbin/mkfs.bfs usr/sbin/
 sbin/mkfs.cramfs usr/sbin/
 sbin/mkfs.minix usr/sbin/
+usr/bin/enosys                                                  [linux-any]
 usr/bin/fadvise                                                 [linux-any]
 usr/bin/fincore                                                 [linux-any]
 usr/bin/lsfd                                                    [linux-any]

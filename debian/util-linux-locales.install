@@ -121,6 +121,7 @@ debian/tmp/usr/share/man/*/man8/wipefs.8 <!nodoc>
 debian/tmp/usr/share/man/*/man8/zramctl.8 <!nodoc>                         [linux-any]
 
 # util-linux-extra
+debian/tmp/usr/share/man/*/man1/enosys.1 <!nodoc>                          [linux-any]
 debian/tmp/usr/share/man/*/man1/fincore.1 <!nodoc>                         [linux-any]
 debian/tmp/usr/share/man/*/man1/lsirq.1 <!nodoc>                           [linux-any]
 debian/tmp/usr/share/man/*/man1/waitpid.1 <!nodoc>                         [linux-any]
