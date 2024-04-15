@@ -8,3 +8,5 @@ upstream/lsfd-add-LSFD_DEBUG-env-var-for-debugging.patch
 upstream/tests-test_mkfds-sockdiag-verify-the-recived-message.patch
 debian/tests-mark-fadvise-drop-as-known-failing-on-buildds.patch
 upstream/tests-lsfd-mkfds-multiplexing-skip-if-proc-pid-syscall-is.patch
+upstream/audit-arch.h-add-defines-for-m68k-sh.patch
+upstream/Revert-lib-pager-Apply-pager-specific-fixes-only-when-nee.patch

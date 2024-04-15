@@ -1,0 +1,40 @@
+From: Chris Hofstaedtler <zeha@debian.org>
+Date: Tue, 9 Apr 2024 10:30:32 +0200
+Subject: audit-arch.h: add defines for m68k, sh
+
+John Paul Adrian Glaubitz points out that libseccomp needs to release 2.6.0,
+too.
+
+Upstream commit 5ebf0edb0a0531cba801c7791543c610725bf944.
+
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+---
+ include/audit-arch.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/include/audit-arch.h b/include/audit-arch.h
+index ade1824..9afc663 100644
+--- a/include/audit-arch.h
++++ b/include/audit-arch.h
+@@ -35,6 +35,8 @@
+ #    endif
+ #elif __powerpc__
+ #    define SECCOMP_ARCH_NATIVE AUDIT_ARCH_PPC
++#elif __m68k__
++#    define SECCOMP_ARCH_NATIVE AUDIT_ARCH_M68K
+ #elif __mips__
+ #    if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+ # 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_MIPS
+@@ -47,6 +49,12 @@
+ #    else
+ # 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_ARCV2
+ #    endif
++#elif __sh__
++#    if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++# 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_SH
++#    else
++# 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_SHEL
++#    endif
+ #elif __sparc__
+ #    if __SIZEOF_POINTER__ == 4
+ # 	 define SECCOMP_ARCH_NATIVE AUDIT_ARCH_SPARC
