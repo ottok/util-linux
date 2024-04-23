@@ -1,0 +1,37 @@
+From: Masatake YAMATO <yamato@redhat.com>
+Date: Sat, 13 Apr 2024 04:13:03 +0900
+Subject: lslocks: remove a unused local variable
+
+Signed-off-by: Masatake YAMATO <yamato@redhat.com>
+(cherry picked from commit c8c85e8e54aa201766f2420e2a7c86ccfa8d5df0)
+---
+ misc-utils/lslocks.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/misc-utils/lslocks.c b/misc-utils/lslocks.c
+index 60f6595..176173f 100644
+--- a/misc-utils/lslocks.c
++++ b/misc-utils/lslocks.c
+@@ -490,12 +490,11 @@ static int get_pid_locks(void *locks, void (*add_lock)(void *, struct lock *), s
+ 	return rc;
+ }
+ 
+-static int get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
++static void get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
+ {
+ 	DIR *dir;
+ 	struct dirent *d;
+ 	struct path_cxt *pc = NULL;
+-	int rc = 0;
+ 
+ 	pc = ul_new_path(NULL);
+ 	if (!pc)
+@@ -526,7 +525,7 @@ static int get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
+ 	closedir(dir);
+ 	ul_unref_path(pc);
+ 
+-	return rc;
++	return;
+ }
+ 
+ static int get_proc_locks(void *locks, void (*add_lock)(void *, struct lock *), void *fallback)

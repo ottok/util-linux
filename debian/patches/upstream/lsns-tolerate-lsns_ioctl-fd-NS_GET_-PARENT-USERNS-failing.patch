@@ -1,0 +1,49 @@
+From: Masatake YAMATO <yamato@redhat.com>
+Date: Sun, 14 Apr 2024 01:40:14 +0900
+Subject: lsns: tolerate lsns_ioctl(fd,
+ NS_GET_{PARENT,USERNS}) failing with ENOSYS
+
+With the original code, "lsns/filedesc" test case failed on
+"build (qemu-user, s390x)" and "build (qemu-user, riscv64)".
+
+On the platforms, lsns_ioctl(fd, NS_GET_{PARENT,USERNS}) failed
+with ENOSYS. The error stoped the iteration for gathering
+information from /proc/[0-9]+. As a result, lsns printed
+nothing. We don't expect this behavior.
+
+Signed-off-by: Masatake YAMATO <yamato@redhat.com>
+(cherry picked from commit f2a8b20d9c63f771d1fddd639ea1ec3fe034dc6d)
+---
+ sys-utils/lsns.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/sys-utils/lsns.c b/sys-utils/lsns.c
+index 1f3574f..4ea01d2 100644
+--- a/sys-utils/lsns.c
++++ b/sys-utils/lsns.c
+@@ -308,7 +308,11 @@ static int get_ns_ino(int dir, const char *nsname, ino_t *ino, ino_t *pino, ino_
+ 		return -errno;
+ 	if (strcmp(nsname, "pid") == 0 || strcmp(nsname, "user") == 0) {
+ 		if ((pfd = lsns_ioctl(fd, NS_GET_PARENT)) < 0) {
+-			if (errno == EPERM)
++			if (errno == EPERM
++			    /* On the test platforms, "build (qemu-user, s390x)" and
++			     * "build (qemu-user, riscv64)", the ioctl reported ENOSYS.
++			     */
++			    || errno == ENOSYS)
+ 				goto user;
+ 			close(fd);
+ 			return -errno;
+@@ -323,7 +327,11 @@ static int get_ns_ino(int dir, const char *nsname, ino_t *ino, ino_t *pino, ino_
+ 	}
+  user:
+ 	if ((ofd = lsns_ioctl(fd, NS_GET_USERNS)) < 0) {
+-		if (errno == EPERM)
++		if (errno == EPERM
++		    /* On the test platforms, "build (qemu-user, s390x)" and
++		     * "build (qemu-user, riscv64)", the ioctl reported ENOSYS.
++		     */
++		    || errno == ENOSYS)
+ 			goto out;
+ 		close(fd);
+ 		return -errno;

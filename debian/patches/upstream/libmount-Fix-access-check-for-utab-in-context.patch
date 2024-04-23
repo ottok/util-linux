@@ -1,0 +1,39 @@
+From: Karel Zak <kzak@redhat.com>
+Date: Mon, 22 Apr 2024 13:09:04 +0200
+Subject: libmount: Fix access check for utab in context
+
+The function mnt_has_regular_utab() properly detects that the utab is
+not writable, but this is ignored by the high-level context API. As a
+result, the library later attempts to update the file and ends up with
+a warning in mount(8):
+
+ $ mkdir sys
+ $ unshare --map-root-user --mount
+ $ mount --rbind /sys sys
+ $ umount --lazy sys; echo $?
+ umount: /home/user/sys: filesystem was unmounted, but failed to update userspace mount table.
+ 16
+
+In this case, the utab should be ignored.
+
+Fixes: https://github.com/util-linux/util-linux/issues/2981
+Signed-off-by: Karel Zak <kzak@redhat.com>
+(cherry picked from commit 97f7bfc0fdf74b6a6e220ba9d2f620386e660b29)
+---
+ libmount/src/context.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/libmount/src/context.c b/libmount/src/context.c
+index 952287a..5206c1d 100644
+--- a/libmount/src/context.c
++++ b/libmount/src/context.c
+@@ -367,8 +367,7 @@ const char *mnt_context_get_writable_tabpath(struct libmnt_context *cxt)
+ {
+ 	assert(cxt);
+ 
+-	context_init_paths(cxt, 1);
+-	return cxt->utab_path;
++	return mnt_context_utab_writable(cxt) ? cxt->utab_path : NULL;
+ }
+ 
+ 
