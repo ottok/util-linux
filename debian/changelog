@@ -1,3 +1,32 @@
+util-linux (2.40-7) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Import upstream stable/v2.40 up to a8aa0b5f154a44557f5bae5a4027bdbfe42b0323
+    * lsns: fix netns use
+    * libmount: fix comment typo for mnt_fs_get_comment()
+    * libmount: Fix access check for utab in context
+    * lsblk: simplify SOURCES code
+    * findmnt: always zero-terminate SOURCES data
+    * agetty: Don't override TERM passed by the user
+    * libsmartcols: reset wrap after calculation
+    * lslocks: remove a unused local variable
+    * lslocks: don't abort gathering per-process information even if
+      opening a /proc/[0-9]* fails
+    * lsns: tolerate lsns_ioctl(fd, NS_GET_{PARENT,USERNS}) failing with ENOSYS
+    * lsns: report with warnx if a namespace related ioctl fails with ENOSYS
+    * Fix misplaced else in mnt_update_already_done
+    * findmnt: revise the code for -I and -D option (Closes: #1069634)
+    * libblkid: topology/ioctl: simplify ioctl handling
+    * libblkid: topology/ioctl: correctly handle kernel types
+    * pam_lastlog2: link against liblastlog
+    * libblkid: Fix segfault when blkid.conf doesn't exist (Closes: #1069634)
+
+  [ Helmut Grohne ]
+  * Fix /usr-move mitigation (Closes: #1069064).
+    Thanks!
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Fri, 26 Apr 2024 11:41:02 +0200
+
 util-linux (2.40-6) unstable; urgency=medium
 
   * Add upstream patches fixing enosys on m68k, sh and dmesg -H output
