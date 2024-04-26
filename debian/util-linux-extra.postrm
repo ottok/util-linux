@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+if test "$1" = remove || test "$1" = disappear; then
+  dpkg-divert --no-rename --package util-linux-extra --divert /sbin/fsck.cramfs.usr-is-merged --remove /sbin/fsck.cramfs
+  dpkg-divert --no-rename --package util-linux-extra --divert /sbin/fsck.minix.usr-is-merged --remove /sbin/fsck.minix
+  dpkg-divert --no-rename --package util-linux-extra --divert /sbin/mkfs.bfs.usr-is-merged --remove /sbin/mkfs.bfs
+  dpkg-divert --no-rename --package util-linux-extra --divert /sbin/mkfs.cramfs.usr-is-merged --remove /sbin/mkfs.cramfs
+  dpkg-divert --no-rename --package util-linux-extra --divert /sbin/mkfs.minix.usr-is-merged --remove /sbin/mkfs.minix
+fi
+
+#DEBHELPER#
+
