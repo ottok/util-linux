@@ -1,3 +1,10 @@
+util-linux (2.40-8) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Also cover ctrlaltdel in /usr-move mitigation (Closes: #1069923)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 27 Apr 2024 14:23:31 +0200
+
 util-linux (2.40-7) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
