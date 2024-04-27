@@ -1,2 +1,0 @@
-# DEP17 P1 mitigation
-diversion-for-unknown-file sbin/* [preinst:*]
