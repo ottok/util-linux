@@ -1196,7 +1196,8 @@ static void open_tty(const char *tty, struct termios *tp, struct options *op)
 #endif
 	}
 
-	op->term = get_terminal_default_type(op->tty, !(op->flags & F_VCONSOLE));
+	if (!op->term)
+		op->term = get_terminal_default_type(op->tty, !(op->flags & F_VCONSOLE));
 	if (!op->term)
 		log_err(_("failed to allocate memory: %m"));
 
@@ -1876,6 +1877,7 @@ static int issue_is_changed(struct issue *ie)
 		free(ie->mem_old);
 		ie->mem_old = ie->mem;
 		ie->mem = NULL;
+		ie->mem_sz = 0;
 		return 0;
 	}
 
@@ -1902,7 +1904,7 @@ static void print_issue_file(struct issue *ie,
 		}
 	}
 
-	if (ie->mem_sz)
+	if (ie->mem_sz && ie->mem)
 		write_all(STDOUT_FILENO, ie->mem, ie->mem_sz);
 
 	if (ie->do_tcrestore) {
@@ -2463,12 +2465,12 @@ static void __attribute__((__noreturn__)) usage(void)
 	fputs(_(" -H, --host <hostname>      specify login host\n"), out);
 	fputs(_(" -i, --noissue              do not display issue file\n"), out);
 	fputs(_(" -I, --init-string <string> set init string\n"), out);
-	fputs(_(" -J  --noclear              do not clear the screen before prompt\n"), out);
+	fputs(_(" -J, --noclear              do not clear the screen before prompt\n"), out);
 	fputs(_(" -l, --login-program <file> specify login program\n"), out);
 	fputs(_(" -L, --local-line[=<mode>]  control the local line flag\n"), out);
 	fputs(_(" -m, --extract-baud         extract baud rate during connect\n"), out);
 	fputs(_(" -n, --skip-login           do not prompt for login\n"), out);
-	fputs(_(" -N  --nonewline            do not print a newline before issue\n"), out);
+	fputs(_(" -N, --nonewline            do not print a newline before issue\n"), out);
 	fputs(_(" -o, --login-options <opts> options that are passed to login\n"), out);
 	fputs(_(" -p, --login-pause          wait for any key before the login\n"), out);
 	fputs(_(" -r, --chroot <dir>         change root to the directory\n"), out);
@@ -3026,4 +3028,5 @@ static void load_credentials(struct options *op) {
 			op->autolog = str;
 		}
 	}
+	closedir(dir);
 }

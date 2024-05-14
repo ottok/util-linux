@@ -2,12 +2,12 @@
 .\"     Title: uuid_copy
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-01-31
+.\"      Date: 2024-05-01
 .\"    Manual: Programmer's Manual
-.\"    Source: util-linux 2.40
+.\"    Source: util-linux 2.40.1
 .\"  Language: English
 .\"
-.TH "UUID_COPY" "3" "2024-01-31" "util\-linux 2.40" "Programmer\*(Aqs Manual"
+.TH "UUID_COPY" "3" "2024-05-01" "util\-linux 2.40.1" "Programmer\*(Aqs Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -33,7 +33,7 @@ uuid_copy \- copy a UUID value
 .sp
 \fB#include <uuid.h>\fP
 .sp
-\fBvoid uuid_copy(uuid_t \fIdst\fP, uuid_t \fIsrc\fP);\fP
+\fBvoid uuid_copy(uuid_t \fIdst\fP, const uuid_t \fIsrc\fP);\fP
 .SH "DESCRIPTION"
 .sp
 The \fBuuid_copy\fP() function copies the UUID variable \fIsrc\fP to \fIdst\fP.

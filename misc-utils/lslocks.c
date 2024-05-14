@@ -89,7 +89,7 @@ static struct colinfo infos[] = {
 	[COL_END]  = { "END",    10, SCOLS_FL_RIGHT, N_("ending offset of the lock")},
 	[COL_PATH] = { "PATH",    0, SCOLS_FL_TRUNC, N_("path of the locked file")},
 	[COL_BLOCKER] = { "BLOCKER", 0, SCOLS_FL_RIGHT, N_("PID of the process blocking the lock") },
-	[COL_HOLDERS] = { "HOLDERS", 0, SCOLS_FL_WRAP, N_("HOLDERS of the lock") },
+	[COL_HOLDERS] = { "HOLDERS", 0, SCOLS_FL_WRAP, N_("holders of the lock") },
 };
 
 static int columns[ARRAY_SIZE(infos) * 2];
@@ -490,12 +490,11 @@ static int get_pid_locks(void *locks, void (*add_lock)(void *, struct lock *), s
 	return rc;
 }
 
-static int get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
+static void get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
 {
 	DIR *dir;
 	struct dirent *d;
 	struct path_cxt *pc = NULL;
-	int rc = 0;
 
 	pc = ul_new_path(NULL);
 	if (!pc)
@@ -513,10 +512,8 @@ static int get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
 		if (procfs_dirent_get_pid(d, &pid) != 0)
 			continue;
 
-		if (procfs_process_init_path(pc, pid) != 0) {
-			rc = -1;
-			break;
-		}
+		if (procfs_process_init_path(pc, pid) != 0)
+			continue;
 
 		if (procfs_process_get_cmdname(pc, buf, sizeof(buf)) <= 0)
 			continue;
@@ -528,7 +525,7 @@ static int get_pids_locks(void *locks, void (*add_lock)(void *, struct lock *))
 	closedir(dir);
 	ul_unref_path(pc);
 
-	return rc;
+	return;
 }
 
 static int get_proc_locks(void *locks, void (*add_lock)(void *, struct lock *), void *fallback)

@@ -68,7 +68,7 @@ UL_DEBUG_DEFINE_MASKNAMES(lsns) = UL_DEBUG_EMPTY_MASKNAMES;
 
 #define lsns_ioctl(fildes, request, ...) __extension__ ({ \
 	int ret = ioctl(fildes, request, ##__VA_ARGS__); \
-	if (ret == -1 && errno == ENOTTY) \
+	if (ret == -1 && (errno == ENOTTY || errno == ENOSYS))	\
 		warnx("Unsupported ioctl %s", #request); \
 	ret; })
 
@@ -308,7 +308,11 @@ static int get_ns_ino(int dir, const char *nsname, ino_t *ino, ino_t *pino, ino_
 		return -errno;
 	if (strcmp(nsname, "pid") == 0 || strcmp(nsname, "user") == 0) {
 		if ((pfd = lsns_ioctl(fd, NS_GET_PARENT)) < 0) {
-			if (errno == EPERM)
+			if (errno == EPERM
+			    /* On the test platforms, "build (qemu-user, s390x)" and
+			     * "build (qemu-user, riscv64)", the ioctl reported ENOSYS.
+			     */
+			    || errno == ENOSYS)
 				goto user;
 			close(fd);
 			return -errno;
@@ -323,7 +327,11 @@ static int get_ns_ino(int dir, const char *nsname, ino_t *ino, ino_t *pino, ino_
 	}
  user:
 	if ((ofd = lsns_ioctl(fd, NS_GET_USERNS)) < 0) {
-		if (errno == EPERM)
+		if (errno == EPERM
+		    /* On the test platforms, "build (qemu-user, s390x)" and
+		     * "build (qemu-user, riscv64)", the ioctl reported ENOSYS.
+		     */
+		    || errno == ENOSYS)
 			goto out;
 		close(fd);
 		return -errno;
@@ -784,6 +792,9 @@ static void interpolate_missing_namespaces(struct lsns *ls, struct lsns_namespac
 	char buf[BUFSIZ];
 	int fd_orphan, fd_missing;
 	struct stat st;
+
+	if (!orphan->proc)
+		return;
 
 	orphan->related_ns[rela] = get_namespace(ls, orphan->related_id[rela]);
 	if (orphan->related_ns[rela])

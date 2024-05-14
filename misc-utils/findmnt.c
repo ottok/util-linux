@@ -552,7 +552,6 @@ static char *get_vfs_attr(struct libmnt_fs *fs, int sizetype)
 static char *get_data_col_sources(struct libmnt_fs *fs, int evaluate, size_t *datasiz)
 {
 	const char *tag = NULL, *p = NULL;
-	int i = 0;
 	const char *device = NULL;
 	char *val = NULL;
 	blkid_dev_iterate iter;
@@ -602,10 +601,8 @@ static char *get_data_col_sources(struct libmnt_fs *fs, int evaluate, size_t *da
 		dev = blkid_verify(blk_cache, dev);
 		if (!dev)
 			continue;
-		if (i != 0)
-			ul_buffer_append_data(&buf, "\0", 1);
 		ul_buffer_append_string(&buf, blkid_dev_devname(dev));
-		i++;
+		ul_buffer_append_data(&buf, "\0", 1);
 	}
 	blkid_dev_iterate_end(iter);
 	free(val);
@@ -1636,7 +1633,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'I':
 			flags &= ~FL_TREE;
-			flags |= FL_DF_INODES;
+			flags |= (FL_DF_INODES | FL_DF);
 			break;
 		case 'i':
 			flags |= FL_INVERT;
@@ -1775,22 +1772,20 @@ int main(int argc, char *argv[])
 	if (collist)
 		list_colunms();		/* print end exit */
 
-	if (!ncolumns && (flags & FL_DF_INODES)) {
+	if (!ncolumns && (flags & FL_DF)) {
 		add_column(columns, ncolumns++, COL_SOURCE);
 		add_column(columns, ncolumns++, COL_FSTYPE);
-		add_column(columns, ncolumns++, COL_INO_TOTAL);
-		add_column(columns, ncolumns++, COL_INO_USED);
-		add_column(columns, ncolumns++, COL_INO_AVAIL);
-		add_column(columns, ncolumns++, COL_INO_USEPERC);
-		add_column(columns, ncolumns++, COL_TARGET);
-	}
-	else if (!ncolumns && (flags & FL_DF)) {
-		add_column(columns, ncolumns++, COL_SOURCE);
-		add_column(columns, ncolumns++, COL_FSTYPE);
-		add_column(columns, ncolumns++, COL_SIZE);
-		add_column(columns, ncolumns++, COL_USED);
-		add_column(columns, ncolumns++, COL_AVAIL);
-		add_column(columns, ncolumns++, COL_USEPERC);
+		if (flags & FL_DF_INODES) {
+			add_column(columns, ncolumns++, COL_INO_TOTAL);
+			add_column(columns, ncolumns++, COL_INO_USED);
+			add_column(columns, ncolumns++, COL_INO_AVAIL);
+			add_column(columns, ncolumns++, COL_INO_USEPERC);
+		} else {
+			add_column(columns, ncolumns++, COL_SIZE);
+			add_column(columns, ncolumns++, COL_USED);
+			add_column(columns, ncolumns++, COL_AVAIL);
+			add_column(columns, ncolumns++, COL_USEPERC);
+		}
 		add_column(columns, ncolumns++, COL_TARGET);
 	}
 

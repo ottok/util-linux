@@ -84,6 +84,14 @@ static int kcmp(pid_t pid1 __attribute__((__unused__)),
 
 #include "lsfd.h"
 
+UL_DEBUG_DEFINE_MASK(lsfd);
+UL_DEBUG_DEFINE_MASKNAMES(lsfd) = UL_DEBUG_EMPTY_MASKNAMES;
+
+static void lsfd_init_debug(void)
+{
+	__UL_INIT_DEBUG_FROM_ENV(lsfd, LSFD_DEBUG_, 0, LSFD_DEBUG);
+}
+
 /*
  * /proc/$pid/mountinfo entries
  */
@@ -402,7 +410,7 @@ static const struct colinfo infos[] = {
 				   N_("user of the process") },
 	[COL_XMODE]            = { "XMODE",
 				   0,   SCOLS_FL_RIGHT, SCOLS_JSON_STRING,
-				   N_("extended version of MDOE (rwxD[Ll]m)") },
+				   N_("extended version of MODE (rwxD[Ll]m)") },
 };
 
 static const int default_columns[] = {
@@ -2270,6 +2278,8 @@ int main(int argc, char *argv[])
 		{ "list-columns",no_argument, NULL, 'H' },
 		{ NULL, 0, NULL, 0 },
 	};
+
+	lsfd_init_debug();
 
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);

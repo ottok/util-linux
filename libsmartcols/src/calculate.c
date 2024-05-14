@@ -379,9 +379,14 @@ static int reduce_column(struct libscols_table *tb,
 			/* columns are reduced in "bad first" way, be more
 			 * agresive for the the worst column */
 			reduce = 3;
-		if (cl->width - reduce < st->width_min)
-			reduce = cl->width - st->width_min;
-		cl->width -= reduce;
+
+		if (cl->width < reduce)
+			reduce = cl->width;
+
+		if (cl->width - reduce > st->width_min)
+			cl->width -= reduce;
+		else
+			cl->width = st->width_min;
 		break;
 	default:
 		return -1;	/* no more stages */
@@ -413,10 +418,8 @@ int __scols_calculate(struct libscols_table *tb, struct ul_buffer *buf)
 	size_t colsepsz;
 	int sorted = 0;
 
-
 	DBG(TAB, ul_debugobj(tb, "-----calculate-(termwidth=%zu)-----", tb->termwidth));
 	tb->is_dummy_print = 1;
-
 	colsepsz = scols_table_is_noencoding(tb) ?
 			mbs_width(colsep(tb)) :
 			mbs_safe_width(colsep(tb));
@@ -429,6 +432,11 @@ int __scols_calculate(struct libscols_table *tb, struct ul_buffer *buf)
 	scols_reset_iter(&itr, SCOLS_ITER_FORWARD);
 	while (scols_table_next_column(tb, &itr, &cl) == 0) {
 		int is_last;
+
+		memset(&cl->wstat, 0, sizeof(cl->wstat));
+		cl->width = 0;
+		cl->width_treeart = 0;
+		scols_column_reset_wrap(cl);
 
 		if (scols_column_is_hidden(cl))
 			continue;

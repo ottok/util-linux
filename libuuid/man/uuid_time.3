@@ -2,12 +2,12 @@
 .\"     Title: uuid_time
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-01-31
+.\"      Date: 2024-05-01
 .\"    Manual: Programmer's Manual
-.\"    Source: util-linux 2.40
+.\"    Source: util-linux 2.40.1
 .\"  Language: English
 .\"
-.TH "UUID_TIME" "3" "2024-01-31" "util\-linux 2.40" "Programmer\*(Aqs Manual"
+.TH "UUID_TIME" "3" "2024-05-01" "util\-linux 2.40.1" "Programmer\*(Aqs Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -33,7 +33,7 @@ uuid_time \- extract the time at which the UUID was created
 .sp
 \fB#include <uuid.h>\fP
 .sp
-\fBtime_t uuid_time(uuid_t \fIuu\fP, struct timeval *\fIret_tv\fP)\fP
+\fBtime_t uuid_time(const uuid_t \fIuu\fP, struct timeval *\fIret_tv\fP)\fP
 .SH "DESCRIPTION"
 .sp
 The \fBuuid_time\fP() function extracts the time at which the supplied time\-based UUID \fIuu\fP was created. Note that the UUID creation time is only encoded within certain types of UUIDs. This function can only reasonably expect to extract the creation time for UUIDs created with the \fBuuid_generate_time\fP(3) and \fBuuid_generate_time_safe\fP(3) functions. It may or may not work with UUIDs created by other mechanisms.

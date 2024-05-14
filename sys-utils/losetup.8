@@ -2,12 +2,12 @@
 .\"     Title: losetup
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-03-20
+.\"      Date: 2024-05-02
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.40
+.\"    Source: util-linux 2.40.1
 .\"  Language: English
 .\"
-.TH "LOSETUP" "8" "2024-03-20" "util\-linux 2.40" "System Administration"
+.TH "LOSETUP" "8" "2024-05-02" "util\-linux 2.40.1" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -139,7 +139,7 @@ Set up a read\-only loop device.
 .sp
 \fB\-\-direct\-io\fP[\fB=on\fP|\fBoff\fP]
 .RS 4
-Enable or disable direct I/O for the backing file. The optional argument can be either \fBon\fP or \fBoff\fP. If the optional argument is omitted, it defaults to \fBon\fP.
+Enable or disable direct I/O for the backing file. The default is \fBoff\fP. Specifying either \fB\-\-direct\-io\fP or \fB\-\-direct\-io=on\fP will enable it. But, \fB\-\-direct\-io=off\fP can be provided to explicitly turn it off.
 .RE
 .sp
 \fB\-v\fP, \fB\-\-verbose\fP
