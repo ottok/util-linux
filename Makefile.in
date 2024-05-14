@@ -1009,7 +1009,8 @@ check_PROGRAMS = test_blkdev$(EXEEXT) test_buffer$(EXEEXT) \
 @BUILD_PAM_LASTLOG2_TRUE@@HAVE_VSCRIPT_TRUE@am__append_597 = pam_lastlog2_la_LDFLAGS += $(VSCRIPT_LDFLAGS),$(top_srcdir)/pam_lastlog2/src/pam_lastlog2.sym
 @BUILD_PAM_LASTLOG2_TRUE@am__append_598 =  \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/src/pam_lastlog2.sym \
-@BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/COPYING
+@BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/COPYING \
+@BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/meson.build
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKID_TRUE@am__append_599 = bash-completion/blkid
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_CAL_TRUE@am__append_600 = bash-completion/cal
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_COL_TRUE@am__append_601 = bash-completion/col
@@ -1859,7 +1860,8 @@ libuuid_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libuuid_la_CFLAGS) \
 	$(CFLAGS) $(libuuid_la_LDFLAGS) $(LDFLAGS) -o $@
 @BUILD_LIBUUID_TRUE@am_libuuid_la_rpath = -rpath $(usrlib_execdir)
-pam_lastlog2_la_LIBADD =
+@BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_DEPENDENCIES =  \
+@BUILD_PAM_LASTLOG2_TRUE@	liblastlog2.la
 am__pam_lastlog2_la_SOURCES_DIST = pam_lastlog2/src/pam_lastlog2.c
 @BUILD_PAM_LASTLOG2_TRUE@am_pam_lastlog2_la_OBJECTS =  \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/src/la-pam_lastlog2.lo
@@ -7179,9 +7181,9 @@ test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 @BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_CFLAGS = \
 @BUILD_PAM_LASTLOG2_TRUE@	$(AM_CFLAGS) \
 @BUILD_PAM_LASTLOG2_TRUE@	 $(SOLIB_CFLAGS) \
-@BUILD_PAM_LASTLOG2_TRUE@	 -I$(ul_liblastlog2_incdir) \
-@BUILD_PAM_LASTLOG2_TRUE@	 -Iliblastlog2/src
+@BUILD_PAM_LASTLOG2_TRUE@	 -I$(ul_liblastlog2_incdir)
 
+@BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_LIBADD = liblastlog2.la
 @BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_LDFLAGS = $(SOLIB_LDFLAGS) \
 @BUILD_PAM_LASTLOG2_TRUE@	-module -avoid-version -shared \
 @BUILD_PAM_LASTLOG2_TRUE@	$(am__append_597)
@@ -18853,7 +18855,7 @@ install-exec-hook:
 
 @BUILD_ENOSYS_TRUE@syscalls.h: $(top_srcdir)/tools/all_syscalls
 @BUILD_ENOSYS_TRUE@	@echo '  GEN      $@'
-@BUILD_ENOSYS_TRUE@	@$(top_srcdir)/tools/all_syscalls $(CC) $(CFLAGS)
+@BUILD_ENOSYS_TRUE@	@$(top_srcdir)/tools/all_syscalls "$(SED)" $(CC) $(CFLAGS)
 
 @BUILD_ENOSYS_TRUE@-include syscalls.h.deps
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_LAST_TRUE@install-data-hook-bashcomp-lastb::

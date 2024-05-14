@@ -36,7 +36,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: util-linux-man 2.39-rc3\n"
 "Report-Msgid-Bugs-To: util-linux@vger.kernel.org\n"
-"POT-Creation-Date: 2024-03-27 12:11+0100\n"
+"POT-Creation-Date: 2024-05-01 21:34+0200\n"
 "PO-Revision-Date: 2024-01-08 15:23+0100\n"
 "Last-Translator: Frédéric Marchal <fmarchal@perso.be>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -3103,7 +3103,7 @@ msgstr ""
 "*sfdisk*(8)\n"
 
 #. Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../disk-utils/fsck.8.adoc:6
 #, no-wrap
@@ -8484,7 +8484,7 @@ msgstr ""
 "*partx*(8)\n"
 
 #. Copyright 2010 Jason Borden <jborden@bluehost.com>
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../disk-utils/swaplabel.8.adoc:6
 #, no-wrap
@@ -9690,7 +9690,7 @@ msgstr "uuid_compare - Comparer deux UUID"
 #: ../libuuid/man/uuid_compare.3.adoc:50
 #, fuzzy
 #| msgid "*int uuid_compare(uuid_t __uu1__, uuid_t __uu2__)*\n"
-msgid "*int uuid_compare(uuid_t __uu1__, uuid_t __uu2__)*"
+msgid "*int uuid_compare(const uuid_t __uu1__, const uuid_t __uu2__)*"
 msgstr "*int uuid_compare(uuid_t __uu1__, uuid_t __uu2__)*\n"
 
 #. type: Plain text
@@ -9788,7 +9788,7 @@ msgstr "uuid_copy - Copier une valeur d'UUID"
 #: ../libuuid/man/uuid_copy.3.adoc:50
 #, fuzzy
 #| msgid "*void uuid_copy(uuid_t __dst__, uuid_t __src__;*\n"
-msgid "*void uuid_copy(uuid_t __dst__, uuid_t __src__);*"
+msgid "*void uuid_copy(uuid_t __dst__, const uuid_t __src__);*"
 msgstr "*void uuid_copy(uuid_t __dst__, uuid_t __source__;*\n"
 
 #. type: Plain text
@@ -10092,7 +10092,7 @@ msgstr "uuid_is_null - Comparer la valeur d'un UUID à la valeur NULL"
 #: ../libuuid/man/uuid_is_null.3.adoc:50
 #, fuzzy
 #| msgid "*int uuid_is_null(uuid_t __uu__);*\n"
-msgid "*int uuid_is_null(uuid_t __uu__);*"
+msgid "*int uuid_is_null(const uuid_t __uu__);*"
 msgstr "*int uuid_is_null(uuid_t __uu__);*\n"
 
 #. type: Plain text
@@ -10178,8 +10178,8 @@ msgstr "uuid_parse - Convertir une chaîne d'UUID en sa représentation binaire"
 #| "*int uuid_parse(char *__in__, uuid_t __uu__);* +\n"
 #| "*int uuid_parse_range(char *__in_start__, char *__in_end__, uuid_t __uu__);*\n"
 msgid ""
-"*int uuid_parse(char *__in__, uuid_t __uu__);*\n"
-"*int uuid_parse_range(char *__in_start__, char *__in_end__, uuid_t __uu__);*"
+"*int uuid_parse(const char *__in__, uuid_t __uu__);*\n"
+"*int uuid_parse_range(const char *__in_start__, const char *__in_end__, uuid_t __uu__);*"
 msgstr ""
 "*int uuid_parse(char *__in__, uuid_t __uu__);* +\n"
 "*int uuid_parse_range(char *__in_start__, char *__in_end__, uuid_t __uu__);*\n"
@@ -10296,7 +10296,7 @@ msgstr "uuid_time - Extraire la date de création d'un UUID"
 #: ../libuuid/man/uuid_time.3.adoc:50
 #, fuzzy
 #| msgid "*time_t uuid_time(uuid_t __uu__, struct timeval *__ret_tv__)*\n"
-msgid "*time_t uuid_time(uuid_t __uu__, struct timeval *__ret_tv__)*"
+msgid "*time_t uuid_time(const uuid_t __uu__, struct timeval *__ret_tv__)*"
 msgstr "*time_t uuid_time(uuid_t __uu__, struct timeval *__ret_tv__)*\n"
 
 #. type: Plain text
@@ -10404,9 +10404,9 @@ msgstr ""
 #| "*void uuid_unparse_upper(uuid_t __uu__, char *__out__);* +\n"
 #| "*void uuid_unparse_lower(uuid_t __uu__, char *__out__);*\n"
 msgid ""
-"*void uuid_unparse(uuid_t __uu__, char *__out__);*\n"
-"*void uuid_unparse_upper(uuid_t __uu__, char *__out__);*\n"
-"*void uuid_unparse_lower(uuid_t __uu__, char *__out__);*"
+"*void uuid_unparse(const uuid_t __uu__, char *__out__);*\n"
+"*void uuid_unparse_upper(const uuid_t __uu__, char *__out__);*\n"
+"*void uuid_unparse_lower(const uuid_t __uu__, char *__out__);*"
 msgstr ""
 "*void uuid_unparse(uuid_t __uu__, char *__out__);* +\n"
 "*void uuid_unparse_upper(uuid_t __uu__, char *__out__);* +\n"
@@ -14194,7 +14194,7 @@ msgstr ""
 "E<lt>I<https:/www.kernel.org/pub/linux/utils/util-linux/>E<gt>."
 
 #.  Copyright 2000 Andreas Dilger (adilger@turbolinux.com)
-#.  This file may be copied under the terms of the GNU Public License.
+#.  This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/blkid.8.adoc:4
 #, no-wrap
@@ -15836,7 +15836,7 @@ msgstr "*ioprio_set*(2)\n"
 
 #
 #. Copyright 2017 Red Hat, Inc.
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/fincore.1.adoc:7
 #, no-wrap
@@ -15973,7 +15973,7 @@ msgstr ""
 "*getconf*(1p)\n"
 
 #.  Copyright 1993, 1994, 1995 by Theodore Ts'o.  All Rights Reserved.
-#.  This file may be copied under the terms of the GNU Public License.
+#.  This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/findfs.8.adoc:4
 #, no-wrap
@@ -21031,7 +21031,7 @@ msgid "*clock_getres*(2) *clock_gettime*(2)"
 msgstr ""
 
 #. Copyright 2021 Red Hat, Inc.
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/lsfd.1.adoc:7
 #, fuzzy, no-wrap
@@ -24316,7 +24316,7 @@ msgid "*mv*(1)"
 msgstr "*mv*(1)\n"
 
 #. Copyright 2007 by Theodore Ts'o.  All Rights Reserved.
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/uuidd.8.adoc:6
 #, no-wrap
@@ -24587,7 +24587,7 @@ msgstr ""
 "*uuidgen*(1)\n"
 
 #. Copyright 1999 Andreas Dilger (adilger@enel.ucalgary.ca)
-#. This file may be copied under the terms of the GNU Public License.
+#. This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/uuidgen.1.adoc:6
 #, no-wrap
@@ -25273,7 +25273,7 @@ msgid ""
 msgstr "*cd /usr/bin* *whereis -u -ms -M /usr/man/man1 -S /usr/src -f **\n"
 
 #.  Copyright 2009 by Karel Zak.  All Rights Reserved.
-#.  This file may be copied under the terms of the GNU Public License.
+#.  This file may be copied under the terms of the GNU General Public License.
 #. type: Title =
 #: ../misc-utils/wipefs.8.adoc:4
 #, no-wrap
@@ -29241,7 +29241,7 @@ msgstr ""
 #
 #. Copyright (C) 1994-2005 Jeff Tranter (tranter@pobox.com)
 #. Copyright (C) 2012 Karel Zak <kzak@redhat.com>.
-#. It may be distributed under the GNU Public License, version 2, or
+#. It may be distributed under the GNU General Public License, version 2, or
 #. any higher version. See section COPYING of the GNU Public license
 #. for conditions under which this file may be redistributed.
 #. type: Title =
@@ -35281,19 +35281,11 @@ msgstr "*--direct-io*[**=on**|*off*]"
 
 #. type: Plain text
 #: ../sys-utils/losetup.8.adoc:97
-#, fuzzy
-#| msgid ""
-#| "Enable or disable direct I/O for the backing file. The optional argument "
-#| "can be either *on* or *off*. If the argument is omitted, it defaults to "
-#| "*off*."
 msgid ""
-"Enable or disable direct I/O for the backing file. The optional argument can "
-"be either *on* or *off*. If the optional argument is omitted, it defaults to "
-"*on*."
+"Enable or disable direct I/O for the backing file. The default is *off*. "
+"Specifying either *--direct-io* or *--direct-io=on* will enable it. But, *--"
+"direct-io=off* can be provided to explicitly turn it off."
 msgstr ""
-"Activer ou désactiver les E/S directes pour le fichier de sauvegarde. "
-"L’argument facultatif peut être *on* ou *off*. En absence d’argument, *off* "
-"est la valeur par défaut."
 
 #. type: Plain text
 #: ../sys-utils/losetup.8.adoc:103
@@ -57597,6 +57589,20 @@ msgstr ""
 "*nroff*(1),\n"
 "*setenv*(3),\n"
 "*terminfo*(5)\n"
+
+#, fuzzy
+#~| msgid ""
+#~| "Enable or disable direct I/O for the backing file. The optional argument "
+#~| "can be either *on* or *off*. If the argument is omitted, it defaults to "
+#~| "*off*."
+#~ msgid ""
+#~ "Enable or disable direct I/O for the backing file. The optional argument "
+#~ "can be either *on* or *off*. If the optional argument is omitted, it "
+#~ "defaults to *on*."
+#~ msgstr ""
+#~ "Activer ou désactiver les E/S directes pour le fichier de sauvegarde. "
+#~ "L’argument facultatif peut être *on* ou *off*. En absence d’argument, "
+#~ "*off* est la valeur par défaut."
 
 #, no-wrap
 #~ msgid ""

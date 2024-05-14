@@ -2,12 +2,12 @@
 .\"     Title: uuid_parse
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-01-31
+.\"      Date: 2024-05-01
 .\"    Manual: Programmer's Manual
-.\"    Source: util-linux 2.40
+.\"    Source: util-linux 2.40.1
 .\"  Language: English
 .\"
-.TH "UUID_PARSE" "3" "2024-01-31" "util\-linux 2.40" "Programmer\*(Aqs Manual"
+.TH "UUID_PARSE" "3" "2024-05-01" "util\-linux 2.40.1" "Programmer\*(Aqs Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -33,9 +33,9 @@ uuid_parse \- convert an input UUID string into binary representation
 .sp
 \fB#include <uuid.h>\fP
 .sp
-\fBint uuid_parse(char *\fIin\fP, uuid_t \fIuu\fP);\fP
+\fBint uuid_parse(const char *\fIin\fP, uuid_t \fIuu\fP);\fP
 .br
-\fBint uuid_parse_range(char *\fIin_start\fP, char *\fIin_end\fP, uuid_t \fIuu\fP);\fP
+\fBint uuid_parse_range(const char *\fIin_start\fP, const char *\fIin_end\fP, uuid_t \fIuu\fP);\fP
 .SH "DESCRIPTION"
 .sp
 The \fBuuid_parse\fP() function converts the UUID string given by \fIin\fP into the binary representation. The input UUID is a string of the form 1b4e28ba\-2fa1\-11d2\-883f\-b9a761bde3fb (in \fBprintf\fP(3) format "%08x\-%04x\-%04x\-%04x\-%012x", 36 bytes plus the trailing \*(Aq\(rs0\*(Aq).

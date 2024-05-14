@@ -2,12 +2,12 @@
 .\"     Title: uuid_unparse
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-01-31
+.\"      Date: 2024-05-01
 .\"    Manual: Programmer's Manual
-.\"    Source: util-linux 2.40
+.\"    Source: util-linux 2.40.1
 .\"  Language: English
 .\"
-.TH "UUID_UNPARSE" "3" "2024-01-31" "util\-linux 2.40" "Programmer\*(Aqs Manual"
+.TH "UUID_UNPARSE" "3" "2024-05-01" "util\-linux 2.40.1" "Programmer\*(Aqs Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -33,11 +33,11 @@ uuid_unparse \- convert a UUID from binary representation to a string
 .sp
 \fB#include <uuid.h>\fP
 .sp
-\fBvoid uuid_unparse(uuid_t \fIuu\fP, char *\fIout\fP);\fP
+\fBvoid uuid_unparse(const uuid_t \fIuu\fP, char *\fIout\fP);\fP
 .br
-\fBvoid uuid_unparse_upper(uuid_t \fIuu\fP, char *\fIout\fP);\fP
+\fBvoid uuid_unparse_upper(const uuid_t \fIuu\fP, char *\fIout\fP);\fP
 .br
-\fBvoid uuid_unparse_lower(uuid_t \fIuu\fP, char *\fIout\fP);\fP
+\fBvoid uuid_unparse_lower(const uuid_t \fIuu\fP, char *\fIout\fP);\fP
 .SH "DESCRIPTION"
 .sp
 The \fBuuid_unparse\fP() function converts the supplied UUID \fIuu\fP from the binary representation into a 36\-byte string (plus trailing \*(Aq\(rs0\*(Aq) of the form 1b4e28ba\-2fa1\-11d2\-883f\-0016d3cca427 and stores this value in the character string pointed to by \fIout\fP. The case of the hex digits returned by \fBuuid_unparse\fP() may be upper or lower case, and is dependent on the system\-dependent local default.
