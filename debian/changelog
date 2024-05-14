@@ -1,3 +1,12 @@
+util-linux (2.40.1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update Homepage: field.
+  * Drop upstream-applied patches.
+  * Apply new patches from upstream. (Closes: #1062208)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 14 May 2024 12:53:27 +0200
+
 util-linux (2.40-8) unstable; urgency=medium
 
   [ Helmut Grohne ]
