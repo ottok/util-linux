@@ -38,7 +38,7 @@ Standards-Version: 4.6.0
 Rules-Requires-Root: no
 Vcs-Browser: https://salsa.debian.org/debian/util-linux
 Vcs-Git: https://salsa.debian.org/debian/util-linux.git
-Homepage: https://www.kernel.org/pub/linux/utils/util-linux/
+Homepage: https://github.com/util-linux/util-linux
 
 Package: util-linux
 Architecture: any
