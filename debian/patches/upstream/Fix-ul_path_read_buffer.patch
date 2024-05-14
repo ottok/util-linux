@@ -1,0 +1,25 @@
+From: Daan De Meyer <daan.j.demeyer@gmail.com>
+Date: Thu, 9 May 2024 12:32:31 +0200
+Subject: Fix ul_path_read_buffer()
+
+The current implementation cuts off the last character of the buffer
+if there is no trailing newline.
+
+(cherry picked from commit 6273c12257973cbd3c59a710049ee8a8027bbbb1)
+---
+ lib/path.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/path.c b/lib/path.c
+index 202f19a..f897599 100644
+--- a/lib/path.c
++++ b/lib/path.c
+@@ -682,7 +682,7 @@ int ul_path_read_buffer(struct path_cxt *pc, char *buf, size_t bufsz, const char
+ 		if (*(buf + rc - 1) == '\n')
+ 			buf[--rc] = '\0';
+ 		else
+-			buf[rc - 1] = '\0';
++			buf[rc] = '\0';
+ 	}
+ 
+ 	return rc;

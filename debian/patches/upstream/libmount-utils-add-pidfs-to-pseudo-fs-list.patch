@@ -1,0 +1,21 @@
+From: Mike Yuan <me@yhndnzj.com>
+Date: Sat, 11 May 2024 01:11:28 +0800
+Subject: libmount/utils: add pidfs to pseudo fs list
+
+(cherry picked from commit 62cf52f81d5baaba2cfe6dfe00aa4975ebd55d92)
+---
+ libmount/src/utils.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libmount/src/utils.c b/libmount/src/utils.c
+index a2f8ea0..94a877c 100644
+--- a/libmount/src/utils.c
++++ b/libmount/src/utils.c
+@@ -340,6 +340,7 @@ int mnt_fstype_is_pseudofs(const char *type)
+ 		"none",
+ 		"nsfs",
+ 		"overlay",
++		"pidfs",
+ 		"pipefs",
+ 		"proc",
+ 		"pstore",
