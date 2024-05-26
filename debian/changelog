@@ -1,3 +1,10 @@
+util-linux (2.40.1-2) unstable; urgency=medium
+
+  * Apply upstream patches: fix atime remount, fix smartcols reduction stages,
+    clear uuidd cache on fork
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 26 May 2024 15:52:22 +0200
+
 util-linux (2.40.1-1) unstable; urgency=medium
 
   * New upstream release.
