@@ -1,0 +1,49 @@
+From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Tue, 7 May 2024 13:28:41 +0200
+Subject: libuuid: drop check for HAVE_TLS
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+In the function get_clock() TLS is used unconditionally anyways.
+
+Signed-off-by: Thomas Weißschuh <thomas@t-8ch.de>
+---
+ libuuid/src/gen_uuid.c | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/libuuid/src/gen_uuid.c b/libuuid/src/gen_uuid.c
+index 59e8c23..0984e24 100644
+--- a/libuuid/src/gen_uuid.c
++++ b/libuuid/src/gen_uuid.c
+@@ -90,11 +90,7 @@
+ #include "md5.h"
+ #include "sha1.h"
+ 
+-#ifdef HAVE_TLS
+ #define THREAD_LOCAL static __thread
+-#else
+-#define THREAD_LOCAL static
+-#endif
+ 
+ #ifdef _WIN32
+ static void gettimeofday (struct timeval *tv, void *dummy)
+@@ -584,7 +580,6 @@ int __uuid_generate_time_cont(uuid_t out, int *num, uint32_t cont_offset)
+  * the UUID anyway, but returns -1. Otherwise, returns 0.
+  */
+ static int uuid_generate_time_generic(uuid_t out) {
+-#ifdef HAVE_TLS
+ 	/* thread local cache for uuidd based requests */
+ 	THREAD_LOCAL int		num = 0;
+ 	THREAD_LOCAL int		cache_size = CS_MIN;
+@@ -637,10 +632,6 @@ static int uuid_generate_time_generic(uuid_t out) {
+ 			last_used = cache_size;
+ 		return 0;
+ 	}
+-#else
+-	if (get_uuid_via_daemon(UUIDD_OP_TIME_UUID, out, 0) == 0)
+-		return 0;
+-#endif
+ 
+ 	return __uuid_generate_time(out, NULL);
+ }
