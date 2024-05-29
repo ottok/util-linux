@@ -32,8 +32,6 @@ usr/bin/ipcmk
 usr/bin/ipcrm
 usr/bin/ipcs
 usr/bin/isosize usr/sbin/
-usr/bin/last
-usr/bin/lastb
 usr/bin/lsns                                                    [linux-any]
 usr/bin/mcookie
 usr/bin/mesg

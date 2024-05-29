@@ -44,6 +44,8 @@ CONFOPTS += --disable-kill
 CONFOPTS += --disable-chfn-chsh
 # => bsdmainutils
 CONFOPTS += --disable-cal
+# => wtmpdb
+CONFOPTS += --disable-last
 
 # Keep hwclock as GPLv2 (and others)
 CONFOPTS += --disable-hwclock-gplv3

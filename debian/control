@@ -4,9 +4,9 @@ Build-Depends:
  bc <!stage1 !nocheck>,
  bison,
  debhelper-compat (= 13),
- dh-sequence-zz-debputy-rrr (>= 0.1.23~),
  dh-exec,
  dh-package-notes,
+ dh-sequence-zz-debputy-rrr (>= 0.1.23~),
  flex,
  gettext,
  libaudit-dev [linux-any] <!stage1>,
@@ -51,7 +51,8 @@ Suggests:
  dosfstools,
  kbd,
  util-linux-extra,
- util-linux-locales
+ util-linux-locales,
+ wtmpdb
 Provides:
  hardlink
 Conflicts:
