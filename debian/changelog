@@ -1,3 +1,11 @@
+util-linux (2.40.1-5) experimental; urgency=medium
+
+  * Target experimental.
+  * Add new binary packages for lastlog2, pam_lastlog2 and liblastlog2.so
+    (Addresses Bug: #1068017)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 30 May 2024 19:39:43 +0200
+
 util-linux (2.40.1-4) unstable; urgency=medium
 
   * lintian: ignore missing misc:Depends, not needed with debputy
