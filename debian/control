@@ -30,6 +30,7 @@ Build-Depends:
  zlib1g-dev
 Build-Conflicts:
  libedit-dev
+Section: utils
 Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
 Uploaders:
@@ -43,7 +44,6 @@ Homepage: https://github.com/util-linux/util-linux
 Package: util-linux
 Architecture: any
 Build-Profiles: <!stage1>
-Section: utils
 Essential: yes
 Recommends:
  sensible-utils
@@ -138,7 +138,6 @@ Package: bsdutils
 Architecture: any
 Build-Profiles: <!stage1>
 Essential: yes
-Section: utils
 Recommends:
  bsdextrautils
 Multi-Arch: foreign
@@ -150,7 +149,6 @@ Description: basic utilities from 4.4BSD-Lite
 Package: bsdextrautils
 Architecture: any
 Build-Profiles: <!stage1>
-Section: utils
 Priority: optional
 Replaces:
  bsdmainutils (<< 12.1.3),
@@ -168,7 +166,6 @@ Description: extra utilities from 4.4BSD-Lite
 
 Package: fdisk
 Architecture: any
-Section: utils
 Priority: important
 Recommends:
  sensible-utils
@@ -366,7 +363,6 @@ Description: Universally Unique ID library
 Package: uuid-runtime
 Architecture: any
 Build-Profiles: <!stage1>
-Section: utils
 Priority: optional
 Pre-Depends:
  libuuid1
@@ -428,7 +424,6 @@ Description: stripped down miscellaneous system utilities, for debian-installer
 Package: rfkill
 Architecture: linux-any
 Build-Profiles: <!stage1>
-Section: utils
 Priority: optional
 Multi-Arch: foreign
 Description: tool for enabling and disabling wireless devices
@@ -439,7 +434,6 @@ Description: tool for enabling and disabling wireless devices
 Package: eject
 Architecture: linux-any
 Build-Profiles: <!stage1>
-Section: utils
 Priority: optional
 Multi-Arch: foreign
 Description: ejects CDs and operates CD-Changers under Linux
@@ -464,7 +458,6 @@ Description: ejects CDs from d-i menu
 Package: util-linux-extra
 Architecture: any
 Build-Profiles: <!stage1>
-Section: utils
 Replaces:
  util-linux (<< 2.40-0~)
 Breaks:
