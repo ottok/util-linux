@@ -1,3 +1,11 @@
+util-linux (2.40.1-4) unstable; urgency=medium
+
+  * lintian: ignore missing misc:Depends, not needed with debputy
+  * d/copyright: update
+  * d/control: set Section: utils for Source: section
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Thu, 30 May 2024 19:14:16 +0200
+
 util-linux (2.40.1-3) unstable; urgency=medium
 
   * Stop installing last(1), Suggest: wtmpdb instead
