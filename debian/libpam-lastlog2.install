@@ -1,0 +1,2 @@
+debian/pam-configs/lastlog2 /usr/share/pam-configs/
+usr/lib/*/security/pam_lastlog2.so

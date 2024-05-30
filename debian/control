@@ -17,6 +17,7 @@ Build-Depends:
  libpam0g-dev <!stage1>,
  libreadline-dev,
  libselinux1-dev [linux-any],
+ libsqlite3-dev,
  libsystemd-dev [linux-any] <!stage1>,
  libtool,
  libudev-dev [linux-any] <!stage1>,
@@ -468,3 +469,40 @@ Multi-Arch: foreign
 Description: interactive login tools
  Tools commonly found on systems where humans login interactively,
  or are needed with non-standard system configurations.
+
+Package: liblastlog2-2
+Architecture: any
+Priority: optional
+Section: libs
+Multi-Arch: same
+Description: lastlog2 database shared library
+ Y2038 safe lastlog database implementation, library files.
+
+Package: liblastlog2-dev
+Architecture: any
+Priority: optional
+Section: libdevel
+Description: liblastlog2 development files
+ Y2038 safe lastlog database implementation, development files.
+
+Package: libpam-lastlog2
+Architecture: any
+Priority: optional
+Section: admin
+Depends:
+ libpam-runtime
+Recommends:
+ wtmpdb
+Multi-Arch: same
+Description: lastlog2 database PAM module
+ Y2038 safe lastlog database implementation, PAM module.
+
+Package: lastlog2
+Architecture: any
+Priority: optional
+Recommends:
+ libpam-lastlog2
+Multi-Arch: foreign
+Description: Read lastlog2 database
+ This package provides the lastlog2 program, to read the
+ lastlog2 database.

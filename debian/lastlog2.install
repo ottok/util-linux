@@ -1,0 +1,6 @@
+usr/bin/lastlog2
+# begin-remove-after: released:trixie
+usr/lib/systemd/system/lastlog2-import.service
+# end-remove-after
+usr/lib/tmpfiles.d/lastlog2-tmpfiles.conf
+usr/share/bash-completion/completions/lastlog2
