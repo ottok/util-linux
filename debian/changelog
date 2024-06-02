@@ -1,3 +1,12 @@
+util-linux (2.40.1-7) unstable; urgency=medium
+
+  * Upload to unstable.
+
+  [ Samuel Thibault ]
+  * Disable year2038 support on hurd-i386, fixes FTBFs (Closes: #1072472)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 02 Jun 2024 16:57:20 +0200
+
 util-linux (2.40.1-6) experimental; urgency=medium
 
   * Convert lintian overrides for ftp-master very old lintian
