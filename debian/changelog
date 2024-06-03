@@ -1,3 +1,9 @@
+util-linux (2.40.1-8) unstable; urgency=medium
+
+  * libpam-lastlog2: fix incorrect removal of PAM config
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 03 Jun 2024 17:03:37 +0200
+
 util-linux (2.40.1-7) unstable; urgency=medium
 
   * Upload to unstable.
