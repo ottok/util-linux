@@ -9,7 +9,7 @@ debian/tmp/usr/bin/rename => /usr/bin/rename.ul
 [linux-any] ${deb_systemdsystemunitdir}/fstrim.timer
 [linux-any] ${deb_systemdsystemunitdir}/fstrim.service
 bin/findmnt usr/bin/
-bin/more bin/                                                   [linux-any]
+bin/more usr/bin/                                                   [linux-any]
 bin/mountpoint usr/bin/
 bin/su usr/bin/
 sbin/agetty usr/sbin/
