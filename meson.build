@@ -13,7 +13,7 @@ pkgconfig = import('pkgconfig')
 # soname versions; This never change because we use symbols versioing. There is also
 # API version (LIB*_VERSION macros) and it follow package version.
 libblkid_version = '1.1.0'
-libblkid_date = '06-May-2024'
+libblkid_date = '04-Jul-2024'
 libuuid_version = '1.3.0'
 liblastlog2_version = '2.0.0'
 libmount_version = '1.1.0'
@@ -79,7 +79,9 @@ conf.set_quoted('_PATH_LOCALSTATEDIR', localstatedir)
 conf.set_quoted('CONFIG_ADJTIME_PATH', '/etc/adjtime')
 conf.set_quoted('ADJTIME_PATH', '/etc/adjtime') # yes, both are used :(
 
-conf.set_quoted('_PATH_VENDORDIR', vendordir)
+if vendordir != ''
+  conf.set_quoted('_PATH_VENDORDIR', vendordir)
+endif
 conf.set('USE_VENDORDIR', vendordir == '' ? false : 1)
 
 build_libblkid = get_option('build-libblkid').allowed()
@@ -906,11 +908,7 @@ bison_gen = generator(
   output : ['@BASENAME@.tab.c', '@BASENAME@.tab.h'],
   arguments : ['@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@'])
 
-python_module = import('python')
-python = python_module.find_installation(
-    get_option('python'),
-    required : true,
-    disabler : true)
+python_program = find_program('python3', 'python', native : true)
 
 meson_make_symlink = meson.current_source_dir() + '/tools/meson-make-symlink.sh'
 meson_make_manpage_stub = meson.current_source_dir() + '/tools/meson-make-manpage-stub.sh'
@@ -2994,6 +2992,7 @@ exe = executable(
   'rename',
   rename_sources,
   include_directories : includes,
+  link_with : [lib_common],
   install_dir : usrbin_exec_dir,
   install : opt,
   build_by_default : opt)
@@ -3715,7 +3714,7 @@ configure_file(output : 'meson.conf',
                           '''asan=@0@
 PYTHON=@1@
 '''.format(get_option('b_sanitize')=='address' ? 'yes' : '',
-           python.full_path())])
+           python_program.full_path())])
 
 run_sh = find_program('tests/run.sh')
 run_target(
