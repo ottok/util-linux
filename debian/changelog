@@ -1,8 +1,18 @@
+util-linux (2.40.2-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Drop upstream-applied patches.
+  * Add upstream patches:
+    Add binfmt_misc features to unshare(1).
+    Avoid OOM-kill of swapoff(8).
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 06 Jul 2024 15:57:30 +0200
+
 util-linux (2.40.1-9) unstable; urgency=medium
 
   * (Pre-)Depend on libpam-{modules,runtime}, so runuser/su work
     (Closes: #1074157)
-  * Ack NMU 2.40.1-8.1 by Helmu Grohne. Many thanks!
+  * Ack NMU 2.40.1-8.1 by Helmut Grohne. Many thanks!
 
  -- Chris Hofstaedtler <zeha@debian.org>  Mon, 24 Jun 2024 01:31:42 +0200
 
