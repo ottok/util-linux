@@ -1,0 +1,49 @@
+From: Karel Zak <kzak@redhat.com>
+Date: Thu, 20 Jun 2024 12:07:12 +0200
+Subject: swapoff: avoid being killed by OOM
+
+Based on patch from dparalen <vetrisko@gmail.com>.
+
+Fixes: https://github.com/util-linux/util-linux/issues/3095
+Signed-off-by: Karel Zak <kzak@redhat.com>
+---
+ include/pathnames.h | 2 ++
+ sys-utils/swapoff.c | 5 +++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/include/pathnames.h b/include/pathnames.h
+index de456c5..4f0a713 100644
+--- a/include/pathnames.h
++++ b/include/pathnames.h
+@@ -110,6 +110,8 @@
+ #define _PATH_PROC_FDDIR	"/proc/self/fd"
+ #define _PATH_PROC_TIMENS_OFF   "/proc/self/timens_offsets"
+ 
++#define _PATH_PROC_OOM_ADJ	"/proc/self/oom_score_adj"
++
+ #define _PATH_PROC_ATTR_CURRENT	"/proc/self/attr/current"
+ #define _PATH_PROC_ATTR_EXEC	"/proc/self/attr/exec"
+ #define _PATH_PROC_CAPLASTCAP	"/proc/sys/kernel/cap_last_cap"
+diff --git a/sys-utils/swapoff.c b/sys-utils/swapoff.c
+index 62f1374..5677d87 100644
+--- a/sys-utils/swapoff.c
++++ b/sys-utils/swapoff.c
+@@ -23,6 +23,8 @@
+ #include "c.h"
+ #include "xalloc.h"
+ #include "closestream.h"
++#include "pathnames.h"
++#include "path.h"
+ 
+ #include "swapprober.h"
+ #include "swapon-common.h"
+@@ -272,6 +274,9 @@ int main(int argc, char *argv[])
+ 		errtryhelp(SWAPOFF_EX_USAGE);
+ 	}
+ 
++	/* prevent the OOM killer from killing myself */
++	ul_path_write_string(NULL, "-1000", _PATH_PROC_OOM_ADJ);
++
+ 	mnt_init_debug(0);
+ 	mntcache = mnt_new_cache();
+ 

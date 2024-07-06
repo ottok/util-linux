@@ -8,3 +8,6 @@ debian/tests-mark-fadvise-drop-as-known-failing-on-buildds.patch
 upstream-master/audit-arch.h-add-defines-for-m68k-sh.patch
 upstream-master/fsck-warn-if-fsck.-type-not-found-and-device-is-specified.patch
 upstream-master/libmount-Fix-atime-remount-for-new-API.patch
+upstream-master/swapoff-avoid-being-killed-by-OOM.patch
+upstream-master/unshare-mount-binfmt_misc.patch
+upstream-master/unshare-load-binfmt_misc-interpreter.patch
