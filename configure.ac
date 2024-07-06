@@ -29,7 +29,7 @@ PACKAGE_VERSION_RELEASE=$(echo $PACKAGE_VERSION | awk -F. '{
 
 dnl libblkid version
 LIBBLKID_VERSION="$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_RELEASE"
-LIBBLKID_DATE="06-May-2024"
+LIBBLKID_DATE="04-Jul-2024"
 LIBBLKID_LT_MAJOR=1
 LIBBLKID_LT_MINOR=1
 LIBBLKID_LT_MICRO=0
@@ -119,6 +119,9 @@ AS_CASE([$libdir],
  [usrlib_execdir='${exec_prefix}'$libdir]
 )
 AC_SUBST([usrlib_execdir])
+
+usrsecurelib_execdir='${usrlib_execdir}/security'
+AC_SUBST([usrsecurelib_execdir])
 
 # static configuration maintaned by packages (e.g. /usr/lib)
 AC_ARG_VAR([SYSCONFSTATICDIR],
@@ -2755,16 +2758,17 @@ AM_CONDITIONAL([BUILD_PYLIBMOUNT], [test "x$build_pylibmount" = "xyes"])
 
 # We need to introduce a verbatim dependency into the Makefile, without automake
 # trying to interpret it, so push it as a AM_SUBST_NOTMAKE variable.
-verbatim_pylibmount_dependency='
+verbatim_extra_dependency='
 
 # pylibmountexec module must be installed after usrlib_exec libraries,
 # otherwise the libtool relink step will fail to find libmount.la and
 # will try -lmount which is possibly not available.
 install-pylibmountexecLTLIBRARIES: install-usrlib_execLTLIBRARIES
+install-usrsecurelib_execLTLIBRARIES: install-usrlib_execLTLIBRARIES
 
 '
-AC_SUBST([verbatim_pylibmount_dependency])
-AM_SUBST_NOTMAKE([verbatim_pylibmount_dependency])
+AC_SUBST([verbatim_extra_dependency])
+AM_SUBST_NOTMAKE([verbatim_extra_dependency])
 
 AC_ARG_ENABLE([pg-bell],
   AS_HELP_STRING([--disable-pg-bell], [let pg not ring the bell on invalid keys]),

@@ -397,6 +397,7 @@ top_srcdir = @top_srcdir@
 usrbin_execdir = @usrbin_execdir@
 usrlib_execdir = @usrlib_execdir@
 usrsbin_execdir = @usrsbin_execdir@
+usrsecurelib_execdir = @usrsecurelib_execdir@
 vendordir = @vendordir@
 with_bashcompletiondir = @with_bashcompletiondir@
 with_systemdsystemunitdir = @with_systemdsystemunitdir@

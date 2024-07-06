@@ -2,12 +2,12 @@
 .\"     Title: mkswap
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.20
-.\"      Date: 2024-05-01
+.\"      Date: 2024-05-28
 .\"    Manual: System Administration
-.\"    Source: util-linux 2.40.1
+.\"    Source: util-linux 2.40.2
 .\"  Language: English
 .\"
-.TH "MKSWAP" "8" "2024-05-01" "util\-linux 2.40.1" "System Administration"
+.TH "MKSWAP" "8" "2024-05-28" "util\-linux 2.40.2" "System Administration"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -168,7 +168,7 @@ Presently, Linux allows 32 swap areas. The areas in use can be seen in the file 
 .sp
 If you don\(cqt know the page size that your machine uses, you can look it up with \fBgetconf PAGESIZE\fP.
 .sp
-To set up a swap file, it is necessary to create that file before initializing it with \fBmkswap\fP, e.g. using a command like
+Aside from \fBmkswap \-\-file\fP, it is also possible to create the swapfile manually before initializing it with \fBmkswap\fP, e.g. using a command like
 .sp
 .if n .RS 4
 .nf
@@ -180,7 +180,7 @@ To set up a swap file, it is necessary to create that file before initializing i
 .sp
 to create 8GiB swapfile.
 .sp
-Please read notes from \fBswapon\fP(8) about \fBthe swap file use restrictions\fP (holes, preallocation and copy\-on\-write issues).
+In such a case, please read notes from \fBswapon\fP(8) about \fBthe swap file use restrictions\fP (holes, preallocation and copy\-on\-write issues).
 .SH "SEE ALSO"
 .sp
 \fBfdisk\fP(8),

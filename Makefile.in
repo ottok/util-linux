@@ -228,7 +228,7 @@ check_PROGRAMS = test_blkdev$(EXEEXT) test_buffer$(EXEEXT) \
 
 @BUILD_LIBUUID_TRUE@am__append_24 = test_uuid_parser
 @BUILD_LIBUUID_TRUE@am__append_25 = libuuid.la
-@BUILD_LIBUUID_TRUE@@HAVE_VSCRIPT_TRUE@am__append_26 = libuuid_la_LDFLAGS += $(VSCRIPT_LDFLAGS),$(top_srcdir)/libuuid/src/libuuid.sym
+@BUILD_LIBUUID_TRUE@@HAVE_VSCRIPT_TRUE@am__append_26 = $(VSCRIPT_LDFLAGS),$(top_srcdir)/libuuid/src/libuuid.sym
 @BUILD_LIBUUID_TRUE@am__append_27 = libuuid/src/libuuid.sym \
 @BUILD_LIBUUID_TRUE@	libuuid/COPYING
 @BUILD_LIBUUID_TRUE@am__append_28 = install-exec-hook-libuuid
@@ -1006,161 +1006,162 @@ check_PROGRAMS = test_blkdev$(EXEEXT) test_buffer$(EXEEXT) \
 @BUILD_PAM_LASTLOG2_TRUE@am__append_596 = \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/man/pam_lastlog2.8.adoc
 
-@BUILD_PAM_LASTLOG2_TRUE@@HAVE_VSCRIPT_TRUE@am__append_597 = pam_lastlog2_la_LDFLAGS += $(VSCRIPT_LDFLAGS),$(top_srcdir)/pam_lastlog2/src/pam_lastlog2.sym
-@BUILD_PAM_LASTLOG2_TRUE@am__append_598 =  \
+@BUILD_PAM_LASTLOG2_TRUE@am__append_597 = pam_lastlog2.la
+@BUILD_PAM_LASTLOG2_TRUE@@HAVE_VSCRIPT_TRUE@am__append_598 = pam_lastlog2_la_LDFLAGS += $(VSCRIPT_LDFLAGS),$(top_srcdir)/pam_lastlog2/src/pam_lastlog2.sym
+@BUILD_PAM_LASTLOG2_TRUE@am__append_599 =  \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/src/pam_lastlog2.sym \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/COPYING \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/meson.build
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKID_TRUE@am__append_599 = bash-completion/blkid
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CAL_TRUE@am__append_600 = bash-completion/cal
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_COL_TRUE@am__append_601 = bash-completion/col
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLCRT_TRUE@am__append_602 = bash-completion/colcrt
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLRM_TRUE@am__append_603 = bash-completion/colrm
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLUMN_TRUE@am__append_604 = bash-completion/column
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_EXCH_TRUE@am__append_605 = bash-completion/exch
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINCORE_TRUE@am__append_606 = bash-completion/fincore
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINDFS_TRUE@am__append_607 = bash-completion/findfs
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINDMNT_TRUE@am__append_608 = bash-completion/findmnt
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FLOCK_TRUE@am__append_609 = bash-completion/flock
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_GETOPT_TRUE@am__append_610 = bash-completion/getopt
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_HEXDUMP_TRUE@am__append_611 = bash-completion/hexdump
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCMK_TRUE@am__append_612 = bash-completion/ipcmk
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCRM_TRUE@am__append_613 = bash-completion/ipcrm
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCS_TRUE@am__append_614 = bash-completion/ipcs
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_IRQTOP_TRUE@am__append_615 = bash-completion/irqtop
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_ISOSIZE_TRUE@am__append_616 = bash-completion/isosize
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOGGER_TRUE@am__append_617 = bash-completion/logger
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOOK_TRUE@am__append_618 = bash-completion/look
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSIPC_TRUE@am__append_619 = bash-completion/lsipc
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSIRQ_TRUE@am__append_620 = bash-completion/lsirq
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSNS_TRUE@am__append_621 = bash-completion/lsns
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MCOOKIE_TRUE@am__append_622 = bash-completion/mcookie
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MKFS_TRUE@am__append_623 = bash-completion/mkfs
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MKSWAP_TRUE@am__append_624 = bash-completion/mkswap
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_NAMEI_TRUE@am__append_625 = bash-completion/namei
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_PRLIMIT_TRUE@am__append_626 = bash-completion/prlimit
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_READPROFILE_TRUE@am__append_627 = bash-completion/readprofile
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RENICE_TRUE@am__append_628 = bash-completion/renice
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_REV_TRUE@am__append_629 = bash-completion/rev
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPT_TRUE@am__append_630 = bash-completion/script
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPTREPLAY_TRUE@am__append_631 = bash-completion/scriptreplay
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPTLIVE_TRUE@am__append_632 = bash-completion/scriptlive
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETPGID_TRUE@am__append_633 = bash-completion/setpgid
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETSID_TRUE@am__append_634 = bash-completion/setsid
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WHEREIS_TRUE@am__append_635 = bash-completion/whereis
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WIPEFS_TRUE@am__append_636 = bash-completion/wipefs
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSCK_TRUE@am__append_637 = bash-completion/fsck
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_BFS_TRUE@am__append_638 = bash-completion/mkfs.bfs
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MINIX_TRUE@am__append_639 = \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKID_TRUE@am__append_600 = bash-completion/blkid
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CAL_TRUE@am__append_601 = bash-completion/cal
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_COL_TRUE@am__append_602 = bash-completion/col
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLCRT_TRUE@am__append_603 = bash-completion/colcrt
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLRM_TRUE@am__append_604 = bash-completion/colrm
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_COLUMN_TRUE@am__append_605 = bash-completion/column
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_EXCH_TRUE@am__append_606 = bash-completion/exch
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINCORE_TRUE@am__append_607 = bash-completion/fincore
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINDFS_TRUE@am__append_608 = bash-completion/findfs
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FINDMNT_TRUE@am__append_609 = bash-completion/findmnt
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FLOCK_TRUE@am__append_610 = bash-completion/flock
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_GETOPT_TRUE@am__append_611 = bash-completion/getopt
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_HEXDUMP_TRUE@am__append_612 = bash-completion/hexdump
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCMK_TRUE@am__append_613 = bash-completion/ipcmk
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCRM_TRUE@am__append_614 = bash-completion/ipcrm
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_IPCS_TRUE@am__append_615 = bash-completion/ipcs
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_IRQTOP_TRUE@am__append_616 = bash-completion/irqtop
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_ISOSIZE_TRUE@am__append_617 = bash-completion/isosize
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOGGER_TRUE@am__append_618 = bash-completion/logger
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOOK_TRUE@am__append_619 = bash-completion/look
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSIPC_TRUE@am__append_620 = bash-completion/lsipc
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSIRQ_TRUE@am__append_621 = bash-completion/lsirq
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSNS_TRUE@am__append_622 = bash-completion/lsns
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MCOOKIE_TRUE@am__append_623 = bash-completion/mcookie
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MKFS_TRUE@am__append_624 = bash-completion/mkfs
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MKSWAP_TRUE@am__append_625 = bash-completion/mkswap
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_NAMEI_TRUE@am__append_626 = bash-completion/namei
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_PRLIMIT_TRUE@am__append_627 = bash-completion/prlimit
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_READPROFILE_TRUE@am__append_628 = bash-completion/readprofile
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RENICE_TRUE@am__append_629 = bash-completion/renice
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_REV_TRUE@am__append_630 = bash-completion/rev
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPT_TRUE@am__append_631 = bash-completion/script
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPTREPLAY_TRUE@am__append_632 = bash-completion/scriptreplay
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SCRIPTLIVE_TRUE@am__append_633 = bash-completion/scriptlive
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETPGID_TRUE@am__append_634 = bash-completion/setpgid
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETSID_TRUE@am__append_635 = bash-completion/setsid
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WHEREIS_TRUE@am__append_636 = bash-completion/whereis
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WIPEFS_TRUE@am__append_637 = bash-completion/wipefs
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSCK_TRUE@am__append_638 = bash-completion/fsck
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_BFS_TRUE@am__append_639 = bash-completion/mkfs.bfs
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MINIX_TRUE@am__append_640 = \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_MINIX_TRUE@	bash-completion/fsck.minix \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_MINIX_TRUE@	bash-completion/mkfs.minix
 
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CRAMFS_TRUE@am__append_640 = \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CRAMFS_TRUE@am__append_641 = \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_CRAMFS_TRUE@	bash-completion/fsck.cramfs \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_CRAMFS_TRUE@	bash-completion/mkfs.cramfs
 
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@am__append_641 = \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@am__append_642 = \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@	bash-completion/addpart \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@	bash-completion/delpart \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@	bash-completion/resizepart \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_PARTX_TRUE@	bash-completion/partx
 
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RAW_TRUE@am__append_642 = bash-completion/raw
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SWAPLABEL_TRUE@am__append_643 = bash-completion/swaplabel
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FDFORMAT_TRUE@am__append_644 = bash-completion/fdformat
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLOCKDEV_TRUE@am__append_645 = bash-completion/blockdev
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FDISK_TRUE@am__append_646 = bash-completion/fdisk
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SFDISK_TRUE@am__append_647 = bash-completion/sfdisk
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CFDISK_TRUE@am__append_648 = bash-completion/cfdisk
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHFN_CHSH_TRUE@am__append_649 = \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RAW_TRUE@am__append_643 = bash-completion/raw
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SWAPLABEL_TRUE@am__append_644 = bash-completion/swaplabel
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FDFORMAT_TRUE@am__append_645 = bash-completion/fdformat
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLOCKDEV_TRUE@am__append_646 = bash-completion/blockdev
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FDISK_TRUE@am__append_647 = bash-completion/fdisk
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SFDISK_TRUE@am__append_648 = bash-completion/sfdisk
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CFDISK_TRUE@am__append_649 = bash-completion/cfdisk
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHFN_CHSH_TRUE@am__append_650 = \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_CHFN_CHSH_TRUE@	bash-completion/chfn \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_CHFN_CHSH_TRUE@	bash-completion/chsh
 
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LAST_TRUE@am__append_650 = bash-completion/last
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LAST_TRUE@am__append_651 = install-data-hook-bashcomp-lastb
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSLOGINS_TRUE@am__append_652 = bash-completion/lslogins
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_NEWGRP_TRUE@am__append_653 = bash-completion/newgrp
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SU_TRUE@am__append_654 = bash-completion/su
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RUNUSER_TRUE@am__append_655 = install-data-hook-bashcomp-runuser
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UTMPDUMP_TRUE@am__append_656 = bash-completion/utmpdump
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDGEN_TRUE@am__append_657 = bash-completion/uuidgen
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LIBLASTLOG2_TRUE@am__append_658 = bash-completion/lastlog2
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDPARSE_TRUE@am__append_659 = bash-completion/uuidparse
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDD_TRUE@am__append_660 = bash-completion/uuidd
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSBLK_TRUE@am__append_661 = bash-completion/lsblk
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSLOCKS_TRUE@am__append_662 = bash-completion/lslocks
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RENAME_TRUE@am__append_663 = bash-completion/rename
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHRT_TRUE@am__append_664 = bash-completion/chrt
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UCLAMPSET_TRUE@am__append_665 = bash-completion/uclampset
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_IONICE_TRUE@am__append_666 = bash-completion/ionice
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_TASKSET_TRUE@am__append_667 = bash-completion/taskset
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHCPU_TRUE@am__append_668 = bash-completion/chcpu
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHMEM_TRUE@am__append_669 = bash-completion/chmem
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_EJECT_TRUE@am__append_670 = bash-completion/eject
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FALLOCATE_TRUE@am__append_671 = bash-completion/fallocate
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_HWCLOCK_TRUE@am__append_672 = bash-completion/hwclock
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_TUNELP_TRUE@am__append_673 = bash-completion/tunelp
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSCPU_TRUE@am__append_674 = bash-completion/lscpu
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSMEM_TRUE@am__append_675 = bash-completion/lsmem
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOSETUP_TRUE@am__append_676 = bash-completion/losetup
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MOUNT_TRUE@am__append_677 = bash-completion/mount \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LAST_TRUE@am__append_651 = bash-completion/last
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LAST_TRUE@am__append_652 = install-data-hook-bashcomp-lastb
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSLOGINS_TRUE@am__append_653 = bash-completion/lslogins
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_NEWGRP_TRUE@am__append_654 = bash-completion/newgrp
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SU_TRUE@am__append_655 = bash-completion/su
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RUNUSER_TRUE@am__append_656 = install-data-hook-bashcomp-runuser
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UTMPDUMP_TRUE@am__append_657 = bash-completion/utmpdump
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDGEN_TRUE@am__append_658 = bash-completion/uuidgen
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LIBLASTLOG2_TRUE@am__append_659 = bash-completion/lastlog2
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDPARSE_TRUE@am__append_660 = bash-completion/uuidparse
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UUIDD_TRUE@am__append_661 = bash-completion/uuidd
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSBLK_TRUE@am__append_662 = bash-completion/lsblk
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSLOCKS_TRUE@am__append_663 = bash-completion/lslocks
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RENAME_TRUE@am__append_664 = bash-completion/rename
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHRT_TRUE@am__append_665 = bash-completion/chrt
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UCLAMPSET_TRUE@am__append_666 = bash-completion/uclampset
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_IONICE_TRUE@am__append_667 = bash-completion/ionice
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_TASKSET_TRUE@am__append_668 = bash-completion/taskset
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHCPU_TRUE@am__append_669 = bash-completion/chcpu
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CHMEM_TRUE@am__append_670 = bash-completion/chmem
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_EJECT_TRUE@am__append_671 = bash-completion/eject
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FALLOCATE_TRUE@am__append_672 = bash-completion/fallocate
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_HWCLOCK_TRUE@am__append_673 = bash-completion/hwclock
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_TUNELP_TRUE@am__append_674 = bash-completion/tunelp
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSCPU_TRUE@am__append_675 = bash-completion/lscpu
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSMEM_TRUE@am__append_676 = bash-completion/lsmem
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LOSETUP_TRUE@am__append_677 = bash-completion/losetup
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MOUNT_TRUE@am__append_678 = bash-completion/mount \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_MOUNT_TRUE@	bash-completion/umount
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MOUNTPOINT_TRUE@am__append_678 = bash-completion/mountpoint
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_NSENTER_TRUE@am__append_679 = bash-completion/nsenter
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_PIVOT_ROOT_TRUE@am__append_680 = bash-completion/pivot_root
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETPRIV_TRUE@am__append_681 = bash-completion/setpriv
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SWAPON_TRUE@am__append_682 = bash-completion/swapon \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MOUNTPOINT_TRUE@am__append_679 = bash-completion/mountpoint
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_NSENTER_TRUE@am__append_680 = bash-completion/nsenter
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_PIVOT_ROOT_TRUE@am__append_681 = bash-completion/pivot_root
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETPRIV_TRUE@am__append_682 = bash-completion/setpriv
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SWAPON_TRUE@am__append_683 = bash-completion/swapon \
 @BUILD_BASH_COMPLETION_TRUE@@BUILD_SWAPON_TRUE@	bash-completion/swapoff
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UNSHARE_TRUE@am__append_683 = bash-completion/unshare
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WDCTL_TRUE@am__append_684 = bash-completion/wdctl
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKDISCARD_TRUE@am__append_685 = bash-completion/blkdiscard
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKZONE_TRUE@am__append_686 = bash-completion/blkzone
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_CTRLALTDEL_TRUE@am__append_687 = bash-completion/ctrlaltdel
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_DMESG_TRUE@am__append_688 = bash-completion/dmesg
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSFREEZE_TRUE@am__append_689 = bash-completion/fsfreeze
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSTRIM_TRUE@am__append_690 = bash-completion/fstrim
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LDATTACH_TRUE@am__append_691 = bash-completion/ldattach
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RFKILL_TRUE@am__append_692 = bash-completion/rfkill
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_RTCWAKE_TRUE@am__append_693 = bash-completion/rtcwake
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETARCH_TRUE@am__append_694 = bash-completion/setarch
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_ZRAMCTL_TRUE@am__append_695 = bash-completion/zramctl
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MESG_TRUE@am__append_696 = bash-completion/mesg
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WALL_TRUE@am__append_697 = bash-completion/wall
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WRITE_TRUE@am__append_698 = bash-completion/write
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETTERM_TRUE@am__append_699 = bash-completion/setterm
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_MORE_TRUE@am__append_700 = bash-completion/more
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_PG_TRUE@am__append_701 = bash-completion/pg
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_UL_TRUE@am__append_702 = bash-completion/ul
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_HARDLINK_TRUE@am__append_703 = bash-completion/hardlink
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_PIPESZ_TRUE@am__append_704 = bash-completion/pipesz
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_FADVISE_TRUE@am__append_705 = bash-completion/fadvise
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_WAITPID_TRUE@am__append_706 = bash-completion/waitpid
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_ENOSYS_TRUE@am__append_707 = bash-completion/enosys
-@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSCLOCKS_TRUE@am__append_708 = bash-completion/lsclocks
-@LINUX_TRUE@am__append_709 = test_mkfds test_enosys
-@HAVE_CAP_NG_TRUE@am__append_710 = test_cap
-@HAVE_SELINUX_TRUE@am__append_711 = -e 's|@LIBSELINUX[@]|libselinux|g'
-@HAVE_SELINUX_FALSE@am__append_712 = -e 's|@LIBSELINUX[@]||g'
-@CRYPTSETUP_VIA_DLOPEN_TRUE@@HAVE_CRYPTSETUP_TRUE@am__append_713 = -e \
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UNSHARE_TRUE@am__append_684 = bash-completion/unshare
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WDCTL_TRUE@am__append_685 = bash-completion/wdctl
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKDISCARD_TRUE@am__append_686 = bash-completion/blkdiscard
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_BLKZONE_TRUE@am__append_687 = bash-completion/blkzone
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_CTRLALTDEL_TRUE@am__append_688 = bash-completion/ctrlaltdel
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_DMESG_TRUE@am__append_689 = bash-completion/dmesg
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSFREEZE_TRUE@am__append_690 = bash-completion/fsfreeze
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FSTRIM_TRUE@am__append_691 = bash-completion/fstrim
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LDATTACH_TRUE@am__append_692 = bash-completion/ldattach
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RFKILL_TRUE@am__append_693 = bash-completion/rfkill
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_RTCWAKE_TRUE@am__append_694 = bash-completion/rtcwake
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETARCH_TRUE@am__append_695 = bash-completion/setarch
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_ZRAMCTL_TRUE@am__append_696 = bash-completion/zramctl
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MESG_TRUE@am__append_697 = bash-completion/mesg
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WALL_TRUE@am__append_698 = bash-completion/wall
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WRITE_TRUE@am__append_699 = bash-completion/write
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_SETTERM_TRUE@am__append_700 = bash-completion/setterm
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_MORE_TRUE@am__append_701 = bash-completion/more
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_PG_TRUE@am__append_702 = bash-completion/pg
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_UL_TRUE@am__append_703 = bash-completion/ul
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_HARDLINK_TRUE@am__append_704 = bash-completion/hardlink
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_PIPESZ_TRUE@am__append_705 = bash-completion/pipesz
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_FADVISE_TRUE@am__append_706 = bash-completion/fadvise
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_WAITPID_TRUE@am__append_707 = bash-completion/waitpid
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_ENOSYS_TRUE@am__append_708 = bash-completion/enosys
+@BUILD_BASH_COMPLETION_TRUE@@BUILD_LSCLOCKS_TRUE@am__append_709 = bash-completion/lsclocks
+@LINUX_TRUE@am__append_710 = test_mkfds test_enosys
+@HAVE_CAP_NG_TRUE@am__append_711 = test_cap
+@HAVE_SELINUX_TRUE@am__append_712 = -e 's|@LIBSELINUX[@]|libselinux|g'
+@HAVE_SELINUX_FALSE@am__append_713 = -e 's|@LIBSELINUX[@]||g'
+@CRYPTSETUP_VIA_DLOPEN_TRUE@@HAVE_CRYPTSETUP_TRUE@am__append_714 = -e \
 @CRYPTSETUP_VIA_DLOPEN_TRUE@@HAVE_CRYPTSETUP_TRUE@	's|@LIBCRYPTSETUP[@]||g' \
 @CRYPTSETUP_VIA_DLOPEN_TRUE@@HAVE_CRYPTSETUP_TRUE@	-e \
 @CRYPTSETUP_VIA_DLOPEN_TRUE@@HAVE_CRYPTSETUP_TRUE@	's|@LIBDL[@]|-ldl|g'
-@CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@am__append_714 =  \
+@CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@am__append_715 =  \
 @CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@	-e \
 @CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@	's|@LIBCRYPTSETUP[@]|libcryptsetup|g' \
 @CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@	-e \
 @CRYPTSETUP_VIA_DLOPEN_FALSE@@HAVE_CRYPTSETUP_TRUE@	's|@LIBDL[@]||g'
-@HAVE_CRYPTSETUP_FALSE@am__append_715 = -e 's|@LIBCRYPTSETUP[@]||g' -e \
+@HAVE_CRYPTSETUP_FALSE@am__append_716 = -e 's|@LIBCRYPTSETUP[@]||g' -e \
 @HAVE_CRYPTSETUP_FALSE@	's|@LIBDL[@]||g'
-@USE_VENDORDIR_TRUE@am__append_716 = -e 's|@vendordir[@]|$(vendordir)|g'
-@USE_VENDORDIR_FALSE@am__append_717 = -e 's|@vendordir[@]||g'
-@ENABLE_ASCIIDOC_TRUE@am__append_718 = $(ADOCFILES_COMMON) $(MANPAGES) $(MANLINKS)
-@ENABLE_ASCIIDOC_TRUE@am__append_719 = $(MANPAGES) $(MANLINKS)
-@ENABLE_ASCIIDOC_TRUE@@HAVE_ASCIIDOCTOR_FAILURE_LEVEL_TRUE@am__append_720 = --failure-level ERROR
+@USE_VENDORDIR_TRUE@am__append_717 = -e 's|@vendordir[@]|$(vendordir)|g'
+@USE_VENDORDIR_FALSE@am__append_718 = -e 's|@vendordir[@]||g'
+@ENABLE_ASCIIDOC_TRUE@am__append_719 = $(ADOCFILES_COMMON) $(MANPAGES) $(MANLINKS)
+@ENABLE_ASCIIDOC_TRUE@am__append_720 = $(MANPAGES) $(MANLINKS)
+@ENABLE_ASCIIDOC_TRUE@@HAVE_ASCIIDOCTOR_FAILURE_LEVEL_TRUE@am__append_721 = --failure-level ERROR
 
 # !ENABLE_ASCIIDOC
-@ENABLE_ASCIIDOC_FALSE@@HAVE_MANPAGES_TRUE@am__append_721 = $(ADOCFILES_COMMON) $(MANPAGES) $(MANLINKS)
-@ENABLE_ASCIIDOC_FALSE@@HAVE_MANPAGES_TRUE@am__append_722 = $(MANPAGES) $(MANLINKS)
+@ENABLE_ASCIIDOC_FALSE@@HAVE_MANPAGES_TRUE@am__append_722 = $(ADOCFILES_COMMON) $(MANPAGES) $(MANLINKS)
+@ENABLE_ASCIIDOC_FALSE@@HAVE_MANPAGES_TRUE@am__append_723 = $(MANPAGES) $(MANLINKS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_vscript.m4 \
@@ -1210,11 +1211,12 @@ CONFIG_CLEAN_VPATH_FILES =
 @BUILD_PIPESZ_TRUE@am__EXEEXT_15 = pipesz$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)" \
 	"$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(usrsbin_execdir)" \
-	"$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(securelibdir)" \
-	"$(DESTDIR)$(usrlib_execdir)" "$(DESTDIR)$(usrbin_execdir)" \
-	"$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(man1dir)" \
-	"$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" \
-	"$(DESTDIR)$(man8dir)" "$(DESTDIR)$(bashcompletiondir)" \
+	"$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(usrlib_execdir)" \
+	"$(DESTDIR)$(usrsecurelib_execdir)" \
+	"$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(pylibmountexecdir)" \
+	"$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man3dir)" \
+	"$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man8dir)" \
+	"$(DESTDIR)$(bashcompletiondir)" \
 	"$(DESTDIR)$(getoptexampledir)" "$(DESTDIR)$(pkgconfigdir)" \
 	"$(DESTDIR)$(systemdsystemunitdir)" "$(DESTDIR)$(tmpfilesdir)" \
 	"$(DESTDIR)$(lastlog2incdir)" "$(DESTDIR)$(blkidincdir)" \
@@ -1442,8 +1444,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-LTLIBRARIES = $(pylibmountexec_LTLIBRARIES) $(securelib_LTLIBRARIES) \
-	$(usrlib_exec_LTLIBRARIES)
+LTLIBRARIES = $(pylibmountexec_LTLIBRARIES) $(usrlib_exec_LTLIBRARIES) \
+	$(usrsecurelib_exec_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 @BUILD_LIBBLKID_TRUE@libblkid_la_DEPENDENCIES = libcommon.la \
 @BUILD_LIBBLKID_TRUE@	$(am__DEPENDENCIES_1)
@@ -1871,7 +1873,7 @@ pam_lastlog2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(pam_lastlog2_la_CFLAGS) $(CFLAGS) $(pam_lastlog2_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @BUILD_PAM_LASTLOG2_TRUE@am_pam_lastlog2_la_rpath = -rpath \
-@BUILD_PAM_LASTLOG2_TRUE@	$(securelibdir)
+@BUILD_PAM_LASTLOG2_TRUE@	$(usrsecurelib_execdir)
 @BUILD_LIBMOUNT_TRUE@@BUILD_PYLIBMOUNT_TRUE@pylibmount_la_DEPENDENCIES =  \
 @BUILD_LIBMOUNT_TRUE@@BUILD_PYLIBMOUNT_TRUE@	libmount.la \
 @BUILD_LIBMOUNT_TRUE@@BUILD_PYLIBMOUNT_TRUE@	$(am__DEPENDENCIES_1)
@@ -2482,7 +2484,8 @@ am__lsfd_SOURCES_DIST = misc-utils/lsfd.c misc-utils/lsfd.h \
 	misc-utils/lsfd-cdev.c misc-utils/lsfd-bdev.c \
 	misc-utils/lsfd-sock.c misc-utils/lsfd-sock.h \
 	misc-utils/lsfd-sock-xinfo.c misc-utils/lsfd-unkn.c \
-	misc-utils/lsfd-fifo.c
+	misc-utils/lsfd-fifo.c misc-utils/lsfd-pidfd.h \
+	misc-utils/lsfd-pidfd.c
 @BUILD_LSFD_TRUE@am_lsfd_OBJECTS = misc-utils/lsfd-lsfd.$(OBJEXT) \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-decode-file-flags.$(OBJEXT) \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-file.$(OBJEXT) \
@@ -2491,7 +2494,8 @@ am__lsfd_SOURCES_DIST = misc-utils/lsfd.c misc-utils/lsfd.h \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-sock.$(OBJEXT) \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-sock-xinfo.$(OBJEXT) \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-unkn.$(OBJEXT) \
-@BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-fifo.$(OBJEXT)
+@BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-fifo.$(OBJEXT) \
+@BUILD_LSFD_TRUE@	misc-utils/lsfd-lsfd-pidfd.$(OBJEXT)
 lsfd_OBJECTS = $(am_lsfd_OBJECTS)
 @BUILD_LSFD_TRUE@lsfd_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 @BUILD_LSFD_TRUE@	$(am__DEPENDENCIES_1) libsmartcols.la \
@@ -2754,8 +2758,8 @@ readprofile_OBJECTS = $(am_readprofile_OBJECTS)
 am__rename_SOURCES_DIST = misc-utils/rename.c
 @BUILD_RENAME_TRUE@am_rename_OBJECTS = misc-utils/rename.$(OBJEXT)
 rename_OBJECTS = $(am_rename_OBJECTS)
-rename_LDADD = $(LDADD)
-rename_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@BUILD_RENAME_TRUE@rename_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+@BUILD_RENAME_TRUE@	libcommon.la
 am__renice_SOURCES_DIST = sys-utils/renice.c
 @BUILD_RENICE_TRUE@am_renice_OBJECTS = sys-utils/renice.$(OBJEXT)
 renice_OBJECTS = $(am_renice_OBJECTS)
@@ -4584,6 +4588,7 @@ am__depfiles_remade = ./$(DEPDIR)/dummy.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-decode-file-flags.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-fifo.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-file.Po \
+	misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-sock-xinfo.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-sock.Po \
 	misc-utils/$(DEPDIR)/lsfd-lsfd-unkn.Po \
@@ -5601,6 +5606,7 @@ top_srcdir = @top_srcdir@
 usrbin_execdir = @usrbin_execdir@
 usrlib_execdir = @usrlib_execdir@
 usrsbin_execdir = @usrsbin_execdir@
+usrsecurelib_execdir = @usrsecurelib_execdir@
 vendordir = @vendordir@
 with_bashcompletiondir = @with_bashcompletiondir@
 with_systemdsystemunitdir = @with_systemdsystemunitdir@
@@ -5715,53 +5721,54 @@ dist_noinst_DATA = lib/terminal-colors.d.5.adoc $(am__append_22) \
 # to generate binaries with only relevant stuff.
 #
 EXTRA_LTLIBRARIES = libcommon.la libtcolors.la
-man_MANS = $(am__append_359) $(am__append_719) $(am__append_722)
+man_MANS = $(am__append_359) $(am__append_720) $(am__append_723)
 pkgconfig_DATA = $(am__append_30) $(am__append_40) $(am__append_54) \
 	$(am__append_77) $(am__append_88) $(am__append_104)
 usrlib_exec_LTLIBRARIES = $(am__append_25) $(am__append_34) \
 	$(am__append_42) $(am__append_58) $(am__append_79) \
 	$(am__append_92)
+usrsecurelib_exec_LTLIBRARIES = $(am__append_597)
 dist_usrbin_exec_SCRIPTS = 
 systemdsystemunit_DATA = $(am__append_320) $(am__append_467) \
 	$(am__append_481)
 tmpfiles_DATA = $(am__append_468) $(am__append_480)
-dist_bashcompletion_DATA = $(am__append_599) $(am__append_600) \
-	$(am__append_601) $(am__append_602) $(am__append_603) \
-	$(am__append_604) $(am__append_605) $(am__append_606) \
-	$(am__append_607) $(am__append_608) $(am__append_609) \
-	$(am__append_610) $(am__append_611) $(am__append_612) \
-	$(am__append_613) $(am__append_614) $(am__append_615) \
-	$(am__append_616) $(am__append_617) $(am__append_618) \
-	$(am__append_619) $(am__append_620) $(am__append_621) \
-	$(am__append_622) $(am__append_623) $(am__append_624) \
-	$(am__append_625) $(am__append_626) $(am__append_627) \
-	$(am__append_628) $(am__append_629) $(am__append_630) \
-	$(am__append_631) $(am__append_632) $(am__append_633) \
-	$(am__append_634) $(am__append_635) $(am__append_636) \
-	$(am__append_637) $(am__append_638) $(am__append_639) \
-	$(am__append_640) $(am__append_641) $(am__append_642) \
-	$(am__append_643) $(am__append_644) $(am__append_645) \
-	$(am__append_646) $(am__append_647) $(am__append_648) \
-	$(am__append_649) $(am__append_650) $(am__append_652) \
-	$(am__append_653) $(am__append_654) $(am__append_656) \
-	$(am__append_657) $(am__append_658) $(am__append_659) \
-	$(am__append_660) $(am__append_661) $(am__append_662) \
-	$(am__append_663) $(am__append_664) $(am__append_665) \
-	$(am__append_666) $(am__append_667) $(am__append_668) \
-	$(am__append_669) $(am__append_670) $(am__append_671) \
-	$(am__append_672) $(am__append_673) $(am__append_674) \
-	$(am__append_675) $(am__append_676) $(am__append_677) \
-	$(am__append_678) $(am__append_679) $(am__append_680) \
-	$(am__append_681) $(am__append_682) $(am__append_683) \
-	$(am__append_684) $(am__append_685) $(am__append_686) \
-	$(am__append_687) $(am__append_688) $(am__append_689) \
-	$(am__append_690) $(am__append_691) $(am__append_692) \
-	$(am__append_693) $(am__append_694) $(am__append_695) \
-	$(am__append_696) $(am__append_697) $(am__append_698) \
-	$(am__append_699) $(am__append_700) $(am__append_701) \
-	$(am__append_702) $(am__append_703) $(am__append_704) \
-	$(am__append_705) $(am__append_706) $(am__append_707) \
-	$(am__append_708)
+dist_bashcompletion_DATA = $(am__append_600) $(am__append_601) \
+	$(am__append_602) $(am__append_603) $(am__append_604) \
+	$(am__append_605) $(am__append_606) $(am__append_607) \
+	$(am__append_608) $(am__append_609) $(am__append_610) \
+	$(am__append_611) $(am__append_612) $(am__append_613) \
+	$(am__append_614) $(am__append_615) $(am__append_616) \
+	$(am__append_617) $(am__append_618) $(am__append_619) \
+	$(am__append_620) $(am__append_621) $(am__append_622) \
+	$(am__append_623) $(am__append_624) $(am__append_625) \
+	$(am__append_626) $(am__append_627) $(am__append_628) \
+	$(am__append_629) $(am__append_630) $(am__append_631) \
+	$(am__append_632) $(am__append_633) $(am__append_634) \
+	$(am__append_635) $(am__append_636) $(am__append_637) \
+	$(am__append_638) $(am__append_639) $(am__append_640) \
+	$(am__append_641) $(am__append_642) $(am__append_643) \
+	$(am__append_644) $(am__append_645) $(am__append_646) \
+	$(am__append_647) $(am__append_648) $(am__append_649) \
+	$(am__append_650) $(am__append_651) $(am__append_653) \
+	$(am__append_654) $(am__append_655) $(am__append_657) \
+	$(am__append_658) $(am__append_659) $(am__append_660) \
+	$(am__append_661) $(am__append_662) $(am__append_663) \
+	$(am__append_664) $(am__append_665) $(am__append_666) \
+	$(am__append_667) $(am__append_668) $(am__append_669) \
+	$(am__append_670) $(am__append_671) $(am__append_672) \
+	$(am__append_673) $(am__append_674) $(am__append_675) \
+	$(am__append_676) $(am__append_677) $(am__append_678) \
+	$(am__append_679) $(am__append_680) $(am__append_681) \
+	$(am__append_682) $(am__append_683) $(am__append_684) \
+	$(am__append_685) $(am__append_686) $(am__append_687) \
+	$(am__append_688) $(am__append_689) $(am__append_690) \
+	$(am__append_691) $(am__append_692) $(am__append_693) \
+	$(am__append_694) $(am__append_695) $(am__append_696) \
+	$(am__append_697) $(am__append_698) $(am__append_699) \
+	$(am__append_700) $(am__append_701) $(am__append_702) \
+	$(am__append_703) $(am__append_704) $(am__append_705) \
+	$(am__append_706) $(am__append_707) $(am__append_708) \
+	$(am__append_709)
 dist_check_SCRIPTS = $(am__append_74)
 BUILT_SOURCES = $(am__append_80) .version
 PATHFILES = $(am__append_31) $(am__append_41) $(am__append_55) \
@@ -5827,7 +5834,7 @@ INSTALL_EXEC_HOOKS = $(am__append_28) $(am__append_38) \
 UNINSTALL_HOOKS = $(am__append_29) $(am__append_39) $(am__append_51) \
 	$(am__append_72) $(am__append_84) $(am__append_101) \
 	$(am__append_362)
-INSTALL_DATA_HOOKS = $(am__append_651) $(am__append_655)
+INSTALL_DATA_HOOKS = $(am__append_652) $(am__append_656)
 CLEAN_LOCALS = clean-local-tests
 CHECK_LOCALS = check-local-tests
 
@@ -5869,7 +5876,7 @@ EXTRA_DIST = .version autogen.sh Documentation po/update-potfiles \
 	tools/asciidoctor-unicodeconverter.rb tools/all_syscalls \
 	$(am__append_27) $(am__append_36) $(am__append_46) \
 	$(am__append_64) $(am__append_81) $(am__append_96) \
-	sys-utils/fstrim.timer $(am__append_598) tests/expected \
+	sys-utils/fstrim.timer $(am__append_599) tests/expected \
 	tests/functions.sh tests/commands.sh tests/run.sh tests/ts \
 	meson.build meson_options.txt tools/meson-make-manpage-stub.sh \
 	tools/meson-make-symlink.sh include/meson.build \
@@ -5879,8 +5886,8 @@ EXTRA_DIST = .version autogen.sh Documentation po/update-potfiles \
 	lib/meson.build libuuid/meson.build liblastlog2/meson.build \
 	sys-utils/meson.build libfdisk/meson.build \
 	term-utils/meson.build disk-utils/meson.build \
-	login-utils/meson.build $(PATHFILES:=.in) $(am__append_718) \
-	$(am__append_721)
+	login-utils/meson.build $(PATHFILES:=.in) $(am__append_719) \
+	$(am__append_722)
 CLEANFILES = $(am__append_360) $(am__append_527) $(PATHFILES) \
 	$(EXTRA_LTLIBRARIES)
 SUBDIRS = po $(am__append_4) $(am__append_53) $(am__append_76) \
@@ -6003,7 +6010,7 @@ test_logindefs_LDADD = $(LDADD) libcommon.la $(am__append_20)
 @BUILD_LIBUUID_TRUE@EXTRA_libuuid_la_DEPENDENCIES = \
 @BUILD_LIBUUID_TRUE@	libuuid/src/libuuid.sym
 
-@BUILD_LIBUUID_TRUE@libuuid_la_LIBADD = $(LDADD) $(SOCKET_LIBS)
+@BUILD_LIBUUID_TRUE@libuuid_la_LIBADD = $(LDADD) $(SOCKET_LIBS) -lpthread
 @BUILD_LIBUUID_TRUE@libuuid_la_CFLAGS = \
 @BUILD_LIBUUID_TRUE@	$(AM_CFLAGS) \
 @BUILD_LIBUUID_TRUE@	 $(SOLIB_CFLAGS) \
@@ -7024,6 +7031,7 @@ test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 @BUILD_KILL_TRUE@kill_SOURCES = misc-utils/kill.c
 @BUILD_KILL_TRUE@kill_LDADD = $(LDADD) libcommon.la
 @BUILD_RENAME_TRUE@rename_SOURCES = misc-utils/rename.c
+@BUILD_RENAME_TRUE@rename_LDADD = $(LDADD) libcommon.la
 @BUILD_GETOPT_TRUE@getopt_SOURCES = misc-utils/getopt.c
 @BUILD_GETOPT_TRUE@getopt_LDADD = $(LDADD) libcommon.la
 @BUILD_GETOPT_TRUE@getoptexampledir = $(docdir)
@@ -7051,7 +7059,9 @@ test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-sock.h \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-sock-xinfo.c \
 @BUILD_LSFD_TRUE@	misc-utils/lsfd-unkn.c \
-@BUILD_LSFD_TRUE@	misc-utils/lsfd-fifo.c
+@BUILD_LSFD_TRUE@	misc-utils/lsfd-fifo.c \
+@BUILD_LSFD_TRUE@	misc-utils/lsfd-pidfd.h \
+@BUILD_LSFD_TRUE@	misc-utils/lsfd-pidfd.c
 
 @BUILD_LSFD_TRUE@lsfd_LDADD = $(LDADD) $(MQ_LIBS) libsmartcols.la libcommon.la
 @BUILD_LSFD_TRUE@lsfd_CFLAGS = $(AM_CFLAGS) -I$(ul_libsmartcols_incdir)
@@ -7170,8 +7180,6 @@ test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 @BUILD_PARTX_TRUE@partx_SOURCES = disk-utils/partx.c
 @BUILD_PARTX_TRUE@partx_CFLAGS = $(AM_CFLAGS) -I$(ul_libblkid_incdir) -I$(ul_libsmartcols_incdir)
 @BUILD_PARTX_TRUE@partx_LDADD = $(LDADD) libblkid.la libcommon.la libsmartcols.la
-@BUILD_PAM_LASTLOG2_TRUE@securelibdir = $(libdir)/security
-@BUILD_PAM_LASTLOG2_TRUE@securelib_LTLIBRARIES = pam_lastlog2.la
 @BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_SOURCES = \
 @BUILD_PAM_LASTLOG2_TRUE@	pam_lastlog2/src/pam_lastlog2.c
 
@@ -7186,7 +7194,7 @@ test_islocal_CPPFLAGS = -DTEST_PROGRAM $(AM_CPPFLAGS)
 @BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_LIBADD = liblastlog2.la
 @BUILD_PAM_LASTLOG2_TRUE@pam_lastlog2_la_LDFLAGS = $(SOLIB_LDFLAGS) \
 @BUILD_PAM_LASTLOG2_TRUE@	-module -avoid-version -shared \
-@BUILD_PAM_LASTLOG2_TRUE@	$(am__append_597)
+@BUILD_PAM_LASTLOG2_TRUE@	$(am__append_598)
 test_boilerplate_SOURCES = Documentation/boilerplate.c
 test_boilerplate_LDADD = $(LDADD)
 test_boilerplate_CFLAGS = $(AM_CFLAGS)
@@ -7256,9 +7264,9 @@ edit_cmd = sed -e 's|@prefix[@]|$(prefix)|g' -e \
 	's|@LIBFDISK_MINOR_VERSION[@]|$(LIBFDISK_MINOR_VERSION)|g' -e \
 	's|@LIBFDISK_PATCH_VERSION[@]|$(LIBFDISK_PATCH_VERSION)|g' -e \
 	's|@LIBBLKID_VERSION[@]|$(LIBBLKID_VERSION)|g' \
-	$(am__append_711) $(am__append_712) $(am__append_713) \
-	$(am__append_714) $(am__append_715) $(am__append_716) \
-	$(am__append_717)
+	$(am__append_712) $(am__append_713) $(am__append_714) \
+	$(am__append_715) $(am__append_716) $(am__append_717) \
+	$(am__append_718)
 @ENABLE_ASCIIDOC_TRUE@asciidoc_man_cmd = $(ASCIIDOCTOR) -b manpage -a \
 @ENABLE_ASCIIDOC_TRUE@	'release-version=$(VERSION)' -a \
 @ENABLE_ASCIIDOC_TRUE@	'package-docdir=$(docdir)' -a \
@@ -7266,7 +7274,7 @@ edit_cmd = sed -e 's|@prefix[@]|$(prefix)|g' -e \
 @ENABLE_ASCIIDOC_TRUE@	'ADJTIME_PATH=$(ADJTIME_PATH)' \
 @ENABLE_ASCIIDOC_TRUE@	--load-path '$(abs_srcdir)/tools' \
 @ENABLE_ASCIIDOC_TRUE@	--require asciidoctor-includetracker \
-@ENABLE_ASCIIDOC_TRUE@	$(am__append_720)
+@ENABLE_ASCIIDOC_TRUE@	$(am__append_721)
 @ENABLE_ASCIIDOC_TRUE@SUFFIXES = .1.adoc .3.adoc .5.adoc .8.adoc .1 .3 .5 .8
 DISTCHECK_CONFIGURE_FLAGS = \
 	--disable-makeinstall-chown \
@@ -7593,41 +7601,6 @@ clean-pylibmountexecLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-install-securelibLTLIBRARIES: $(securelib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	@list='$(securelib_LTLIBRARIES)'; test -n "$(securelibdir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(securelibdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(securelibdir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(securelibdir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(securelibdir)"; \
-	}
-
-uninstall-securelibLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(securelib_LTLIBRARIES)'; test -n "$(securelibdir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(securelibdir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(securelibdir)/$$f"; \
-	done
-
-clean-securelibLTLIBRARIES:
-	-test -z "$(securelib_LTLIBRARIES)" || rm -f $(securelib_LTLIBRARIES)
-	@list='$(securelib_LTLIBRARIES)'; \
-	locs=`for p in $$list; do echo $$p; done | \
-	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
-	      sort -u`; \
-	test -z "$$locs" || { \
-	  echo rm -f $${locs}; \
-	  rm -f $${locs}; \
-	}
-
 install-usrlib_execLTLIBRARIES: $(usrlib_exec_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	@list='$(usrlib_exec_LTLIBRARIES)'; test -n "$(usrlib_execdir)" || list=; \
@@ -7655,6 +7628,41 @@ uninstall-usrlib_execLTLIBRARIES:
 clean-usrlib_execLTLIBRARIES:
 	-test -z "$(usrlib_exec_LTLIBRARIES)" || rm -f $(usrlib_exec_LTLIBRARIES)
 	@list='$(usrlib_exec_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
+install-usrsecurelib_execLTLIBRARIES: $(usrsecurelib_exec_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	@list='$(usrsecurelib_exec_LTLIBRARIES)'; test -n "$(usrsecurelib_execdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(usrsecurelib_execdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(usrsecurelib_execdir)" || exit 1; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(usrsecurelib_execdir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(usrsecurelib_execdir)"; \
+	}
+
+uninstall-usrsecurelib_execLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(usrsecurelib_exec_LTLIBRARIES)'; test -n "$(usrsecurelib_execdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(usrsecurelib_execdir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(usrsecurelib_execdir)/$$f"; \
+	done
+
+clean-usrsecurelib_execLTLIBRARIES:
+	-test -z "$(usrsecurelib_exec_LTLIBRARIES)" || rm -f $(usrsecurelib_exec_LTLIBRARIES)
+	@list='$(usrsecurelib_exec_LTLIBRARIES)'; \
 	locs=`for p in $$list; do echo $$p; done | \
 	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
 	      sort -u`; \
@@ -8851,6 +8859,8 @@ misc-utils/lsfd-lsfd-sock-xinfo.$(OBJEXT): misc-utils/$(am__dirstamp) \
 misc-utils/lsfd-lsfd-unkn.$(OBJEXT): misc-utils/$(am__dirstamp) \
 	misc-utils/$(DEPDIR)/$(am__dirstamp)
 misc-utils/lsfd-lsfd-fifo.$(OBJEXT): misc-utils/$(am__dirstamp) \
+	misc-utils/$(DEPDIR)/$(am__dirstamp)
+misc-utils/lsfd-lsfd-pidfd.$(OBJEXT): misc-utils/$(am__dirstamp) \
 	misc-utils/$(DEPDIR)/$(am__dirstamp)
 
 lsfd$(EXEEXT): $(lsfd_OBJECTS) $(lsfd_DEPENDENCIES) $(EXTRA_lsfd_DEPENDENCIES) 
@@ -10753,6 +10763,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-decode-file-flags.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-fifo.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-file.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-sock-xinfo.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-sock.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@misc-utils/$(DEPDIR)/lsfd-lsfd-unkn.Po@am__quote@ # am--include-marker
@@ -13733,6 +13744,20 @@ misc-utils/lsfd-lsfd-fifo.obj: misc-utils/lsfd-fifo.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='misc-utils/lsfd-fifo.c' object='misc-utils/lsfd-lsfd-fifo.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsfd_CFLAGS) $(CFLAGS) -c -o misc-utils/lsfd-lsfd-fifo.obj `if test -f 'misc-utils/lsfd-fifo.c'; then $(CYGPATH_W) 'misc-utils/lsfd-fifo.c'; else $(CYGPATH_W) '$(srcdir)/misc-utils/lsfd-fifo.c'; fi`
+
+misc-utils/lsfd-lsfd-pidfd.o: misc-utils/lsfd-pidfd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsfd_CFLAGS) $(CFLAGS) -MT misc-utils/lsfd-lsfd-pidfd.o -MD -MP -MF misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Tpo -c -o misc-utils/lsfd-lsfd-pidfd.o `test -f 'misc-utils/lsfd-pidfd.c' || echo '$(srcdir)/'`misc-utils/lsfd-pidfd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Tpo misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='misc-utils/lsfd-pidfd.c' object='misc-utils/lsfd-lsfd-pidfd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsfd_CFLAGS) $(CFLAGS) -c -o misc-utils/lsfd-lsfd-pidfd.o `test -f 'misc-utils/lsfd-pidfd.c' || echo '$(srcdir)/'`misc-utils/lsfd-pidfd.c
+
+misc-utils/lsfd-lsfd-pidfd.obj: misc-utils/lsfd-pidfd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsfd_CFLAGS) $(CFLAGS) -MT misc-utils/lsfd-lsfd-pidfd.obj -MD -MP -MF misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Tpo -c -o misc-utils/lsfd-lsfd-pidfd.obj `if test -f 'misc-utils/lsfd-pidfd.c'; then $(CYGPATH_W) 'misc-utils/lsfd-pidfd.c'; else $(CYGPATH_W) '$(srcdir)/misc-utils/lsfd-pidfd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Tpo misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='misc-utils/lsfd-pidfd.c' object='misc-utils/lsfd-lsfd-pidfd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsfd_CFLAGS) $(CFLAGS) -c -o misc-utils/lsfd-lsfd-pidfd.obj `if test -f 'misc-utils/lsfd-pidfd.c'; then $(CYGPATH_W) 'misc-utils/lsfd-pidfd.c'; else $(CYGPATH_W) '$(srcdir)/misc-utils/lsfd-pidfd.c'; fi`
 
 sys-utils/lsipc-lsipc.o: sys-utils/lsipc.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lsipc_CFLAGS) $(CFLAGS) -MT sys-utils/lsipc-lsipc.o -MD -MP -MF sys-utils/$(DEPDIR)/lsipc-lsipc.Tpo -c -o sys-utils/lsipc-lsipc.o `test -f 'sys-utils/lsipc.c' || echo '$(srcdir)/'`sys-utils/lsipc.c
@@ -17230,7 +17255,7 @@ all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(SCRIPTS) $(MANS) $(DATA) \
 		$(HEADERS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(usrsbin_execdir)" "$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(securelibdir)" "$(DESTDIR)$(usrlib_execdir)" "$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man8dir)" "$(DESTDIR)$(bashcompletiondir)" "$(DESTDIR)$(getoptexampledir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(systemdsystemunitdir)" "$(DESTDIR)$(tmpfilesdir)" "$(DESTDIR)$(lastlog2incdir)" "$(DESTDIR)$(blkidincdir)" "$(DESTDIR)$(fdiskincdir)" "$(DESTDIR)$(mountincdir)" "$(DESTDIR)$(smartcolsincdir)" "$(DESTDIR)$(uuidincdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(usrsbin_execdir)" "$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(usrlib_execdir)" "$(DESTDIR)$(usrsecurelib_execdir)" "$(DESTDIR)$(usrbin_execdir)" "$(DESTDIR)$(pylibmountexecdir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man8dir)" "$(DESTDIR)$(bashcompletiondir)" "$(DESTDIR)$(getoptexampledir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(systemdsystemunitdir)" "$(DESTDIR)$(tmpfilesdir)" "$(DESTDIR)$(lastlog2incdir)" "$(DESTDIR)$(blkidincdir)" "$(DESTDIR)$(fdiskincdir)" "$(DESTDIR)$(mountincdir)" "$(DESTDIR)$(smartcolsincdir)" "$(DESTDIR)$(uuidincdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -17325,8 +17350,8 @@ clean: clean-recursive
 clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
 	clean-libtool clean-local clean-noinstPROGRAMS \
 	clean-pylibmountexecLTLIBRARIES clean-sbinPROGRAMS \
-	clean-securelibLTLIBRARIES clean-usrbin_execPROGRAMS \
-	clean-usrlib_execLTLIBRARIES clean-usrsbin_execPROGRAMS \
+	clean-usrbin_execPROGRAMS clean-usrlib_execLTLIBRARIES \
+	clean-usrsbin_execPROGRAMS clean-usrsecurelib_execLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-recursive
@@ -17811,6 +17836,7 @@ distclean: distclean-recursive
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-decode-file-flags.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-fifo.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-file.Po
+	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-sock-xinfo.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-sock.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-unkn.Po
@@ -17961,8 +17987,8 @@ install-data-am: install-dist_bashcompletionDATA \
 	install-man install-nodist_blkidincHEADERS \
 	install-nodist_fdiskincHEADERS install-nodist_mountincHEADERS \
 	install-nodist_smartcolsincHEADERS install-pkgconfigDATA \
-	install-securelibLTLIBRARIES install-systemdsystemunitDATA \
-	install-tmpfilesDATA install-uuidincHEADERS
+	install-systemdsystemunitDATA install-tmpfilesDATA \
+	install-uuidincHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-recursive
@@ -17972,7 +17998,8 @@ install-dvi-am:
 install-exec-am: install-binPROGRAMS install-dist_usrbin_execSCRIPTS \
 	install-pylibmountexecLTLIBRARIES install-pylibmountexecPYTHON \
 	install-sbinPROGRAMS install-usrbin_execPROGRAMS \
-	install-usrlib_execLTLIBRARIES install-usrsbin_execPROGRAMS
+	install-usrlib_execLTLIBRARIES install-usrsbin_execPROGRAMS \
+	install-usrsecurelib_execLTLIBRARIES
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-recursive
@@ -18478,6 +18505,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-decode-file-flags.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-fifo.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-file.Po
+	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-pidfd.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-sock-xinfo.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-sock.Po
 	-rm -f misc-utils/$(DEPDIR)/lsfd-lsfd-unkn.Po
@@ -18632,10 +18660,11 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dist_bashcompletionDATA \
 	uninstall-nodist_smartcolsincHEADERS uninstall-pkgconfigDATA \
 	uninstall-pylibmountexecLTLIBRARIES \
 	uninstall-pylibmountexecPYTHON uninstall-sbinPROGRAMS \
-	uninstall-securelibLTLIBRARIES uninstall-systemdsystemunitDATA \
-	uninstall-tmpfilesDATA uninstall-usrbin_execPROGRAMS \
-	uninstall-usrlib_execLTLIBRARIES \
-	uninstall-usrsbin_execPROGRAMS uninstall-uuidincHEADERS
+	uninstall-systemdsystemunitDATA uninstall-tmpfilesDATA \
+	uninstall-usrbin_execPROGRAMS uninstall-usrlib_execLTLIBRARIES \
+	uninstall-usrsbin_execPROGRAMS \
+	uninstall-usrsecurelib_execLTLIBRARIES \
+	uninstall-uuidincHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 uninstall-man: uninstall-man1 uninstall-man3 uninstall-man5 \
@@ -18650,9 +18679,9 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man5 \
 	clean-binPROGRAMS clean-checkPROGRAMS clean-cscope \
 	clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
 	clean-pylibmountexecLTLIBRARIES clean-sbinPROGRAMS \
-	clean-securelibLTLIBRARIES clean-usrbin_execPROGRAMS \
-	clean-usrlib_execLTLIBRARIES clean-usrsbin_execPROGRAMS cscope \
-	cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	clean-usrbin_execPROGRAMS clean-usrlib_execLTLIBRARIES \
+	clean-usrsbin_execPROGRAMS clean-usrsecurelib_execLTLIBRARIES \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
 	dist-gzip dist-hook dist-lzip dist-shar dist-tarZ dist-xz \
 	dist-zip dist-zstd distcheck distclean distclean-compile \
 	distclean-generic distclean-hdr distclean-libtool \
@@ -18671,16 +18700,16 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man5 \
 	install-nodist_smartcolsincHEADERS install-pdf install-pdf-am \
 	install-pkgconfigDATA install-ps install-ps-am \
 	install-pylibmountexecLTLIBRARIES install-pylibmountexecPYTHON \
-	install-sbinPROGRAMS install-securelibLTLIBRARIES \
-	install-strip install-systemdsystemunitDATA \
-	install-tmpfilesDATA install-usrbin_execPROGRAMS \
-	install-usrlib_execLTLIBRARIES install-usrsbin_execPROGRAMS \
-	install-uuidincHEADERS installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-dist_bashcompletionDATA \
+	install-sbinPROGRAMS install-strip \
+	install-systemdsystemunitDATA install-tmpfilesDATA \
+	install-usrbin_execPROGRAMS install-usrlib_execLTLIBRARIES \
+	install-usrsbin_execPROGRAMS \
+	install-usrsecurelib_execLTLIBRARIES install-uuidincHEADERS \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-dist_bashcompletionDATA \
 	uninstall-dist_getoptexampleDATA \
 	uninstall-dist_usrbin_execSCRIPTS uninstall-hook \
 	uninstall-lastlog2incHEADERS uninstall-man uninstall-man1 \
@@ -18691,10 +18720,11 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man5 \
 	uninstall-nodist_smartcolsincHEADERS uninstall-pkgconfigDATA \
 	uninstall-pylibmountexecLTLIBRARIES \
 	uninstall-pylibmountexecPYTHON uninstall-sbinPROGRAMS \
-	uninstall-securelibLTLIBRARIES uninstall-systemdsystemunitDATA \
-	uninstall-tmpfilesDATA uninstall-usrbin_execPROGRAMS \
-	uninstall-usrlib_execLTLIBRARIES \
-	uninstall-usrsbin_execPROGRAMS uninstall-uuidincHEADERS
+	uninstall-systemdsystemunitDATA uninstall-tmpfilesDATA \
+	uninstall-usrbin_execPROGRAMS uninstall-usrlib_execLTLIBRARIES \
+	uninstall-usrsbin_execPROGRAMS \
+	uninstall-usrsecurelib_execLTLIBRARIES \
+	uninstall-uuidincHEADERS
 
 .PRECIOUS: Makefile
 
@@ -18765,6 +18795,7 @@ LIB_FUZZING_ENGINE ?= -fsanitize=fuzzer
 @BUILD_LIBSMARTCOLS_TRUE@	@rm -f $(SCOLS_YACC_STEMP).tmp
 @BUILD_LIBSMARTCOLS_TRUE@	@touch -f $(SCOLS_YACC_STEMP).tmp
 @BUILD_LIBSMARTCOLS_TRUE@	$(AM_V_YACC) $(BISON) $< --output=${basename $@}.c --defines=${basename $@}.h
+@BUILD_LIBSMARTCOLS_TRUE@	@touch -f ${basename $@}.c
 @BUILD_LIBSMARTCOLS_TRUE@	@mv -f $(SCOLS_YACC_STEMP).tmp $@
 
 @BUILD_LIBSMARTCOLS_TRUE@$(SCOLS_YACC_BASENAME).c $(SCOLS_YACC_BASENAME).h: $(SCOLS_YACC_STEMP)
@@ -18775,6 +18806,7 @@ LIB_FUZZING_ENGINE ?= -fsanitize=fuzzer
 @BUILD_LIBSMARTCOLS_TRUE@	@rm -f $(SCOLS_LEX_STEMP).tmp
 @BUILD_LIBSMARTCOLS_TRUE@	@touch -f $(SCOLS_LEX_STEMP).tmp
 @BUILD_LIBSMARTCOLS_TRUE@	$(AM_V_GEN) $(FLEX) --header-file=${basename $@}.h --outfile=${basename $@}.c $<
+@BUILD_LIBSMARTCOLS_TRUE@	@touch -f ${basename $@}.c
 @BUILD_LIBSMARTCOLS_TRUE@	@mv -f $(SCOLS_LEX_STEMP).tmp $@
 
 @BUILD_LIBSMARTCOLS_TRUE@$(SCOLS_LEX_BASENAME).c $(SCOLS_LEX_BASENAME).h: $(SCOLS_LEX_STEMP)
@@ -18874,10 +18906,12 @@ check-local-tests: $(check_PROGRAMS)
 # pylibmountexec module must be installed after usrlib_exec libraries,
 # otherwise the libtool relink step will fail to find libmount.la and
 # will try -lmount which is possibly not available.
+# The same for usrsecurelib_exec and liblastlog2.la
 #
 # So introduce this dependency rule:
 # install-pylibmountexecLTLIBRARIES: install-usrlib_execLTLIBRARIES
-@verbatim_pylibmount_dependency@
+# install-usrsecurelib_execLTLIBRARIES: install-usrlib_execLTLIBRARIES
+@verbatim_extra_dependency@
 
 $(PATHFILES): Makefile
 	@ rm -f $@ $@.tmp
