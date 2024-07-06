@@ -5,12 +5,6 @@ debian/lsfd-usrbin.patch
 debian/sensible-pager.patch
 debian/tests-mark-lsfd-tests-failing-in-sbuild.patch
 debian/tests-mark-fadvise-drop-as-known-failing-on-buildds.patch
-upstream/audit-arch.h-add-defines-for-m68k-sh.patch
-upstream/Fix-ul_path_read_buffer.patch
-upstream/libmount-utils-add-pidfs-to-pseudo-fs-list.patch
-upstream/fsck-warn-if-fsck.-type-not-found-and-device-is-specified.patch
-upstream-master/libuuid-drop-check-for-HAVE_TLS.patch
-upstream-master/libuuid-split-uuidd-cache-into-dedicated-struct.patch
-upstream-master/libuuid-clear-uuidd-cache-on-fork.patch
-upstream-master/libsmartcols-fix-reduction-stages-use.patch
+upstream-master/audit-arch.h-add-defines-for-m68k-sh.patch
+upstream-master/fsck-warn-if-fsck.-type-not-found-and-device-is-specified.patch
 upstream-master/libmount-Fix-atime-remount-for-new-API.patch
