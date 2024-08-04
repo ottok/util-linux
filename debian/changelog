@@ -1,3 +1,10 @@
+util-linux (2.40.2-2) unstable; urgency=medium
+
+  [ Pino Toscano ]
+  * d/lastlog2.install: install systemd files only on Linux.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 05 Aug 2024 00:31:55 +0200
+
 util-linux (2.40.2-1) unstable; urgency=medium
 
   * New upstream release.
