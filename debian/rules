@@ -25,6 +25,7 @@ endif
 endif
 
 
+CONFOPTS += --enable-newgrp
 CONFOPTS += --enable-write
 
 # build static versions of programs used in fdisk-udeb and util-linux-udeb
@@ -35,9 +36,6 @@ CONFOPTS += --enable-static-programs=fdisk,sfdisk,blkid
 CONFOPTS += --without-python
 
 # disable utilities shipped by other packages
-# => login
-CONFOPTS += --disable-login
-CONFOPTS += --disable-nologin
 # => procps
 CONFOPTS += --disable-kill
 # => passwd
@@ -101,6 +99,7 @@ override_dh_auto_install:
 	find debian/tmp/usr/share/man
 
 override_dh_auto_clean:
+	sed -i 's/# Linux only # //' debian/login.pam
 	dh_auto_clean
 	# drop arch-overrides, generated in dh_install by dh-exec usage.
 	rm -f debian/uuid-runtime.install.$(DEB_HOST_ARCH) \
@@ -168,6 +167,10 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 endif
 
 override_dh_installpam:
+ifneq ($(DEB_HOST_ARCH_OS),linux)
+	sed -i 's/^session    optional   pam_keyinit.so/# Linux only # session    optional   pam_keyinit.so/' debian/login.pam
+endif
+	dh_installpam --package=login --name=login
 	dh_installpam --package=util-linux --name=runuser
 	dh_installpam --package=util-linux --name=runuser-l
 	dh_installpam --package=util-linux --name=su

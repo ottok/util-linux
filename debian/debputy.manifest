@@ -7,6 +7,12 @@ packages:
        mode: "u=rwxs,go=rx"
   bsdutils:
     binary-version: 1:{{DEB_VERSION_UPSTREAM_REVISION}}
+  login:
+    binary-version: 1:4.16.0-2+really{{DEB_VERSION_UPSTREAM_REVISION}}
+    transformations:
+    - path-metadata:
+        path: usr/bin/newgrp
+        mode: "u=rwxs,go=rx"
   mount:
     transformations:
     - path-metadata:

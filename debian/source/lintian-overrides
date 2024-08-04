@@ -16,6 +16,7 @@ debhelper-but-no-misc-depends libpam-lastlog2
 debhelper-but-no-misc-depends libsmartcols1
 debhelper-but-no-misc-depends libsmartcols-dev
 debhelper-but-no-misc-depends libuuid1
+debhelper-but-no-misc-depends login
 debhelper-but-no-misc-depends mount
 debhelper-but-no-misc-depends rfkill
 debhelper-but-no-misc-depends util-linux

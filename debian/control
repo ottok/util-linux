@@ -511,3 +511,19 @@ Multi-Arch: foreign
 Description: Read lastlog2 database
  This package provides the lastlog2 program, to read the
  lastlog2 database.
+
+Package: login
+Architecture: any
+Multi-Arch: foreign
+Protected: yes
+Depends:
+ libpam-modules,
+ libpam-runtime
+Pre-Depends:
+ login.defs (>= 1:4.16.0-1~)
+Description: system login tools
+ This package provides support for console-based logins and for
+ changing effective user or group IDs, including:
+  * login, the program that invokes a user shell on a virtual terminal,
+  * nologin, a dummy shell for disabled user accounts,
+  * newgrp, a program to change the effective group IDs.
