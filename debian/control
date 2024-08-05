@@ -36,7 +36,7 @@ Priority: required
 Maintainer: util-linux packagers <util-linux@packages.debian.org>
 Uploaders:
  Chris Hofstaedtler <zeha@debian.org>
-Standards-Version: 4.6.0
+Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Vcs-Browser: https://salsa.debian.org/debian/util-linux
 Vcs-Git: https://salsa.debian.org/debian/util-linux.git
