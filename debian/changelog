@@ -1,3 +1,9 @@
+util-linux (2.40.2-3) experimental; urgency=medium
+
+  * Take over login package from src:shadow (Closes: #833256)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 05 Aug 2024 02:54:35 +0200
+
 util-linux (2.40.2-2) unstable; urgency=medium
 
   [ Pino Toscano ]
