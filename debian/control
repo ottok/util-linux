@@ -492,6 +492,7 @@ Description: liblastlog2 development files
 
 Package: libpam-lastlog2
 Architecture: any
+Build-Profiles: <!stage1>
 Priority: optional
 Section: admin
 Depends:
@@ -504,6 +505,7 @@ Description: lastlog2 database PAM module
 
 Package: lastlog2
 Architecture: any
+Build-Profiles: <!stage1>
 Priority: optional
 Recommends:
  libpam-lastlog2
