@@ -1,3 +1,16 @@
+util-linux (2.40.2-4) unstable; urgency=medium
+
+  * Upload to unstable.
+
+  [ Chris Hofstaedtler ]
+  * Bump Standards-Version to 4.7.0
+  * Patch login to support our PAM setup
+
+  [ Helmut Grohne ]
+  * Drop lastlog2 and libpam-lastlog2 from stage1 build (Closes: #1077967)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Mon, 05 Aug 2024 17:20:49 +0200
+
 util-linux (2.40.2-3) experimental; urgency=medium
 
   * Take over login package from src:shadow (Closes: #833256)
