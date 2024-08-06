@@ -1,3 +1,13 @@
+util-linux (2.40.2-5) unstable; urgency=medium
+
+  [ Chris Hofstaedtler ]
+  * Do not build login package for stage1 (Closes: #1078027)
+
+  [ Sven Joachim ]
+  * login: fix installing of /etc/pam.d/login (Closes: #1078036)
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Tue, 06 Aug 2024 21:19:26 +0200
+
 util-linux (2.40.2-4) unstable; urgency=medium
 
   * Upload to unstable.
