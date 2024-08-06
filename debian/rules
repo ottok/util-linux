@@ -13,8 +13,10 @@ CONFOPTS += --enable-partx
 
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	CONFOPTS += --without-systemd --without-udev --without-audit
+	CONFOPTS += --disable-newgrp --disable-login --disable-nologin
 else
 	CONFOPTS += --with-systemd --with-udev --with-audit
+	CONFOPTS += --enable-newgrp --enable-login --enable-nologin
 endif
 
 ifneq ($(filter pkg.util-linux.noverity,$(DEB_BUILD_PROFILES)),)
@@ -25,7 +27,6 @@ endif
 endif
 
 
-CONFOPTS += --enable-newgrp
 CONFOPTS += --enable-write
 
 # build static versions of programs used in fdisk-udeb and util-linux-udeb
