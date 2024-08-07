@@ -1,3 +1,12 @@
+util-linux (2.40.2-6) unstable; urgency=medium
+
+  * Remove sg symlink to newgrp.
+    Our newgrp does not take a command to execute, so stop pretending
+    it works like sg. At least for now, we will not have sg.
+    Addresses #1078122.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 07 Aug 2024 18:35:53 +0200
+
 util-linux (2.40.2-5) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
