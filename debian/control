@@ -517,6 +517,7 @@ Description: Read lastlog2 database
 Package: login
 Architecture: any
 Build-Profiles: <!stage1>
+Section: admin
 Multi-Arch: foreign
 Protected: yes
 Depends:
