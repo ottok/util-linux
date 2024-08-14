@@ -1,4 +1,4 @@
 #!/usr/bin/dh-exec
 bin/login usr/bin                                            [linux-any]
-sbin/nologin usr/sbin
-usr/bin/newgrp
+sbin/nologin usr/sbin                                        [linux-any]
+usr/bin/newgrp                                               [linux-any]
