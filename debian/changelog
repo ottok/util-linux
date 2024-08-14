@@ -1,3 +1,12 @@
+util-linux (2.40.2-7) unstable; urgency=medium
+
+  * login: update Section to admin (like in src:shadow)
+    Thanks to Johannes Schauer Marin Rodrigues <josch@debian.org>
+  * Stop installing getopt-example.tcsh.
+    Per lintian tag csh-considered-harmful and policy section 10.4.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Wed, 14 Aug 2024 12:29:34 +0200
+
 util-linux (2.40.2-6) unstable; urgency=medium
 
   * Remove sg symlink to newgrp.
