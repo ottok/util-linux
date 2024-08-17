@@ -56,10 +56,15 @@ Suggests:
  wtmpdb
 Provides:
  hardlink
+Breaks:
+ login (<< 1:4.5-1.1~),
+ mount (<< 2.29.2-3~)
 Conflicts:
  hardlink
 Replaces:
- hardlink
+ hardlink,
+ login (<< 1:4.5-1.1~),
+ mount (<< 2.29.2-3~)
 Pre-Depends:
 # (Pre-)Depend on libpam-*, so runuser/su work.
  libpam-modules,
